@@ -1,4 +1,4 @@
-# Virtual microscopy 0.4 integration contract (compatible twin schema 1)
+# Virtual microscopy 0.5 integration contract (compatible twin schema 1)
 
 Local application: Python FastAPI serves a Vite/vanilla JS + Three.js client. Source in `virtual_microscopy/` and `web/`. Physical dimensions use millimetres. Coordinates x right, y down in image, z depth from specimen top; surrounding material is water for SAM and air for X-ray. Later primitives replace earlier ones. This is a reduced-order synthetic forward simulator, not experimentally validated or coupled full-wave multiphysics.
 
@@ -20,7 +20,7 @@ Optional `image_reference` contains SHA-256, raster width/height, pixel_size_um,
 
 ## API
 
-- GET /api/health -> {status:'ok',version:'0.4.0'}
+- GET /api/health -> {status:'ok',version:'0.5.0'}
 - GET /api/examples -> [{id,name,description,twin}]
 - GET /api/materials -> list of material dicts with id,name,color,density_g_cm3,sound_speed_m_s,impedance_mrayl and provenance; extra properties permitted.
 - POST /api/validate -> twin body -> {valid:true,twin:normalized twin,warnings:[]}; errors HTTP 422.
@@ -121,7 +121,63 @@ four float32 `[view,v,u]` arrays (`counts`, `transmission`, `line_integrals`,
 `detector_center_mm`; `u_mm` and `v_mm` stay local and centered. Unit U/V vectors
 are not pixel-pitch-scaled ASTRA vectors. Counts and every coordinate, pose and
 committed signal chunk are verified before export. Angular stacks are inputs to
-future reconstruction; their view axis is not a spatial z axis.
+reconstruction; their view axis is not a spatial z axis.
+
+### Spatial X-ray reconstruction extension (0.5)
+
+POST `/api/v2/estimate` and POST `/api/v2/jobs` also accept:
+
+```json
+{
+  "kind": "xray_reconstruction",
+  "source_dataset_id": "<completed X-ray dataset UUID>",
+  "reconstruction": {
+    "nx": 96, "ny": 64, "nz": 64,
+    "filter": "hann", "frequency_cutoff": 1,
+    "invalid_policy": "interpolate", "truncation_policy": "reject"
+  }
+}
+```
+
+No twin accompanies this request. The source must be a complete, integrity-checked
+`xray_projection_volume` with at least 16 uniformly spaced endpoint-excluded views
+over exactly 180° or 360° and canonical parallel rotation about Y. The geometry
+validator checks stored coordinates and poses. Limited-angle or nonuniform data
+are not accepted by this baseline.
+
+Each output count accepts 16–256. Optional `bounds_mm` is
+`[xmin,xmax,ymin,ymax,zmin,zmax]` within the source specimen; omission uses its full
+envelope. Filters are `hann` and `ram_lak`; cutoff accepts 0.1–1 of detector-U
+Nyquist. Invalid-log policy is `interpolate` or `reject`; truncation policy is
+`reject` or explicit `allow`. Source files are immutable. The estimate includes
+output bytes, temporary filtering-cache bytes, workspace, work, physical pitches
+and warnings. Shared preflight caps and disk checks apply.
+
+The existing job endpoints expose `kind:'xray_reconstruction'`,
+`progress_unit:'slices'`, and committed/total Z planes. Cancellation and resume
+keep the same dataset and verify the frozen source/solver identities.
+
+GET `/api/v2/datasets/{id}/reconstruction-view` accepts optional zero-based
+`x_index`, `y_index`, `z_index`. It returns `xy`, `xz`, `yz` with `image`,
+`coverage`, `invalid_mask`, `extent_mm`, axis labels and `unit:'mm^-1'`; a common
+`cursor` with indices, global millimetres, attenuation and coverage; and `profiles`
+along x/y/z. Metadata retains `[z,y,x]` shape, bounds, pitch, source, processing,
+warnings and evidence status. Images are respectively `[y,x]`, `[z,x]`, `[z,y]`.
+Invalid indices/wrong kind return 422; incomplete datasets return 409. Reading
+slices or changing browser display limits does not create jobs or change arrays.
+
+Saved Zarr products are float32 `attenuation` and `coverage` in `[z,y,x]`, with
+float64 global-center `x_mm`, `y_mm`, `z_mm`. Negative supported attenuation is
+retained. Coverage is the fraction of views with geometric detector support,
+not a confidence score. At coverage below `1 - 1e-6`, attenuation is a masked
+finite zero placeholder. Even full coverage does not correct truncation bias.
+
+The manifest embeds the complete source-manifest snapshot and its SHA-256, used
+in the derived input identity, plus algorithm and numerical-package identity,
+processing settings and per-plane checksums. Completed reconstructions can be
+read/exported without the original source directory. GET `/export` produces
+`ct-reconstruction-{id}.zip` containing the derived arrays and manifest, without
+duplicating original projections. See [Reconstruction](docs/RECONSTRUCTION.md).
 
 
 ## Simulation response (plain JSON numeric arrays)

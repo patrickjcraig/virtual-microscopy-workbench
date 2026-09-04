@@ -2,6 +2,76 @@
 
 This record concerns the first local implementation in `E:\git\Dissertation`. It establishes software and analytical-model behavior, not experimental imaging accuracy.
 
+## Version 0.5 — saved-source CPU CT reconstruction
+
+The complete Windows Python suite passed **247 tests in 95.69 seconds**, including
+the 197 existing cases and 50 reconstruction/atomic-storage cases. The same two
+third-party deprecation warnings remain. Locked environment synchronization and
+the production frontend build pass. Tests cover physical attenuation scaling,
+asymmetric ellipses with displaced rotation/detector centers, multiple Y planes,
+equivalent 180°/360° weighting, detector-sampling refinement, filter/cutoff effects,
+negative values, invalid logarithms, truncation masks and physical half-pixel
+edges. Nonuniform, limited-angle and noncanonical poses are rejected. Resource
+estimates are checked before allocating the filtered-projection cache.
+
+The independent experiment in `tools/verify_reconstruction.py` uses closed-form
+continuous ellipse projections rather than the production forward projector.
+For 128 views over 180°, a 32 × 216 detector and a 64 × 16 × 64 reconstruction,
+the selected plane's interior mean is **0.6125577 mm⁻¹** against an analytic
+**0.6125000 mm⁻¹** (relative bias **0.00942%**). Whole-plane RMSE is
+**0.0189471 mm⁻¹**. An independent bilinear ray sampler evaluates seven unseen
+angles using 2,048 midpoint samples per ray: relative projection L2 error is
+**3.7455%** and projection RMSE is **0.00744037**. The retained report and NPZ are
+in the ignored local `artifacts/m5-fbp-validation/` directory. These are results
+for this synthetic numerical experiment, not experimental or H100 accuracy.
+
+Storage/API tests verify frozen source-manifest identity, source immutability,
+negative attenuation, finite masked placeholders, coordinate/chunk checksums,
+safe paths, temporary-cache cleanup, bounded disk preflight and byte-identical
+resume. Completed reconstructions remain inspectable and exportable after their
+source directory becomes unavailable. Independent asymmetric saved arrays verify
+exact XY/XZ/YZ slices, profiles and physical cursor coordinates. A real API job
+also survives application restart and exports all arrays with embedded provenance.
+
+Live Windows testing exposed a transient manifest-read/atomic-replace sharing
+conflict. Atomic writes now retry only the Windows sharing/access errors over a
+bounded 0.63-second interval. Tests verify transient recovery, permanent failure,
+preservation of the old manifest and temporary-file cleanup. The affected live
+job resumed from 8 of 16 committed slices and completed; a fresh complete CT
+browser workflow then passed without interruption.
+
+Native Chrome `verify:reconstruction` verifies a frozen synthetic source while
+the preview contains H100, non-cubic output and translated bounds, exact slice
+axes/values, click and keyboard cursor movement, negative display limits without
+new jobs, Zarr ZIP download, reload, SAM/X-ray/CT catalog separation and desktop/
+390-pixel layouts. `verify:reconstruction-jobs` cancelled a 96-slice H100-derived
+job after **three committed slices**, confirmed incomplete data were unavailable,
+then used the native resume button to complete it. The original committed slice
+checksums and source manifest were unchanged. Neither workflow had uncaught page
+errors. The native H100, saved-X-ray and saved-SAM regressions also pass against
+0.5, including the legacy RF/time/gating workflow and its desktop/mobile layout.
+
+The delivered H100 reconstruction is dataset
+`1a3b7510-4bf1-4b18-942d-87426a62900c`, derived from the previously delivered
+60-view source `391fa82b-60cf-4a40-9794-cfddac1f1c3b`. It has shape
+**64 × 64 × 96 in Z/Y/X**, Hann filtering at detector Nyquist, and the full
+60 × 60 × 2.65 mm envelope. Output pitch X/Y/Z is **625 / 937.5 / 41.40625 µm**.
+Its attenuation range is approximately **−0.22575 to 0.59075 mm⁻¹**. The working
+copy interpolated 46 invalid source log samples; the original projection files
+were byte-identical after reconstruction and export. All output voxels have full
+geometric detector support; that does not establish reconstruction accuracy.
+
+The source retains all six HBM assemblies. Its coarse detector and sparse angles
+cannot resolve fine HBM microstructure, despite the much smaller output Z pitch.
+Attenuation, coverage and coordinate arrays occupy **3,147,520 uncompressed bytes**;
+the local archive is **1,640,714 bytes** and passes ZIP CRC checks. Reconstruction
+and export took approximately **16.80 seconds** in this observed run. These are
+example timings, not a performance guarantee. The
+[CT workspace screenshot](images/ct-reconstruction-workspace.png) shows actual
+saved attenuation. Generated volumes, validation arrays and the supplied reference
+image remain outside Git. Cone CT, laminography, acoustic depth conversion and
+experimental calibration are future work.
+
 ## Version 0.4 — saved full-angle X-ray projections
 
 The complete Python suite passed **197 tests in 49.55 seconds**, including all
@@ -170,4 +240,4 @@ The repeatable export check is `web/scripts/verify-exports.mjs`, exposed as `npm
 
 The loopback service was restarted with the final backend and checked again at `http://127.0.0.1:8765`; the default acquisition completed. The Windows launch script passed PowerShell syntax parsing. The finished desktop view is saved in `artifacts/workbench-final.png`.
 
-Imports currently use ordered primitive JSON geometry and the fixed material library. Native CAD/EDA import, measured transducer/source calibration, elastic full-wave SAM, polychromatic/scattered X-ray transport, CT/laminography reconstruction and coupling to electrical/thermal/mechanical fields are future work. The docs and UI identify sampling limits and illustrative material/PSF choices.
+Imports currently use ordered primitive JSON geometry and the fixed material library. Native CAD/EDA import, measured transducer/source calibration, elastic full-wave SAM, polychromatic/scattered X-ray transport, cone CT/laminography reconstruction and coupling to electrical/thermal/mechanical fields are future work. The 0.5 baseline supports parallel-beam CT from saved synthetic projections. The docs and UI identify sampling limits and illustrative material/PSF choices.

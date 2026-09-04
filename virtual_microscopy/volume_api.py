@@ -1,6 +1,5 @@
 """Local volume jobs, immutable datasets and bounded display products."""
 from pathlib import Path
-import os
 import tempfile
 import threading
 from typing import Literal
@@ -16,6 +15,8 @@ from .volume_processing import sam_view
 from .xray_schemas import XrayVolumeRequest
 from .xray_volume import estimate_xray
 from .xray_processing import xray_view
+from .reconstruction_schemas import ReconstructionRequest
+from .reconstruction_processing import reconstruction_view
 
 router = APIRouter(prefix="/api/v2", tags=["Saved volumes"])
 # Aborting an HTTP fetch does not stop its synchronous disk reads. Serialize
@@ -46,6 +47,17 @@ def invoke(function, *args):
 def public_manifest(manifest):
     result = dict(manifest)
     request = result.get("request", {})
+    if result.get("kind") == "xray_reconstruction":
+        source = result.get("source_manifest", {}).get("request", {}).get("twin", {})
+        estimate = result.get("estimate", {})
+        result.setdefault("id", result.get("dataset_id"))
+        result.setdefault("dataset_id", result.get("id"))
+        result.setdefault("name", f"Reconstruction / {source.get('name', 'X-ray projections')}")
+        result.setdefault("source_dataset_id", request.get("source_dataset_id"))
+        result.setdefault("reconstruction", request.get("reconstruction", {}))
+        result.setdefault("bounds_mm", estimate.get("bounds_mm"))
+        result.setdefault("voxel_pitch_mm", estimate.get("voxel_pitch_mm"))
+        return result
     acquisition = request.get("acquisition", result.get("acquisition", {}))
     twin = request.get("twin", {})
     result.setdefault("id", result.get("dataset_id"))
@@ -72,15 +84,19 @@ def public_manifest(manifest):
 
 
 @router.post("/estimate")
-def estimate(body: SamVolumeRequest | XrayVolumeRequest):
+def estimate(body: SamVolumeRequest | XrayVolumeRequest | ReconstructionRequest, request: Request):
     from .datasets import check_disk_space, default_data_root
-    result = invoke(estimate_xray if isinstance(body, XrayVolumeRequest) else estimate_sam, body)
-    result.update(invoke(check_disk_space, default_data_root(), result["total_bytes"]))
+    if isinstance(body, ReconstructionRequest):
+        result = invoke(manager(request).estimate_reconstruction, body)
+    else:
+        result = invoke(estimate_xray if isinstance(body, XrayVolumeRequest) else estimate_sam, body)
+    required = result["total_bytes"] + result.get("estimated_temporary_bytes", 0)
+    result.update(invoke(check_disk_space, default_data_root(), required))
     return result
 
 
 @router.post("/jobs", status_code=202)
-def submit(body: SamVolumeRequest | XrayVolumeRequest, request: Request):
+def submit(body: SamVolumeRequest | XrayVolumeRequest | ReconstructionRequest, request: Request):
     from .server import _compute_lock
     if not _compute_lock.acquire(blocking=False):
         raise HTTPException(409, "A preview is running. Wait for it to finish before starting a volume acquisition.")
@@ -172,43 +188,26 @@ def export(dataset_id: str, request: Request):
         return invoke(_archive, path, dataset_id)
 
 
+@router.get("/datasets/{dataset_id}/reconstruction-view")
+def reconstruction_view_api(dataset_id: str, request: Request,
+                            x_index: int | None = Query(None, ge=0),
+                            y_index: int | None = Query(None, ge=0),
+                            z_index: int | None = Query(None, ge=0)):
+    path = complete_path(request, dataset_id, "xray_reconstruction")
+    manifest = invoke(manager(request).get_manifest, dataset_id)
+    try:
+        with _processing_lock:
+            return reconstruction_view(path, manifest, x_index=x_index, y_index=y_index, z_index=z_index)
+    except KeyError as exc:
+        raise HTTPException(422, "Saved reconstruction arrays or metadata are missing.") from exc
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+
+
 def _export_files(path: Path, dataset_id: str):
     """Reject redirected roots and descendants before any Zarr data is read."""
-    from .datasets import checked_id
-    logical_path = path.parent / checked_id(dataset_id)
-
-    def reject_link(target):
-        if target.is_symlink() or target.is_junction():
-            raise ValueError("Dataset exports do not follow symbolic links or directory junctions.")
-
-    reject_link(logical_path)
-    reject_link(path)
-    root = path.resolve(strict=True)
-    if root != logical_path.resolve(strict=True):
-        raise ValueError("Dataset export path does not match its identifier.")
-
-    def checked_child(child):
-        reject_link(child)
-        if not child.resolve(strict=True).is_relative_to(root):
-            raise ValueError("Dataset export path leaves the dataset directory.")
-        return child
-
-    manifest = checked_child(path / "manifest.json")
-    data = checked_child(path / "data.zarr")
-    if not manifest.is_file() or not data.is_dir():
-        raise ValueError("Dataset export requires its manifest and Zarr directory.")
-    files = [manifest]
-    # Inspect directories before os.walk descends into them. Windows junctions
-    # need their own check even when followlinks=False.
-    for directory, directories, filenames in os.walk(data, followlinks=False):
-        current = checked_child(Path(directory))
-        for name in directories:
-            checked_child(current / name)
-        for name in filenames:
-            child = checked_child(current / name)
-            if child.is_file():
-                files.append(child)
-    return files
+    from .datasets import validate_dataset_paths
+    return validate_dataset_paths(path, dataset_id)
 
 
 def _archive(path, dataset_id):
@@ -219,6 +218,9 @@ def _archive(path, dataset_id):
     if kind == "xray_projection_volume":
         from .xray_datasets import XrayDatasetStore
         store = XrayDatasetStore(path.parent)
+    elif kind == "xray_reconstruction":
+        from .reconstruction_datasets import ReconstructionDatasetStore
+        store = ReconstructionDatasetStore(path.parent)
     manifest = invoke(store.verify_complete, dataset_id)
     invoke(check_disk_space, path.parent, manifest.get("estimate", {}).get("total_bytes", 0))
     # Build on disk, not in API/browser RAM. Stored chunks already use their
@@ -232,6 +234,6 @@ def _archive(path, dataset_id):
     except Exception:
         output.unlink(missing_ok=True)
         raise
-    prefix = "xray-projections" if kind == "xray_projection_volume" else "sam-volume"
+    prefix = {"xray_projection_volume": "xray-projections", "xray_reconstruction": "ct-reconstruction"}.get(kind, "sam-volume")
     return FileResponse(output, media_type="application/zip", filename=f"{prefix}-{dataset_id}.zip",
                         background=BackgroundTask(output.unlink, missing_ok=True))

@@ -2,7 +2,7 @@
 
 [![Verify workbench](https://github.com/patrickjcraig/virtual-microscopy-workbench/actions/workflows/ci.yml/badge.svg)](https://github.com/patrickjcraig/virtual-microscopy-workbench/actions/workflows/ci.yml)
 
-A local research prototype that loads a material-aware digital twin of a microelectronic package and simulates X-ray radiography and scanning acoustic microscopy from the same geometry. A browser workbench combines a 3D specimen, acquisition controls, quantitative images, pulse-echo inspection, saved acoustic RF volumes, and full-angle X-ray projection stacks.
+A local research prototype that loads a material-aware digital twin of a microelectronic package and simulates X-ray radiography and scanning acoustic microscopy from the same geometry. A browser workbench combines a 3D specimen, acquisition controls, quantitative images, pulse-echo inspection, saved acoustic RF volumes, full-angle X-ray projection stacks, and reconstructed spatial attenuation volumes.
 
 **Evidence status:** synthetic, reduced-order forward models. This version provides two imaging physics models sharing one specimen. It has no experimental calibration and does not claim a coupled elastic/electromagnetic solver or measured instrument accuracy.
 
@@ -98,7 +98,24 @@ The supplied reference has a provisional user estimate of approximately 4.6 µm/
 
 ## Numerical exports and headless execution
 
-**New in 0.4: saved X-ray projections.** Open **X-ray volumes** to acquire a full
+**New in 0.5: spatial CT reconstruction.** Open **CT reconstruction**, select a
+completed saved X-ray acquisition, and reconstruct an attenuation volume with
+independent X/Y/Z counts and bounds. Choose Hann or Ram-Lak filtering, frequency
+cutoff, and explicit policies for invalid logarithms and detector truncation.
+The CPU baseline accepts uniform 180° or 360° parallel-beam acquisitions with at
+least 16 views. Its inversion uses saved measurements and poses, without using
+the twin's material labels to populate the reconstruction.
+
+Inspect linked XY/XZ/YZ slices, click or use arrow keys to move a physical cursor,
+adjust the display window including negative values, and export attenuation in
+mm⁻¹ with geometric coverage, coordinates and frozen source provenance. These
+arrays have axes `[z,y,x]`. Reconstruction jobs support queueing, cancellation,
+resume and reopening. See [Reconstruction](docs/RECONSTRUCTION.md) for the
+algorithm, resource limits, unsupported-data masks and numerical validation.
+
+![Saved H100 CT attenuation with linked XY, XZ and YZ sections](docs/images/ct-reconstruction-workspace.png)
+
+**Saved X-ray projections (0.4 onward).** Open **X-ray volumes** to acquire a full
 rotation or a chosen angular span with the CPU parallel-beam projector, including
 90° side views. Control view count, energy, incident photons, counting noise,
 detector field/offsets/blur and raster, rotation center, and independent material
@@ -111,8 +128,8 @@ These arrays have axes `[view,v,u]`. Detector pixels and material voxels have
 independent sampling; neither pitch establishes physical resolution. Every saved
 view retains its angle, unit ray direction, detector center and basis vectors.
 See [X-ray volumes](docs/XRAY_VOLUMES.md) for geometry, controls, storage, Python
-access and resource limits. This release generates projection stacks; xyz CT
-reconstruction is the next milestone.
+access and resource limits. Projection stacks and derived xyz CT reconstructions
+remain separate datasets, preserving the original counts and logarithms.
 
 ![Saved H100 X-ray acquisition with projection, sinogram and detector geometry](docs/images/xray-volume-workspace.png)
 
@@ -124,7 +141,7 @@ completed dataset to inspect XY/X–time/Y–time views and change gates without
 rerunning propagation. Download the full data and frozen provenance as a Zarr ZIP.
 
 These datasets have axes `[y,x,time]`; the time axis is not reconstructed depth.
-The original microscope preview remains available alongside both saved-data
+The original microscope preview remains available alongside the saved-data
 workflows. Layered acoustic depth conversion is a subsequent milestone.
 See [Saved volumes](docs/SAVED_VOLUMES.md) for controls, storage, Python access and
 the current numerical/resource limits.
@@ -165,7 +182,15 @@ Tests cover analytical forward-model cases and public API validation/reproducibi
 
 The executed checks and their scope are recorded in [docs/VERIFICATION.md](docs/VERIFICATION.md). Native browser checks are also available: with the server running, set `MICROSCOPY_CHROME_PATH` to a local Chrome/Chromium executable and run `npm.cmd run verify:exports`, `npm.cmd run verify:h100`, `npm.cmd run verify:hbm`, `npm.cmd run verify:volumes`, `npm.cmd run verify:volume-jobs`, `npm.cmd run verify:xray` or `npm.cmd run verify:xray-jobs` from `web`. They verify downloads, provenance, HBM editing/regions, saved-volume acquisition and inspection, reopening and cancellation/resume. Volume checks create synthetic datasets in the local catalog.
 
-The next milestone is CPU parallel-beam reconstruction from the saved X-ray data, followed by explicitly modeled acoustic depth conversion and richer microstructure/propagation controls. See [EXPANSION_PLAN.md](docs/EXPANSION_PLAN.md) for the sequence and acceptance gates. Version 0.4 saves both SAM RF/envelope time volumes and multiangle X-ray projections with frozen provenance.
+Run `npm.cmd run verify:reconstruction` for the saved-source CT workflow and
+`npm.cmd run verify:reconstruction-jobs` for native cancellation/resume. These
+checks create synthetic datasets and preserve their source acquisitions.
+
+The next increment is acoustic time-to-depth conversion with a declared velocity
+model, followed by explicit HBM microstructure and richer propagation controls.
+GPU cone CT and iterative laminography remain separate future extensions. See
+[EXPANSION_PLAN.md](docs/EXPANSION_PLAN.md) for the sequence and acceptance gates.
+Version 0.5 retains raw SAM RF and X-ray projections alongside derived CT volumes.
 
 The implementation is separated into `virtual_microscopy/physics.py` and `materials.py`, strict schemas and local API, `web/` UI, reproducible example geometry, and tests. This leaves room for higher-fidelity solvers and CAD/voxel import while keeping the current demo runnable.
 

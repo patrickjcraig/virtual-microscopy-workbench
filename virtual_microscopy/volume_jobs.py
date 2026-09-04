@@ -54,7 +54,7 @@ def _job_dict(row) -> dict:
     result.update(id=result["job_id"], dataset_id=result["job_id"],
                   status=result["state"], progress=result["completed_rows"] / result["total_rows"], kind=kind,
                   completed_units=result["completed_rows"], total_units=result["total_rows"],
-                  progress_unit="views" if kind == "xray_projection_volume" else "rows")
+                  progress_unit={"xray_projection_volume": "views", "xray_reconstruction": "slices"}.get(kind, "rows"))
     return result
 
 
@@ -65,6 +65,9 @@ def store_for_manifest(root: Path, manifest: dict) -> DatasetStore:
     if kind == "xray_projection_volume":
         from .xray_datasets import XrayDatasetStore
         return XrayDatasetStore(root)
+    if kind == "xray_reconstruction":
+        from .reconstruction_datasets import ReconstructionDatasetStore
+        return ReconstructionDatasetStore(root)
     raise ValueError(f"Unsupported dataset kind: {kind}.")
 
 
@@ -77,6 +80,10 @@ def _backend(kind: str):
         from .xray_volume import estimate_xray, prepare_xray, iter_xray_views
         from .xray_schemas import XrayVolumeRequest
         return XrayVolumeRequest, estimate_xray, prepare_xray, iter_xray_views
+    if kind == "xray_reconstruction":
+        from .reconstruction import estimate_reconstruction, prepare_reconstruction, iter_reconstruction_slices
+        from .reconstruction_schemas import ReconstructionRequest
+        return ReconstructionRequest, estimate_reconstruction, prepare_reconstruction, iter_reconstruction_slices
     raise ValueError(f"Unsupported acquisition kind: {kind}.")
 
 
@@ -123,6 +130,7 @@ def _run_job(root: Path, identifier: str, stop_event) -> None:
     # Imported in the spawned process so solver memory and runtime are isolated
     # from the HTTP server. No unbounded full RF volume is retained in RAM.
     store = DatasetStore(root)
+    prepared = None
     try:
         manifest = store.manifest(identifier)
         kind = manifest.get("kind", "sam_rf_volume")
@@ -138,15 +146,20 @@ def _run_job(root: Path, identifier: str, stop_event) -> None:
             return
         Request, estimate_acquisition, prepare_acquisition, iterate = _backend(kind)
         request = Request.model_validate(manifest["request"])
-        estimate = estimate_acquisition(request)
+        if kind == "xray_reconstruction":
+            source, source_path = store.source_context(identifier, verify=True)
+            acquisition_args = (request, source, source_path)
+        else:
+            acquisition_args = (request,)
+        estimate = estimate_acquisition(*acquisition_args)
         if estimate != manifest["estimate"]:
             raise ValueError("Acquisition estimate changed; create a new dataset instead of resuming.")
         # Repeat the disk check immediately before preparing potentially large
         # arrays; another queued job or application may have used the space.
         remaining = estimate["total_bytes"] * (1 - manifest["completed_rows"] / manifest["total_rows"])
-        check_disk_space(root, int(remaining))
+        check_disk_space(root, int(remaining) + estimate.get("estimated_temporary_bytes", estimate.get("workspace_disk_bytes", 0)))
         store.set_state(identifier, "running")
-        prepared = prepare_acquisition(request)
+        prepared = prepare_acquisition(*acquisition_args)
         if kind == "sam_rf_volume":
             store.initialize_arrays(identifier, prepared.x_mm, prepared.y_mm, prepared.time_us, prepared.metadata)
         else:
@@ -159,7 +172,8 @@ def _run_job(root: Path, identifier: str, stop_event) -> None:
         missing = [y for y in range(0, manifest["total_rows"], manifest["tile_rows"])
                    if str(y) not in manifest["completed_chunks"]]
         start = min(missing, default=manifest["total_rows"])
-        iterator = iterate(prepared, **({"start_row": start} if kind == "sam_rf_volume" else {"start_view": start}))
+        start_key = {"sam_rf_volume": "start_row", "xray_projection_volume": "start_view", "xray_reconstruction": "start_slice"}[kind]
+        iterator = iterate(prepared, **{start_key: start})
         while True:
             halted = _checkpoint(root, identifier, stop_event)
             if halted:
@@ -174,8 +188,8 @@ def _run_job(root: Path, identifier: str, stop_event) -> None:
             if str(y0) in manifest["completed_chunks"]:
                 continue
             check_disk_space(root, (y1 - y0) * manifest["shape"][1] * manifest["shape"][2] * 4 * len(store.signal_units))
-            manifest = (store.write_tile(identifier, *item) if kind == "sam_rf_volume" else
-                        store.write_view(identifier, *item))
+            write_chunk = {"sam_rf_volume": "write_tile", "xray_projection_volume": "write_view", "xray_reconstruction": "write_slice"}[kind]
+            manifest = getattr(store, write_chunk)(identifier, *item)
             # Do not overwrite a concurrently requested cancellation with a
             # progress update. The manifest and catalog have separate duties.
             with _connection(root) as connection:
@@ -199,6 +213,16 @@ def _run_job(root: Path, identifier: str, stop_event) -> None:
         except Exception:
             rows = _read_job(root, identifier)["completed_rows"]
         _update_job(root, identifier, "failed", rows, error)
+    finally:
+        close = getattr(prepared, "close", None)
+        if close is not None:
+            try:
+                close()
+            except Exception as exc:
+                job = _read_job(root, identifier)
+                previous = f"{job['error']} " if job["error"] else ""
+                _update_job(root, identifier, job["state"], job["completed_rows"],
+                            f"{previous}Temporary reconstruction cache cleanup failed: {exc}")
 
 
 def _lock_stream(path: Path):
@@ -287,6 +311,8 @@ class VolumeJobManager:
                 time.sleep(0.05)
 
     def _recover(self):
+        from .reconstruction_datasets import cleanup_reconstruction_caches
+        cleanup_reconstruction_caches(self.root)
         with _connection(self.root) as connection:
             rows = connection.execute("SELECT * FROM jobs").fetchall()
         for row in rows:
@@ -354,7 +380,14 @@ class VolumeJobManager:
             kind = request.get("kind", "sam_rf_volume") if isinstance(request, dict) else getattr(request, "kind", "sam_rf_volume")
             Request, estimate_acquisition, _, _ = _backend(kind)
             request = request if isinstance(request, Request) else Request.model_validate(request)
-            estimate = estimate_acquisition(request)
+            if kind == "xray_reconstruction":
+                from .reconstruction_datasets import reconstruction_source
+                source, source_path = reconstruction_source(self.root, request.source_dataset_id)
+                estimate = estimate_acquisition(request, source, source_path)
+                name = "Reconstruction / " + source["request"]["twin"].get("name", "X-ray projections")
+            else:
+                estimate = estimate_acquisition(request)
+                name = request.twin.name
             identifier = str(uuid4())
             store = store_for_manifest(self.root, {"kind": kind})
             manifest = store.create(identifier, request.model_dump(mode="json", exclude_none=True), estimate)
@@ -362,7 +395,7 @@ class VolumeJobManager:
                 connection.execute("""INSERT INTO jobs
                     (job_id, state, name, created_at, updated_at, completed_rows, total_rows, error, kind)
                     VALUES (?, 'queued', ?, ?, ?, 0, ?, NULL, ?)""",
-                                   (identifier, request.twin.name, manifest["created_at"], manifest["updated_at"],
+                                   (identifier, name, manifest["created_at"], manifest["updated_at"],
                                     manifest["total_rows"], kind))
                 connection.commit()
             return _read_job(self.root, identifier)
@@ -373,6 +406,15 @@ class VolumeJobManager:
                 self._ensure_worker()
             with _connection(self.root) as connection:
                 return [_job_dict(row) for row in connection.execute("SELECT * FROM jobs ORDER BY created_at DESC, job_id DESC")]
+
+    def estimate_reconstruction(self, request) -> dict:
+        from .reconstruction_datasets import reconstruction_source
+        Request, estimate_acquisition, _, _ = _backend("xray_reconstruction")
+        request = request if isinstance(request, Request) else Request.model_validate(request)
+        source, source_path = reconstruction_source(self.root, request.source_dataset_id)
+        estimate = estimate_acquisition(request, source, source_path)
+        check_disk_space(self.root, estimate["total_bytes"] + estimate.get("estimated_temporary_bytes", estimate.get("workspace_disk_bytes", 0)))
+        return estimate
 
     def get_job(self, identifier: str) -> dict:
         with self._mutex:
@@ -409,7 +451,8 @@ class VolumeJobManager:
             if manifest["complete"]:
                 raise ValueError("Completed datasets are immutable.")
             remaining = manifest["estimate"]["total_bytes"] * (1 - manifest["completed_rows"] / manifest["total_rows"])
-            check_disk_space(self.root, int(remaining))
+            estimate = manifest["estimate"]
+            check_disk_space(self.root, int(remaining) + estimate.get("estimated_temporary_bytes", estimate.get("workspace_disk_bytes", 0)))
             store.set_state(identifier, "queued")
             _update_job(self.root, identifier, "queued", manifest["completed_rows"])
             return _read_job(self.root, identifier)

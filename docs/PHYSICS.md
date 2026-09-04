@@ -11,10 +11,19 @@ detector sampling is independent of the whole-specimen material grid. Counts,
 transmission, zero-regularized negative-log transmission and log-validity masks
 have axes `[view,v,u]`; every detector pose is retained. Exact voxel path lengths
 do not remove geometry sampling error. Detector pixel-area integration, spectrum,
-scatter and CT reconstruction are absent. See [Saved X-ray acquisitions](XRAY_VOLUMES.md)
+and scatter are absent. See [Saved X-ray acquisitions](XRAY_VOLUMES.md)
 for its complete geometry, noise/zero-count conventions, resource bounds and
 sampling distinctions. The single-projection angle/extent discussion below
 describes the original preview, which remains available.
+
+Version 0.5 adds `reconstruction.py`: CPU filtered backprojection of saved
+parallel-beam line integrals into `[z,y,x]` attenuation in mm⁻¹. Hann/Ram-Lak
+filtering uses detector pitch and stored poses; 180°/360° angular weighting is
+explicit. It preserves source measurements, negative supported values and a
+geometric support mask. It does not fill output from known material labels.
+See [Reconstruction](RECONSTRUCTION.md) for invalid-log handling, truncation,
+filter equations, interpolation, numerical checks and limits. A fine output
+voxel pitch does not establish physical image resolution.
 
 ## Digital-twin interpretation and units
 
@@ -66,7 +75,7 @@ T_\mathrm{noisy}=N/N_0,
 
 where `N0` is the incident photons per pixel setting. A fixed seed makes a run reproducible. An individual noisy sample can exceed 1 even though noise-free transmission is bounded by 1. Counts alone do not represent a calibrated exposure, detector dose or tube current. Display windowing is separate from the stored transmission arrays.
 
-This model omits the source spectrum, beam hardening, finite focal spot, calibrated detector energy response/MTF, scatter reaching the detector, fluorescence, phase contrast and reconstruction. One projection is radiography; this release does not claim CT or computed laminography reconstruction.
+This preview model omits the source spectrum, beam hardening, finite focal spot, calibrated detector energy response/MTF, scatter reaching the detector, fluorescence, phase contrast and reconstruction. One projection is radiography. The separate saved-data workflow supports parallel-beam CT reconstruction; cone CT and computed laminography remain future work.
 
 ## SAM forward model
 

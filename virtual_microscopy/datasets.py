@@ -13,6 +13,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import time
 from uuid import UUID, uuid4
 
 import numpy as np
@@ -52,7 +53,17 @@ def atomic_json(path: Path, value: dict) -> None:
             stream.write(canonical_json(value))
             stream.flush()
             os.fsync(stream.fileno())
-        os.replace(temporary, path)
+        # Windows readers may briefly open an existing manifest without delete
+        # sharing. Keep the replacement atomic, but tolerate that transient
+        # sharing/access conflict while the catalog finishes its read.
+        for attempt in range(7):
+            try:
+                os.replace(temporary, path)
+                break
+            except PermissionError as exc:
+                if os.name != "nt" or getattr(exc, "winerror", None) not in (5, 32, 33) or attempt == 6:
+                    raise
+                time.sleep(.01 * 2 ** attempt)
     finally:
         temporary.unlink(missing_ok=True)
 
@@ -79,6 +90,47 @@ def dataset_path(root: Path, identifier: str) -> Path:
     if target.parent != root:
         raise ValueError("Dataset path leaves the data directory.")
     return target
+
+
+def validate_dataset_paths(path: Path, identifier: str, *, include_arrays: bool = True) -> list[Path]:
+    """Check roots, junctions and descendants before reading a stored dataset."""
+    path = Path(path)
+    logical_path = path.parent / checked_id(identifier)
+
+    def reject_link(target):
+        if target.is_symlink() or target.is_junction():
+            raise ValueError("Dataset reads and exports do not follow symbolic links or directory junctions.")
+
+    reject_link(logical_path)
+    reject_link(path)
+    root = path.resolve(strict=True)
+    if root != logical_path.resolve(strict=True):
+        raise ValueError("Dataset path does not match its identifier.")
+
+    def checked_child(child):
+        reject_link(child)
+        if not child.resolve(strict=True).is_relative_to(root):
+            raise ValueError("Dataset path leaves the dataset directory.")
+        return child
+
+    manifest = checked_child(path / "manifest.json")
+    if not manifest.is_file():
+        raise ValueError("Dataset requires a regular manifest file.")
+    files = [manifest]
+    if not include_arrays:
+        return files
+    data = checked_child(path / "data.zarr")
+    if not data.is_dir():
+        raise ValueError("Dataset requires its Zarr directory.")
+    for directory, directories, filenames in os.walk(data, followlinks=False):
+        current = checked_child(Path(directory))
+        for name in directories:
+            checked_child(current / name)
+        for name in filenames:
+            child = checked_child(current / name)
+            if child.is_file():
+                files.append(child)
+    return files
 
 
 def check_disk_space(root: Path, required_bytes: int) -> dict:
@@ -113,6 +165,8 @@ def solver_identity(model_version: str, kind: str = "sam_rf_volume") -> dict:
         filenames = ("sam_volume.py", "volume_schemas.py", "physics.py", "schemas.py", "materials.py")
     elif kind == "xray_projection_volume":
         filenames = ("xray_volume.py", "xray_schemas.py", "physics.py", "schemas.py", "materials.py")
+    elif kind == "xray_reconstruction":
+        filenames = ("reconstruction.py", "reconstruction_schemas.py")
     else:
         raise ValueError(f"Unknown dataset kind: {kind}.")
     for filename in filenames:
@@ -150,6 +204,23 @@ class DatasetStore:
                        "axes": list(self.axis_order), "units": units}
                 for name, units in self.signal_units.items()}
 
+    def _creation_provenance(self, request: dict) -> dict:
+        return {}
+
+    def _creation_materials(self, provenance: dict) -> dict:
+        return material_snapshot()
+
+    def _identity_payload(self, manifest: dict) -> dict:
+        return {"request_sha256": manifest["request_sha256"],
+                "materials_sha256": manifest["materials_sha256"], "solver": manifest["solver"]}
+
+    def _verify_frozen_provenance(self, manifest: dict) -> None:
+        pass
+
+    def _verify_current_dependencies(self, manifest: dict) -> None:
+        if json_sha256(material_snapshot()) != manifest["materials_sha256"]:
+            raise ValueError("Material library changed; create a new dataset instead of resuming.")
+
     def manifest(self, identifier: str) -> dict:
         path = self.path(identifier) / "manifest.json"
         if not path.is_file():
@@ -163,12 +234,13 @@ class DatasetStore:
         tile_rows = int(estimate["tile_rows"])
         if tile_rows < 1:
             raise ValueError("Tile row count must be positive.")
-        check_disk_space(self.root, estimate["total_bytes"])
+        check_disk_space(self.root, estimate["total_bytes"] + estimate.get("estimated_temporary_bytes", estimate.get("workspace_disk_bytes", 0)))
+        frozen_request = json.loads(canonical_json(request))
+        provenance = self._creation_provenance(frozen_request)
         path = self.path(identifier)
         path.mkdir(exist_ok=False)
-        materials = material_snapshot()
+        materials = self._creation_materials(provenance)
         identity = self._solver_identity(estimate["model_version"])
-        frozen_request = json.loads(canonical_json(request))
         input_sha = json_sha256(frozen_request)
         materials_sha = json_sha256(materials)
         manifest = {
@@ -179,15 +251,16 @@ class DatasetStore:
             "request": frozen_request, "request_sha256": input_sha,
             "materials": materials, "materials_sha256": materials_sha,
             "solver": identity,
-            "input_sha256": json_sha256({"request_sha256": input_sha,
-                                         "materials_sha256": materials_sha, "solver": identity}),
+            "input_sha256": "",
             "estimate": estimate, "shape": shape, "axis_order": list(self.axis_order),
             "dtype": "float32", "zarr_format": 3, "store": "data.zarr",
             "tile_rows": tile_rows, "total_rows": shape[0], "completed_rows": 0,
             "completed_chunks": {}, "coordinates_sha256": {}, "metadata": {},
             "arrays": {**self._signal_descriptors(shape, frozen_request),
                        **self._coordinate_descriptors(shape)},
+            **provenance,
         }
+        manifest["input_sha256"] = json_sha256(self._identity_payload(manifest))
         atomic_json(path / "manifest.json", manifest)
         return manifest
 
@@ -199,7 +272,8 @@ class DatasetStore:
             raise ValueError("Dataset identity cannot change.")
         for field in ("request", "request_sha256", "materials", "materials_sha256", "solver",
                       "input_sha256", "estimate", "shape", "tile_rows", "total_rows", "kind",
-                      "axis_order", "arrays", "dtype", "store", "zarr_format", "evidence_status"):
+                      "axis_order", "arrays", "dtype", "store", "zarr_format", "evidence_status",
+                      "source_manifest", "source_manifest_sha256", "source_dataset_id"):
             if manifest.get(field) != previous.get(field):
                 raise ValueError(f"Frozen dataset field cannot change: {field}.")
         manifest["updated_at"] = now_iso()
@@ -221,12 +295,11 @@ class DatasetStore:
             raise ValueError("Frozen request checksum mismatch; cannot resume this dataset.")
         if json_sha256(manifest["materials"]) != manifest["materials_sha256"]:
             raise ValueError("Frozen material checksum mismatch; cannot resume this dataset.")
-        if json_sha256(material_snapshot()) != manifest["materials_sha256"]:
-            raise ValueError("Material library changed; create a new dataset instead of resuming.")
+        self._verify_frozen_provenance(manifest)
+        self._verify_current_dependencies(manifest)
         if self._solver_identity(manifest["solver"]["model_version"]) != manifest["solver"]:
             raise ValueError("Solver or numerical package changed; create a new dataset instead of resuming.")
-        expected = json_sha256({"request_sha256": manifest["request_sha256"],
-                               "materials_sha256": manifest["materials_sha256"], "solver": manifest["solver"]})
+        expected = json_sha256(self._identity_payload(manifest))
         if expected != manifest["input_sha256"]:
             raise ValueError("Dataset identity checksum mismatch.")
         return manifest
@@ -325,9 +398,8 @@ class DatasetStore:
         if (json_sha256(manifest["request"]) != manifest["request_sha256"] or
                 json_sha256(manifest["materials"]) != manifest["materials_sha256"]):
             raise ValueError("Frozen dataset snapshot checksum mismatch.")
-        expected_input = json_sha256({"request_sha256": manifest["request_sha256"],
-                                     "materials_sha256": manifest["materials_sha256"],
-                                     "solver": manifest["solver"]})
+        self._verify_frozen_provenance(manifest)
+        expected_input = json_sha256(self._identity_payload(manifest))
         if expected_input != manifest["input_sha256"]:
             raise ValueError("Dataset identity checksum mismatch.")
         if (manifest["shape"] != manifest["estimate"]["shape"] or

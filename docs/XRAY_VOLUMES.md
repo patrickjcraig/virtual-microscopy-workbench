@@ -23,7 +23,8 @@ Open a completed X-ray dataset to scrub its views, choose a detector row, and re
 the corresponding sinogram and row profile. Switch between photon counts,
 transmission and negative-log transmission. These actions read saved arrays and
 do not run propagation. Download the archive to retain all projection values,
-coordinate vectors, poses and provenance for future reconstruction.
+coordinate vectors, poses and provenance for reconstruction. Version 0.5 adds a
+separate [CT workspace](RECONSTRUCTION.md) for compatible completed sources.
 
 ## Acquisition controls
 
@@ -160,7 +161,8 @@ does not assume compression savings. Disk checks include a reserve. Settings are
 never silently reduced. Fewer views/detector pixels reduce saved data; changing
 the field alone does not change its array size.
 
-The next milestone is a small CPU parallel-beam reconstruction baseline, followed
-by optional GPU cone-beam and laminography support with appropriate geometry and
-validation. A saved projection stack provides the inputs; it is not itself a CT
-reconstruction. See [the expansion plan](EXPANSION_PLAN.md).
+Version 0.5 provides a CPU parallel-beam reconstruction baseline using these saved
+inputs. It creates a separate spatial attenuation dataset; a projection stack's
+view axis remains angular. Optional GPU cone-beam and laminography support need
+additional geometry and validation. See [Reconstruction](RECONSTRUCTION.md) and
+[the expansion plan](EXPANSION_PLAN.md).
