@@ -2,7 +2,7 @@
 
 [![Verify workbench](https://github.com/patrickjcraig/virtual-microscopy-workbench/actions/workflows/ci.yml/badge.svg)](https://github.com/patrickjcraig/virtual-microscopy-workbench/actions/workflows/ci.yml)
 
-A local research prototype that loads a material-aware digital twin of a microelectronic package and simulates X-ray radiography and scanning acoustic microscopy from the same geometry. A browser workbench combines a 3D specimen, acquisition controls, quantitative images, pulse-echo inspection, and saved acoustic RF volumes.
+A local research prototype that loads a material-aware digital twin of a microelectronic package and simulates X-ray radiography and scanning acoustic microscopy from the same geometry. A browser workbench combines a 3D specimen, acquisition controls, quantitative images, pulse-echo inspection, saved acoustic RF volumes, and full-angle X-ray projection stacks.
 
 **Evidence status:** synthetic, reduced-order forward models. This version provides two imaging physics models sharing one specimen. It has no experimental calibration and does not claim a coupled elastic/electromagnetic solver or measured instrument accuracy.
 
@@ -98,7 +98,25 @@ The supplied reference has a provisional user estimate of approximately 4.6 µm/
 
 ## Numerical exports and headless execution
 
-**New in 0.3: saved SAM volumes.** Open **Saved volumes** to record signed RF at
+**New in 0.4: saved X-ray projections.** Open **X-ray volumes** to acquire a full
+rotation or a chosen angular span with the CPU parallel-beam projector, including
+90° side views. Control view count, energy, incident photons, counting noise,
+detector field/offsets/blur and raster, rotation center, and independent material
+grid counts. The complete sampled specimen contributes to every ray. Inspect
+saved photon counts, transmission and negative-log transmission using a view
+scrubber, sinogram, row profile and explicit geometry diagram. Queue, cancel,
+resume, reopen and export through the shared dataset system.
+
+These arrays have axes `[view,v,u]`. Detector pixels and material voxels have
+independent sampling; neither pitch establishes physical resolution. Every saved
+view retains its angle, unit ray direction, detector center and basis vectors.
+See [X-ray volumes](docs/XRAY_VOLUMES.md) for geometry, controls, storage, Python
+access and resource limits. This release generates projection stacks; xyz CT
+reconstruction is the next milestone.
+
+![Saved H100 X-ray acquisition with projection, sinogram and detector geometry](docs/images/xray-volume-workspace.png)
+
+**Saved SAM volumes (0.3 onward).** Open **Saved volumes** to record signed RF at
 every raster position, with independent record start/duration, sample rate, pulse
 bandwidth, water standoff and rectangular raster controls. A local background
 worker saves chunked Zarr arrays with progress, cancellation and resume. Reopen a
@@ -106,8 +124,8 @@ completed dataset to inspect XY/X–time/Y–time views and change gates without
 rerunning propagation. Download the full data and frozen provenance as a Zarr ZIP.
 
 These datasets have axes `[y,x,time]`; the time axis is not reconstructed depth.
-The original X-ray preview remains a single projection. Multiangle X-ray stacks,
-CT reconstruction and layered acoustic depth conversion are subsequent milestones.
+The original microscope preview remains available alongside both saved-data
+workflows. Layered acoustic depth conversion is a subsequent milestone.
 See [Saved volumes](docs/SAVED_VOLUMES.md) for controls, storage, Python access and
 the current numerical/resource limits.
 
@@ -145,9 +163,9 @@ uv run pytest -q
 
 Tests cover analytical forward-model cases and public API validation/reproducibility. Passing tests establish numerical behavior in those cases; measured phantom experiments, convergence studies, transducer characterization, and cross-modal calibration remain necessary before scientific accuracy claims.
 
-The executed checks and their scope are recorded in [docs/VERIFICATION.md](docs/VERIFICATION.md). Native browser checks are also available: with the server running, set `MICROSCOPY_CHROME_PATH` to a local Chrome/Chromium executable and run `npm.cmd run verify:exports`, `npm.cmd run verify:h100`, `npm.cmd run verify:hbm`, `npm.cmd run verify:volumes` or `npm.cmd run verify:volume-jobs` from `web`. They verify downloads, provenance, HBM editing/regions and saved-volume acquisition, slices, gates, reopening and cancellation/resume. Volume checks create synthetic datasets in the local catalog.
+The executed checks and their scope are recorded in [docs/VERIFICATION.md](docs/VERIFICATION.md). Native browser checks are also available: with the server running, set `MICROSCOPY_CHROME_PATH` to a local Chrome/Chromium executable and run `npm.cmd run verify:exports`, `npm.cmd run verify:h100`, `npm.cmd run verify:hbm`, `npm.cmd run verify:volumes`, `npm.cmd run verify:volume-jobs`, `npm.cmd run verify:xray` or `npm.cmd run verify:xray-jobs` from `web`. They verify downloads, provenance, HBM editing/regions, saved-volume acquisition and inspection, reopening and cancellation/resume. Volume checks create synthetic datasets in the local catalog.
 
-The next milestones are multiangle X-ray acquisition and reconstruction, followed by explicitly modeled acoustic depth conversion and richer microstructure/propagation controls. See [EXPANSION_PLAN.md](docs/EXPANSION_PLAN.md) for the sequence and acceptance gates. Version 0.3 saves full SAM RF/envelope time volumes; X-ray acquisition remains a single radiographic preview.
+The next milestone is CPU parallel-beam reconstruction from the saved X-ray data, followed by explicitly modeled acoustic depth conversion and richer microstructure/propagation controls. See [EXPANSION_PLAN.md](docs/EXPANSION_PLAN.md) for the sequence and acceptance gates. Version 0.4 saves both SAM RF/envelope time volumes and multiangle X-ray projections with frozen provenance.
 
 The implementation is separated into `virtual_microscopy/physics.py` and `materials.py`, strict schemas and local API, `web/` UI, reproducible example geometry, and tests. This leaves room for higher-fidelity solvers and CAD/voxel import while keeping the current demo runnable.
 

@@ -105,11 +105,17 @@ def material_snapshot() -> dict:
     }))
 
 
-def solver_identity(model_version: str) -> dict:
+def solver_identity(model_version: str, kind: str = "sam_rf_volume") -> dict:
     """Refuse a mixed-version resume instead of silently changing the physics."""
     source_root = Path(__file__).resolve().parent
     source_hashes = {}
-    for filename in ("sam_volume.py", "volume_schemas.py", "physics.py", "schemas.py", "materials.py"):
+    if kind == "sam_rf_volume":
+        filenames = ("sam_volume.py", "volume_schemas.py", "physics.py", "schemas.py", "materials.py")
+    elif kind == "xray_projection_volume":
+        filenames = ("xray_volume.py", "xray_schemas.py", "physics.py", "schemas.py", "materials.py")
+    else:
+        raise ValueError(f"Unknown dataset kind: {kind}.")
+    for filename in filenames:
         path = source_root / filename
         if path.is_file():
             source_hashes[filename] = hashlib.sha256(path.read_bytes()).hexdigest()
@@ -119,12 +125,30 @@ def solver_identity(model_version: str) -> dict:
 
 
 class DatasetStore:
+    kind = "sam_rf_volume"
+    axis_order = ("y", "x", "time")
+    signal_units = {"rf": "relative signed amplitude", "envelope": "relative envelope amplitude"}
+    evidence_status = "Synthetic reduced-order SAM; not experimentally calibrated."
+
     def __init__(self, root: Path):
         self.root = Path(root).resolve()
         self.root.mkdir(parents=True, exist_ok=True)
 
     def path(self, identifier: str) -> Path:
         return dataset_path(self.root, identifier)
+
+    def _solver_identity(self, model_version: str) -> dict:
+        return solver_identity(model_version)
+
+    def _coordinate_descriptors(self, shape: list[int]) -> dict:
+        return {"x_mm": {"path": "x_mm", "units": "mm", "axes": ["x"], "dtype": "float64"},
+                "y_mm": {"path": "y_mm", "units": "mm", "axes": ["y"], "dtype": "float64"},
+                "time_us": {"path": "time_us", "units": "us", "axes": ["time"], "dtype": "float64"}}
+
+    def _signal_descriptors(self, shape: list[int], request: dict) -> dict:
+        return {name: {"path": name, "shape": shape, "dtype": "float32",
+                       "axes": list(self.axis_order), "units": units}
+                for name, units in self.signal_units.items()}
 
     def manifest(self, identifier: str) -> dict:
         path = self.path(identifier) / "manifest.json"
@@ -135,7 +159,7 @@ class DatasetStore:
     def create(self, identifier: str, request: dict, estimate: dict) -> dict:
         shape = [int(v) for v in estimate["shape"]]
         if len(shape) != 3 or any(v <= 0 for v in shape):
-            raise ValueError("Volume shape must be positive [y, x, time].")
+            raise ValueError(f"Volume shape must be positive {list(self.axis_order)}.")
         tile_rows = int(estimate["tile_rows"])
         if tile_rows < 1:
             raise ValueError("Tile row count must be positive.")
@@ -143,33 +167,26 @@ class DatasetStore:
         path = self.path(identifier)
         path.mkdir(exist_ok=False)
         materials = material_snapshot()
-        identity = solver_identity(estimate["model_version"])
+        identity = self._solver_identity(estimate["model_version"])
         frozen_request = json.loads(canonical_json(request))
         input_sha = json_sha256(frozen_request)
         materials_sha = json_sha256(materials)
         manifest = {
             "schema_version": DATASET_SCHEMA_VERSION, "dataset_id": identifier,
-            "kind": "sam_rf_volume", "created_at": now_iso(), "updated_at": now_iso(),
+            "kind": self.kind, "created_at": now_iso(), "updated_at": now_iso(),
             "state": "queued", "complete": False, "arrays_initialized": False,
-            "evidence_status": "Synthetic reduced-order SAM; not experimentally calibrated.",
+            "evidence_status": self.evidence_status,
             "request": frozen_request, "request_sha256": input_sha,
             "materials": materials, "materials_sha256": materials_sha,
             "solver": identity,
             "input_sha256": json_sha256({"request_sha256": input_sha,
                                          "materials_sha256": materials_sha, "solver": identity}),
-            "estimate": estimate, "shape": shape, "axis_order": ["y", "x", "time"],
+            "estimate": estimate, "shape": shape, "axis_order": list(self.axis_order),
             "dtype": "float32", "zarr_format": 3, "store": "data.zarr",
             "tile_rows": tile_rows, "total_rows": shape[0], "completed_rows": 0,
             "completed_chunks": {}, "coordinates_sha256": {}, "metadata": {},
-            "arrays": {
-                "rf": {"path": "rf", "shape": shape, "dtype": "float32", "axes": ["y", "x", "time"],
-                       "units": "relative signed amplitude"},
-                "envelope": {"path": "envelope", "shape": shape, "dtype": "float32", "axes": ["y", "x", "time"],
-                             "units": "relative envelope amplitude"},
-                "x_mm": {"path": "x_mm", "units": "mm", "axes": ["x"], "dtype": "float64"},
-                "y_mm": {"path": "y_mm", "units": "mm", "axes": ["y"], "dtype": "float64"},
-                "time_us": {"path": "time_us", "units": "us", "axes": ["time"], "dtype": "float64"},
-            },
+            "arrays": {**self._signal_descriptors(shape, frozen_request),
+                       **self._coordinate_descriptors(shape)},
         }
         atomic_json(path / "manifest.json", manifest)
         return manifest
@@ -181,7 +198,8 @@ class DatasetStore:
         if manifest.get("dataset_id") != identifier:
             raise ValueError("Dataset identity cannot change.")
         for field in ("request", "request_sha256", "materials", "materials_sha256", "solver",
-                      "input_sha256", "estimate", "shape", "tile_rows", "total_rows"):
+                      "input_sha256", "estimate", "shape", "tile_rows", "total_rows", "kind",
+                      "axis_order", "arrays", "dtype", "store", "zarr_format", "evidence_status"):
             if manifest.get(field) != previous.get(field):
                 raise ValueError(f"Frozen dataset field cannot change: {field}.")
         manifest["updated_at"] = now_iso()
@@ -197,13 +215,15 @@ class DatasetStore:
 
     def validate_identity(self, identifier: str) -> dict:
         manifest = self.manifest(identifier)
+        if manifest.get("kind", "sam_rf_volume") != self.kind:
+            raise ValueError("Dataset kind does not match its storage reader.")
         if json_sha256(manifest["request"]) != manifest["request_sha256"]:
             raise ValueError("Frozen request checksum mismatch; cannot resume this dataset.")
         if json_sha256(manifest["materials"]) != manifest["materials_sha256"]:
             raise ValueError("Frozen material checksum mismatch; cannot resume this dataset.")
         if json_sha256(material_snapshot()) != manifest["materials_sha256"]:
             raise ValueError("Material library changed; create a new dataset instead of resuming.")
-        if solver_identity(manifest["solver"]["model_version"]) != manifest["solver"]:
+        if self._solver_identity(manifest["solver"]["model_version"]) != manifest["solver"]:
             raise ValueError("Solver or numerical package changed; create a new dataset instead of resuming.")
         expected = json_sha256({"request_sha256": manifest["request_sha256"],
                                "materials_sha256": manifest["materials_sha256"], "solver": manifest["solver"]})
@@ -228,7 +248,7 @@ class DatasetStore:
         group = zarr.open_group(str(self.path(identifier) / "data.zarr"), mode="w", zarr_format=3)
         group.attrs.update({"dataset_id": identifier, "input_sha256": manifest["input_sha256"],
                             "axis_order": manifest["axis_order"], "evidence_status": manifest["evidence_status"]})
-        for name in ("rf", "envelope"):
+        for name in self.signal_units:
             group.create_array(name, shape=(ny, nx, nt), chunks=(min(ny, manifest["tile_rows"]), nx, nt),
                                dtype="float32", fill_value=float("nan"),
                                dimension_names=("y", "x", "time"))
@@ -272,7 +292,7 @@ class DatasetStore:
         if group.attrs.get("input_sha256") != manifest["input_sha256"]:
             raise ValueError("Zarr input identity does not match the manifest.")
         self._verify_coordinates(group, manifest)
-        for name in ("rf", "envelope"):
+        for name in self.signal_units:
             array = group[name]
             if list(array.shape) != manifest["shape"] or array.dtype != np.dtype("float32"):
                 raise ValueError(f"Invalid {name} array shape or type.")
@@ -285,7 +305,7 @@ class DatasetStore:
                 raise ValueError("Invalid chunk completion registry.")
             try:
                 good = all(array_sha256(group[name][y0:y1]) == chunk[f"{name}_sha256"]
-                           for name in ("rf", "envelope"))
+                           for name in self.signal_units)
             except (OSError, ValueError, RuntimeError):
                 good = False
             if good:
@@ -298,6 +318,8 @@ class DatasetStore:
     def verify_complete(self, identifier: str) -> dict:
         """Read-only integrity check suitable before exporting an older dataset."""
         manifest = self.manifest(identifier)
+        if manifest.get("kind", "sam_rf_volume") != self.kind:
+            raise ValueError("Dataset kind does not match its storage reader.")
         if not manifest["complete"] or manifest["state"] != "completed":
             raise ValueError("Only completed datasets can be exported.")
         if (json_sha256(manifest["request"]) != manifest["request_sha256"] or
@@ -316,7 +338,7 @@ class DatasetStore:
         group = self.open_arrays(identifier)
         if group.attrs.get("input_sha256") != manifest["input_sha256"]:
             raise ValueError("Zarr input identity does not match the manifest.")
-        for name in ("rf", "envelope"):
+        for name in self.signal_units:
             if list(group[name].shape) != manifest["shape"] or group[name].dtype != np.dtype("float32"):
                 raise ValueError(f"Invalid {name} array shape or type.")
         self._verify_coordinates(group, manifest)
@@ -325,7 +347,7 @@ class DatasetStore:
             chunk = manifest["completed_chunks"].get(str(y0))
             if not chunk or chunk["rows"] != [y0, y1]:
                 raise ValueError("Dataset completion registry has missing rows.")
-            for name in ("rf", "envelope"):
+            for name in self.signal_units:
                 if array_sha256(group[name][y0:y1]) != chunk[f"{name}_sha256"]:
                     raise ValueError(f"Stored {name} checksum mismatch at row {y0}.")
         return manifest

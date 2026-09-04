@@ -48,7 +48,9 @@ def insert_pending(manager, state="queued"):
     identifier = str(uuid4())
     manifest = manager.store.create(identifier, config.model_dump(mode="json", exclude_none=True), estimate_sam(config))
     with sqlite3.connect(manager.root / "catalog.sqlite3") as connection:
-        connection.execute("INSERT INTO jobs VALUES (?, ?, ?, ?, ?, 0, ?, NULL)",
+        connection.execute("""INSERT INTO jobs
+            (job_id, state, name, created_at, updated_at, completed_rows, total_rows, error)
+            VALUES (?, ?, ?, ?, ?, 0, ?, NULL)""",
                            (identifier, state, config.twin.name, manifest["created_at"],
                             manifest["created_at"], manifest["total_rows"]))
     return identifier, config

@@ -103,7 +103,7 @@ export class VolumeWorkspace {
   async refreshCatalog(){
     clearTimeout(this.pollTimer);this.catalogController?.abort();const controller=this.catalogController=new AbortController();
     try{const [jobs,datasets]=await Promise.all([this.request('/api/v2/jobs',null,controller.signal),this.request('/api/v2/datasets',null,controller.signal)]);if(controller!==this.catalogController)return;
-      this.jobs=jobs.jobs;this.datasets=datasets.datasets;this.renderJobs();this.renderDatasets();
+      this.jobs=jobs.jobs.filter(item=>item.kind==='sam_rf_volume'||!item.kind);this.datasets=datasets.datasets.filter(item=>item.kind==='sam_rf_volume'||!item.kind);this.renderJobs();this.renderDatasets();
       const completed=this.datasets.find(item=>item.dataset_id===this.pendingDataset && complete(item));
       if(completed){this.pendingDataset=null;await this.selectDataset(completed.dataset_id || completed.id);}
       else if(!this.manifest){let saved;try{saved=localStorage.getItem('virtual-microscopy-last-volume');}catch{}const chosen=this.datasets.find(item=>complete(item)&&(item.dataset_id || item.id)===saved) || this.datasets.find(complete);if(chosen)await this.selectDataset(chosen.dataset_id || chosen.id);}

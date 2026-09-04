@@ -25,7 +25,7 @@ const app = $('#app');
 app.innerHTML = `
   <header class="topbar">
     <div class="brand"><div class="brand-mark">${icon('cube')}</div><div><h1>Virtual microscopy</h1><p>Microelectronics simulation workbench</p></div></div>
-    <div class="top-actions"><span class="mode-label"><i></i>Synthetic forward model</span><button id="volumes-btn">${icon('layers')}Saved volumes</button><button id="assumptions-btn">${icon('info')}Model & assumptions</button><button id="export-results" disabled>${icon('download')}Export acquisition</button></div>
+    <div class="top-actions"><span class="mode-label"><i></i>Synthetic forward model</span><button id="volumes-btn" title="Saved acoustic RF volumes">${icon('layers')}Saved volumes</button><button id="xray-volumes-btn">${icon('xray')}X-ray volumes</button><button id="assumptions-btn">${icon('info')}Model & assumptions</button><button id="export-results" disabled>${icon('download')}Export acquisition</button></div>
   </header>
   <main class="workspace">
     <aside class="sidebar" aria-label="Specimen and acquisition controls">
@@ -330,6 +330,8 @@ $('#roi-full').addEventListener('click',()=>selectROI(null));
 hbmEditor=new HBMEditor({request,getTwin:()=>state.twin,onApply:twin=>{setTwin(twin,undefined,true);const picker=$('#example-picker');picker.querySelector('option[value="__edited"]')?.remove();const option=document.createElement('option');option.value='__edited';option.textContent=`Edited: ${twin.name}`;picker.append(option);picker.value='__edited';},onSelectROI:selectROI});
 const volumeWorkspace=new VolumeWorkspace({request,getSnapshot:()=>({twin:state.twin,settings:settingsFromControls()})});
 $('#volumes-btn').addEventListener('click',()=>volumeWorkspace.open());
+let xrayWorkspacePromise;
+$('#xray-volumes-btn').addEventListener('click',async()=>{try{xrayWorkspacePromise ||= import('./xray.js').then(({XrayWorkspace})=>new XrayWorkspace({request,getSnapshot:()=>({twin:state.twin,settings:settingsFromControls()})}));(await xrayWorkspacePromise).open();}catch(error){xrayWorkspacePromise=null;notify(`Unable to open the X-ray workspace: ${error.message}`,true);}});
 $('#hbm-editor-btn').addEventListener('click',()=>hbmEditor.open($('#roi-site').value));
 $('#sam-window').addEventListener('change',event=>{state.samCeiling=Number(event.target.value);$('#sam-ceiling-label').textContent=state.samCeiling.toFixed(2);drawAll();});
 $('#reset-view').addEventListener('click',()=>viewer?.reset());
@@ -355,7 +357,7 @@ function downloadJSON(value,filename) {
 }
 const safeName=name=>String(name).replace(/[^a-z0-9_-]+/gi,'-').replace(/^-|-$/g,'').slice(0,75)||'specimen';
 $('#export-twin').addEventListener('click',()=>{if(state.twin)downloadJSON(state.twin,`${safeName(state.twin.name)}.json`);});
-$('#export-results').addEventListener('click',()=>{if(state.result)downloadJSON({...state.result,export_metadata:{application:'Virtual microscopy workbench',version:'0.3.0',exported_at:new Date().toISOString(),display_windows:{xray:[0,1],sam:[0,state.samCeiling],bscan:[0,1]},settings_changed_since_acquisition:state.stale}},`${safeName(state.result.twin.name)}-acquisition-${safeName(state.result.run_id || new Date().toISOString())}.json`);});
+$('#export-results').addEventListener('click',()=>{if(state.result)downloadJSON({...state.result,export_metadata:{application:'Virtual microscopy workbench',version:'0.4.0',exported_at:new Date().toISOString(),display_windows:{xray:[0,1],sam:[0,state.samCeiling],bscan:[0,1]},settings_changed_since_acquisition:state.stale}},`${safeName(state.result.twin.name)}-acquisition-${safeName(state.result.run_id || new Date().toISOString())}.json`);});
 $('#assumptions-btn').addEventListener('click',()=>$('#assumptions-dialog').showModal());
 $('#specimen-reference-btn').addEventListener('click',()=>$('#specimen-reference-dialog').showModal());
 $('#close-specimen-reference').addEventListener('click',()=>$('#specimen-reference-dialog').close());

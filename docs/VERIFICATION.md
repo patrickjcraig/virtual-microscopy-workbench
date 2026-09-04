@@ -2,6 +2,74 @@
 
 This record concerns the first local implementation in `E:\git\Dissertation`. It establishes software and analytical-model behavior, not experimental imaging accuracy.
 
+## Version 0.4 — saved full-angle X-ray projections
+
+The complete Python suite passed **197 tests in 49.55 seconds**, including all
+139 prior cases and 58 X-ray solver/storage/view and integration cases. The same
+two third-party deprecation warnings remain. Independent analytical cases cover
+axis-aligned, negative and oblique box paths, 90° incidence, material replacement,
+asymmetric pose conventions, surrounding attenuation outside a detector crop,
+PSF halo continuity, geometry convergence, Poisson statistics, byte-identical
+seeded resume, negative noisy logarithms, zero-only log substitution and float32
+underflow. Oversized geometry, halo or ray work is rejected before allocation.
+
+Storage tests acquire real mixed SAM/X-ray queues through spawned workers and
+verify cancellation/resume, damaged partial-view regeneration, atomic read-back
+of all four products, pose/coordinate checksums, source identity and immutable
+completed datasets. An actual legacy eight-column SQLite catalog migrates without
+changing the SAM manifest or RF bytes. Export rejects redirected roots and nested
+symlinks/junctions before reading them; the Windows suite includes an actual
+directory-junction case. Missing/nonfinite products and nonbinary/nonfinite
+log-validity masks produce explicit errors instead of plausible displayed data.
+
+Independent asymmetric saved arrays verify exact projection, detector-row
+sinogram and profile selection, physical extents and angular display-bin edges.
+A real API acquisition verifies distinct 0°/90° views, persistent data after an
+application restart, all seven coordinate/pose arrays in the ZIP, instrument-kind
+guards and the old untagged SAM request. View/product changes leave dataset bytes
+and the number of acquisition jobs unchanged.
+
+The native Chrome `verify:xray` workflow passed using an H100 dataset with
+**8 × 32 × 48** samples and actual angles 0°, 45°, ..., 315°. It checks the full
+specimen remains in the X-ray request despite a selected acoustic ROI, independent
+geometry/detector sampling, distinct 0°/90° data and orthogonal rays, stored
+profile/sinogram agreement, all three displayed products, zero-count mask
+semantics, native ZIP download, reopening after reload, separate SAM/X-ray
+catalogs and desktop/390 px layouts. No uncaught page errors occurred.
+
+The separate native `verify:xray-jobs` check cancels a 72-view acquisition before
+its first committed view, confirms the incomplete catalog entry is disabled and
+the view API returns 409, then resumes the same frozen request and dataset through
+completion. Backend tests separately cover already-committed partial views. The
+browser also verifies automatic field sizing after moving the rotation center and
+independently reported material/detector pitches. No uncaught page errors occurred.
+The native H100 regression passes with seven component labels, retained reference
+metadata, exports, imported presets and probe behavior. The production build passes.
+The native `verify:volumes` SAM regression also passes against the final 0.4
+server: acquisition, frozen HBM ROI, signed RF, linked time slices, RMS gating,
+native ZIP download, reload and desktop/mobile layout. The previously delivered
+0.3 HBM6 dataset still returns all 801 A-scan samples after the server restart.
+
+A separate delivered acquisition retains six HBM assemblies and uses a
+**96 × 96 × 1,024** material grid, a **64-row × 96-column** detector, and
+**60 angles from 0° through 354° in 6° steps**. It uses 80 keV, 50,000 incident
+photons/pixel, seeded Poisson noise and a nominal 20 µm detector FWHM. Its
+material pitch is 625 × 625 × 2.588 µm, while detector pitch is approximately
+625.609 × 937.5 µm. The detector undersamples the nominal blur and cannot resolve
+fine HBM microstructure; these values are sampling, not physical resolution.
+
+All four signal arrays and seven coordinate/pose arrays passed export integrity
+checks. They occupy **5,905,760 uncompressed bytes**; the local Zarr ZIP is
+**3,386,007 bytes** and passes ZIP CRC verification. Acquisition plus the two
+cardinal view reads and export took approximately **23.77 seconds** locally,
+which is an observed example rather than a runtime guarantee. The dataset ID is
+`391fa82b-60cf-4a40-9794-cfddac1f1c3b`; generated data remain outside Git.
+
+This release provides synthetic monoenergetic parallel-beam projection stacks,
+not reconstructed xyz attenuation, cone geometry or experimentally calibrated
+H100 microscopy. The [projection workspace screenshot](images/xray-volume-workspace.png)
+shows actual saved data. The supplied reference image remains outside Git.
+
 ## Version 0.3 — saved acoustic volumes
 
 The complete Python suite passed **139 tests in 19.58 seconds**, including the 82

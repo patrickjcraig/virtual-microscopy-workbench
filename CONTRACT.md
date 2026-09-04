@@ -1,4 +1,4 @@
-# Virtual microscopy 0.3 integration contract (compatible twin schema 1)
+# Virtual microscopy 0.4 integration contract (compatible twin schema 1)
 
 Local application: Python FastAPI serves a Vite/vanilla JS + Three.js client. Source in `virtual_microscopy/` and `web/`. Physical dimensions use millimetres. Coordinates x right, y down in image, z depth from specimen top; surrounding material is water for SAM and air for X-ray. Later primitives replace earlier ones. This is a reduced-order synthetic forward simulator, not experimentally validated or coupled full-wave multiphysics.
 
@@ -20,7 +20,7 @@ Optional `image_reference` contains SHA-256, raster width/height, pixel_size_um,
 
 ## API
 
-- GET /api/health -> {status:'ok',version:'0.3.0'}
+- GET /api/health -> {status:'ok',version:'0.4.0'}
 - GET /api/examples -> [{id,name,description,twin}]
 - GET /api/materials -> list of material dicts with id,name,color,density_g_cm3,sound_speed_m_s,impedance_mrayl and provenance; extra properties permitted.
 - POST /api/validate -> twin body -> {valid:true,twin:normalized twin,warnings:[]}; errors HTTP 422.
@@ -77,6 +77,51 @@ Catalog/data root defaults to ignored `artifacts/volumes`, configurable through
 `VM_DATA_ROOT`. UUID-only identifiers cannot select arbitrary filesystem paths.
 No API supports replacing completed datasets. `time` is not a depth coordinate;
 relative modeled amplitudes are not calibrated Pa or volts.
+
+### X-ray projection-volume extension (0.4)
+
+The same estimate/job routes accept `XrayVolumeRequest`:
+`{kind:"xray_projection_volume",twin,acquisition}`. Its independent geometry,
+detector, source and angular fields are defined in `xray_schemas.py`,
+[XRAY_VOLUMES.md](docs/XRAY_VOLUMES.md) and `/openapi.json`. The legacy untagged
+SAM request remains accepted. Unknown kinds or cross-instrument settings fail
+validation. Projection acquisition does not use the preview's ±45° restriction.
+
+X-ray estimates report `[view,v,u]`, four signal-array sizes, coordinate/pose
+bytes, material and detector pitches, actual angle range, excluded stop angle,
+PSF halo, truncation warnings and bounded numerical work. Jobs of either kind
+share one local process queue. Job responses retain the row aliases and add
+`kind`, `completed_units`, `total_units` and `progress_unit` (`views` or `rows`).
+Existing catalog rows migrate with the SAM kind; existing dataset bytes and
+source identity inputs remain unchanged.
+
+X-ray dataset details include `detector_extent_mm:[u0,u1,v0,v1]` in local
+coordinates and `angles_range_deg:[first,last_actual_angle]`. They have no
+acoustic time range. GET `/api/v2/datasets/{id}/xray-view` accepts `view_index`,
+`detector_row` and `product` (`counts`, `transmission`, `line_integrals`). It returns:
+
+- `projection`: saved `[v,u]` image, local `extent_mm`, unit, extrema and invalid mask.
+- `sinogram`: saved `[view,u]` image at one detector row, physical `extent`, actual
+  `angles_deg`, explicit `angle_bin_edges_deg`, unit and invalid mask.
+- `profile`: local `u_mm`, saved values, unit and invalid mask for the chosen row/view.
+- `cursor`: view index, actual angle, detector row and local v coordinate.
+- `pose`: stored unit ray direction, virtual detector center and unit U/V basis.
+- `metadata`: axes, processing definitions, assumptions and sampling warnings.
+
+Both view endpoints return 409 for incomplete data and 422 for the wrong dataset
+kind or invalid indices/settings. Viewing reads saved arrays without acquiring
+new projections. Sinogram angular-bin edges are display support, not extra views.
+Masks describe undefined zero-count logarithms; zero raw counts/transmission are
+valid observations and must not be presented as missing measurements.
+
+The common export route dispatches integrity verification by dataset kind and
+returns `xray-projections-{id}.zip` or `sam-volume-{id}.zip`. X-ray archives contain
+four float32 `[view,v,u]` arrays (`counts`, `transmission`, `line_integrals`,
+`valid_mask`) and seven float64 coordinate/pose arrays. Offsets occur once in
+`detector_center_mm`; `u_mm` and `v_mm` stay local and centered. Unit U/V vectors
+are not pixel-pitch-scaled ASTRA vectors. Counts and every coordinate, pose and
+committed signal chunk are verified before export. Angular stacks are inputs to
+future reconstruction; their view axis is not a spatial z axis.
 
 
 ## Simulation response (plain JSON numeric arrays)

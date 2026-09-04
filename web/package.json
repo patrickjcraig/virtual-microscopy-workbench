@@ -1,6 +1,6 @@
 {
   "name": "virtual-microscopy-workbench",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,7 +11,9 @@
     "verify:h100": "node scripts/verify-h100.mjs",
     "verify:hbm": "node scripts/verify-hbm.mjs",
     "verify:volumes": "node scripts/verify-volumes.mjs",
-    "verify:volume-jobs": "node scripts/verify-volume-jobs.mjs"
+    "verify:volume-jobs": "node scripts/verify-volume-jobs.mjs",
+    "verify:xray": "node scripts/verify-xray.mjs",
+    "verify:xray-jobs": "node scripts/verify-xray-jobs.mjs"
   },
   "dependencies": {
     "three": "^0.180.0"

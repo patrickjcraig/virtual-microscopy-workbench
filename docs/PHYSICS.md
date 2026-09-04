@@ -4,6 +4,18 @@ This workbench produces synthetic X-ray projections and scanning acoustic micros
 
 The models and links below were reviewed on 4 September 2026. The original preview implementation is in `virtual_microscopy/physics.py` and material defaults in `virtual_microscopy/materials.py`. Version 0.3 adds `sam_volume.py`: the same primary-echo model with explicit recording start/duration/sample rate, Gaussian pulse bandwidth, external water-standoff delay/loss, and persistent signed RF/envelope tiles. See [Saved acoustic acquisitions](SAVED_VOLUMES.md) for those acquisition equations and limits. The gate-dependent record duration and excluded water standoff described below apply to the legacy preview.
 
+Version 0.4 adds the independent full-angle parallel projector in `xray_volume.py`.
+It integrates exact segment lengths through a sampled material grid, including
+90° side incidence, and applies Gaussian detector blur before photon noise. Saved
+detector sampling is independent of the whole-specimen material grid. Counts,
+transmission, zero-regularized negative-log transmission and log-validity masks
+have axes `[view,v,u]`; every detector pose is retained. Exact voxel path lengths
+do not remove geometry sampling error. Detector pixel-area integration, spectrum,
+scatter and CT reconstruction are absent. See [Saved X-ray acquisitions](XRAY_VOLUMES.md)
+for its complete geometry, noise/zero-count conventions, resource bounds and
+sampling distinctions. The single-projection angle/extent discussion below
+describes the original preview, which remains available.
+
 ## Digital-twin interpretation and units
 
 The v1 JSON twin contains a bounded volume and ordered boxes, spheres and vertical cylinders. Object positions and full extents use **millimetres**. The x axis points right, y increases down the image and z increases from the specimen top into its thickness. Later objects replace earlier objects wherever they overlap. A void is therefore an air object placed after the solid it removes. Excluding defects skips objects with `role: "defect"`, exposing the underlying structures.

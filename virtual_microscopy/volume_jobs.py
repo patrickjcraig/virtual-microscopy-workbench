@@ -1,4 +1,4 @@
-"""Single local spawn worker, durable SQLite queue and resumable SAM jobs.
+"""Single local spawn worker, durable SQLite queue and resumable microscopy jobs.
 
 The worker never holds an HTTP request open. Cancellation is cooperative at
 canonical row boundaries; shutdown interrupts a job and preserves committed
@@ -35,20 +35,49 @@ def _connection(root: Path):
 def _init_catalog(root: Path) -> None:
     with _connection(root) as connection:
         connection.execute("PRAGMA journal_mode=WAL")
+        connection.execute("BEGIN IMMEDIATE")
         connection.execute("""CREATE TABLE IF NOT EXISTS jobs (
             job_id TEXT PRIMARY KEY, state TEXT NOT NULL, name TEXT NOT NULL,
             created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
             completed_rows INTEGER NOT NULL, total_rows INTEGER NOT NULL,
-            error TEXT
+            error TEXT, kind TEXT NOT NULL DEFAULT 'sam_rf_volume'
         )""")
+        columns = {row["name"] for row in connection.execute("PRAGMA table_info(jobs)")}
+        if "kind" not in columns:
+            connection.execute("ALTER TABLE jobs ADD COLUMN kind TEXT NOT NULL DEFAULT 'sam_rf_volume'")
         connection.commit()
 
 
 def _job_dict(row) -> dict:
     result = dict(row)
+    kind = result.get("kind") or "sam_rf_volume"
     result.update(id=result["job_id"], dataset_id=result["job_id"],
-                  status=result["state"], progress=result["completed_rows"] / result["total_rows"], kind="sam_rf_volume")
+                  status=result["state"], progress=result["completed_rows"] / result["total_rows"], kind=kind,
+                  completed_units=result["completed_rows"], total_units=result["total_rows"],
+                  progress_unit="views" if kind == "xray_projection_volume" else "rows")
     return result
+
+
+def store_for_manifest(root: Path, manifest: dict) -> DatasetStore:
+    kind = manifest.get("kind", "sam_rf_volume")
+    if kind == "sam_rf_volume":
+        return DatasetStore(root)
+    if kind == "xray_projection_volume":
+        from .xray_datasets import XrayDatasetStore
+        return XrayDatasetStore(root)
+    raise ValueError(f"Unsupported dataset kind: {kind}.")
+
+
+def _backend(kind: str):
+    if kind == "sam_rf_volume":
+        from .sam_volume import estimate_sam, prepare_sam, iter_sam_tiles
+        from .volume_schemas import SamVolumeRequest
+        return SamVolumeRequest, estimate_sam, prepare_sam, iter_sam_tiles
+    if kind == "xray_projection_volume":
+        from .xray_volume import estimate_xray, prepare_xray, iter_xray_views
+        from .xray_schemas import XrayVolumeRequest
+        return XrayVolumeRequest, estimate_xray, prepare_xray, iter_xray_views
+    raise ValueError(f"Unsupported acquisition kind: {kind}.")
 
 
 def _read_job(root: Path, identifier: str) -> dict:
@@ -93,11 +122,11 @@ def _checkpoint(root: Path, identifier: str, stop_event) -> str | None:
 def _run_job(root: Path, identifier: str, stop_event) -> None:
     # Imported in the spawned process so solver memory and runtime are isolated
     # from the HTTP server. No unbounded full RF volume is retained in RAM.
-    from .sam_volume import estimate_sam, prepare_sam, iter_sam_tiles
-    from .volume_schemas import SamVolumeRequest
-
     store = DatasetStore(root)
     try:
+        manifest = store.manifest(identifier)
+        kind = manifest.get("kind", "sam_rf_volume")
+        store = store_for_manifest(root, manifest)
         manifest = store.validate_identity(identifier)
         if manifest["complete"]:
             _update_job(root, identifier, "completed", manifest["total_rows"])
@@ -107,8 +136,9 @@ def _run_job(root: Path, identifier: str, stop_event) -> None:
             store.set_state(identifier, halted)
             _update_job(root, identifier, halted, manifest["completed_rows"])
             return
-        request = SamVolumeRequest.model_validate(manifest["request"])
-        estimate = estimate_sam(request)
+        Request, estimate_acquisition, prepare_acquisition, iterate = _backend(kind)
+        request = Request.model_validate(manifest["request"])
+        estimate = estimate_acquisition(request)
         if estimate != manifest["estimate"]:
             raise ValueError("Acquisition estimate changed; create a new dataset instead of resuming.")
         # Repeat the disk check immediately before preparing potentially large
@@ -116,8 +146,11 @@ def _run_job(root: Path, identifier: str, stop_event) -> None:
         remaining = estimate["total_bytes"] * (1 - manifest["completed_rows"] / manifest["total_rows"])
         check_disk_space(root, int(remaining))
         store.set_state(identifier, "running")
-        prepared = prepare_sam(request)
-        store.initialize_arrays(identifier, prepared.x_mm, prepared.y_mm, prepared.time_us, prepared.metadata)
+        prepared = prepare_acquisition(request)
+        if kind == "sam_rf_volume":
+            store.initialize_arrays(identifier, prepared.x_mm, prepared.y_mm, prepared.time_us, prepared.metadata)
+        else:
+            store.initialize_arrays(identifier, prepared)
         manifest = store.verify_chunks(identifier)
         with _connection(root) as connection:
             connection.execute("UPDATE jobs SET completed_rows = ?, updated_at = ? WHERE job_id = ?",
@@ -126,7 +159,7 @@ def _run_job(root: Path, identifier: str, stop_event) -> None:
         missing = [y for y in range(0, manifest["total_rows"], manifest["tile_rows"])
                    if str(y) not in manifest["completed_chunks"]]
         start = min(missing, default=manifest["total_rows"])
-        iterator = iter_sam_tiles(prepared, start_row=start)
+        iterator = iterate(prepared, **({"start_row": start} if kind == "sam_rf_volume" else {"start_view": start}))
         while True:
             halted = _checkpoint(root, identifier, stop_event)
             if halted:
@@ -134,13 +167,15 @@ def _run_job(root: Path, identifier: str, stop_event) -> None:
                 _update_job(root, identifier, halted, manifest["completed_rows"])
                 return
             try:
-                y0, y1, rf, envelope = next(iterator)
+                item = next(iterator)
             except StopIteration:
                 break
+            y0, y1 = item[:2]
             if str(y0) in manifest["completed_chunks"]:
                 continue
-            check_disk_space(root, (y1 - y0) * manifest["shape"][1] * manifest["shape"][2] * 8)
-            manifest = store.write_tile(identifier, y0, y1, rf, envelope)
+            check_disk_space(root, (y1 - y0) * manifest["shape"][1] * manifest["shape"][2] * 4 * len(store.signal_units))
+            manifest = (store.write_tile(identifier, *item) if kind == "sam_rf_volume" else
+                        store.write_view(identifier, *item))
             # Do not overwrite a concurrently requested cancellation with a
             # progress update. The manifest and catalog have separate duties.
             with _connection(root) as connection:
@@ -314,18 +349,21 @@ class VolumeJobManager:
                 self._release_owner()
 
     def submit(self, request) -> dict:
-        from .sam_volume import estimate_sam
-        from .volume_schemas import SamVolumeRequest
         with self._mutex:
             self._ensure_worker()
-            request = request if isinstance(request, SamVolumeRequest) else SamVolumeRequest.model_validate(request)
-            estimate = estimate_sam(request)
+            kind = request.get("kind", "sam_rf_volume") if isinstance(request, dict) else getattr(request, "kind", "sam_rf_volume")
+            Request, estimate_acquisition, _, _ = _backend(kind)
+            request = request if isinstance(request, Request) else Request.model_validate(request)
+            estimate = estimate_acquisition(request)
             identifier = str(uuid4())
-            manifest = self.store.create(identifier, request.model_dump(mode="json", exclude_none=True), estimate)
+            store = store_for_manifest(self.root, {"kind": kind})
+            manifest = store.create(identifier, request.model_dump(mode="json", exclude_none=True), estimate)
             with _connection(self.root) as connection:
-                connection.execute("INSERT INTO jobs VALUES (?, 'queued', ?, ?, ?, 0, ?, NULL)",
+                connection.execute("""INSERT INTO jobs
+                    (job_id, state, name, created_at, updated_at, completed_rows, total_rows, error, kind)
+                    VALUES (?, 'queued', ?, ?, ?, 0, ?, NULL, ?)""",
                                    (identifier, request.twin.name, manifest["created_at"], manifest["updated_at"],
-                                    manifest["total_rows"]))
+                                    manifest["total_rows"], kind))
                 connection.commit()
             return _read_job(self.root, identifier)
 
@@ -366,12 +404,13 @@ class VolumeJobManager:
             job = _read_job(self.root, identifier)
             if job["state"] not in RESUMABLE_STATES:
                 raise ValueError("Only cancelled, interrupted or failed jobs can be resumed.")
-            manifest = self.store.validate_identity(identifier)
+            store = self.get_store(identifier)
+            manifest = store.validate_identity(identifier)
             if manifest["complete"]:
                 raise ValueError("Completed datasets are immutable.")
             remaining = manifest["estimate"]["total_bytes"] * (1 - manifest["completed_rows"] / manifest["total_rows"])
             check_disk_space(self.root, int(remaining))
-            self.store.set_state(identifier, "queued")
+            store.set_state(identifier, "queued")
             _update_job(self.root, identifier, "queued", manifest["completed_rows"])
             return _read_job(self.root, identifier)
 
@@ -389,6 +428,9 @@ class VolumeJobManager:
 
     def get_manifest(self, identifier: str) -> dict:
         return self.store.manifest(identifier)
+
+    def get_store(self, identifier: str) -> DatasetStore:
+        return store_for_manifest(self.root, self.get_manifest(identifier))
 
     def dataset_path(self, identifier: str) -> Path:
         _read_job(self.root, identifier)

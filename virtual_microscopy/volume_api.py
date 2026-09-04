@@ -1,5 +1,6 @@
 """Local volume jobs, immutable datasets and bounded display products."""
 from pathlib import Path
+import os
 import tempfile
 import threading
 from typing import Literal
@@ -12,6 +13,9 @@ from starlette.background import BackgroundTask
 from .volume_schemas import SamVolumeRequest
 from .sam_volume import estimate_sam
 from .volume_processing import sam_view
+from .xray_schemas import XrayVolumeRequest
+from .xray_volume import estimate_xray
+from .xray_processing import xray_view
 
 router = APIRouter(prefix="/api/v2", tags=["Saved volumes"])
 # Aborting an HTTP fetch does not stop its synchronous disk reads. Serialize
@@ -49,6 +53,14 @@ def public_manifest(manifest):
     result.setdefault("name", twin.get("name", "SAM volume"))
     result.setdefault("acquisition", acquisition)
     result.setdefault("shape", result.get("arrays", {}).get("rf", {}).get("shape"))
+    if result.get("kind") == "xray_projection_volume":
+        estimate = result.get("estimate", {})
+        if estimate.get("detector_extent_mm") is not None:
+            result.setdefault("detector_extent_mm", estimate["detector_extent_mm"])
+        if acquisition and result.get("shape"):
+            start = acquisition["angle_start_deg"]
+            result.setdefault("angles_range_deg", [start, start + (result["shape"][0]-1) * acquisition["angle_span_deg"] / result["shape"][0]])
+        return result
     roi = acquisition.get("roi_mm")
     size = twin.get("size_mm")
     if size:
@@ -60,15 +72,15 @@ def public_manifest(manifest):
 
 
 @router.post("/estimate")
-def estimate(body: SamVolumeRequest):
+def estimate(body: SamVolumeRequest | XrayVolumeRequest):
     from .datasets import check_disk_space, default_data_root
-    result = invoke(estimate_sam, body)
+    result = invoke(estimate_xray if isinstance(body, XrayVolumeRequest) else estimate_sam, body)
     result.update(invoke(check_disk_space, default_data_root(), result["total_bytes"]))
     return result
 
 
 @router.post("/jobs", status_code=202)
-def submit(body: SamVolumeRequest, request: Request):
+def submit(body: SamVolumeRequest | XrayVolumeRequest, request: Request):
     from .server import _compute_lock
     if not _compute_lock.acquire(blocking=False):
         raise HTTPException(409, "A preview is running. Wait for it to finish before starting a volume acquisition.")
@@ -114,9 +126,11 @@ def dataset(dataset_id: str, request: Request):
     return public_manifest(invoke(manager(request).get_manifest, dataset_id))
 
 
-def complete_path(request, dataset_id):
+def complete_path(request, dataset_id, expected_kind=None):
     jobs = manager(request)
     manifest = invoke(jobs.get_manifest, dataset_id)
+    if expected_kind is not None and manifest.get("kind", "sam_rf_volume") != expected_kind:
+        raise HTTPException(422, "This dataset belongs to the other instrument. Open it in its matching volume viewer.")
     if not manifest.get("complete") or manifest.get("state") != "completed":
         raise HTTPException(409, "This dataset is incomplete. Resume acquisition before opening numerical views or exports.")
     return invoke(jobs.dataset_path, dataset_id)
@@ -129,7 +143,7 @@ def view(dataset_id: str, request: Request,
          gate_start_us: float | None = Query(None, ge=0, allow_inf_nan=False),
          gate_end_us: float | None = Query(None, gt=0, allow_inf_nan=False),
          gate_mode: Literal["peak_envelope", "rms_rf"] = "peak_envelope"):
-    path = complete_path(request, dataset_id)
+    path = complete_path(request, dataset_id, "sam_rf_volume")
     try:
         with _processing_lock:
             return sam_view(path, x_index=x_index, y_index=y_index, time_index=time_index,
@@ -138,16 +152,74 @@ def view(dataset_id: str, request: Request,
         raise HTTPException(422, str(exc)) from exc
 
 
+@router.get("/datasets/{dataset_id}/xray-view")
+def xray_view_api(dataset_id: str, request: Request,
+                  view_index: int = Query(0, ge=0), detector_row: int | None = Query(None, ge=0),
+                  product: Literal["transmission", "line_integrals", "counts"] = "transmission"):
+    path = complete_path(request, dataset_id, "xray_projection_volume")
+    manifest = invoke(manager(request).get_manifest, dataset_id)
+    try:
+        with _processing_lock:
+            return xray_view(path, manifest, view_index=view_index, detector_row=detector_row, product=product)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+
+
 @router.get("/datasets/{dataset_id}/export")
 def export(dataset_id: str, request: Request):
     path = complete_path(request, dataset_id)
     with _processing_lock:
-        return _archive(path, dataset_id)
+        return invoke(_archive, path, dataset_id)
+
+
+def _export_files(path: Path, dataset_id: str):
+    """Reject redirected roots and descendants before any Zarr data is read."""
+    from .datasets import checked_id
+    logical_path = path.parent / checked_id(dataset_id)
+
+    def reject_link(target):
+        if target.is_symlink() or target.is_junction():
+            raise ValueError("Dataset exports do not follow symbolic links or directory junctions.")
+
+    reject_link(logical_path)
+    reject_link(path)
+    root = path.resolve(strict=True)
+    if root != logical_path.resolve(strict=True):
+        raise ValueError("Dataset export path does not match its identifier.")
+
+    def checked_child(child):
+        reject_link(child)
+        if not child.resolve(strict=True).is_relative_to(root):
+            raise ValueError("Dataset export path leaves the dataset directory.")
+        return child
+
+    manifest = checked_child(path / "manifest.json")
+    data = checked_child(path / "data.zarr")
+    if not manifest.is_file() or not data.is_dir():
+        raise ValueError("Dataset export requires its manifest and Zarr directory.")
+    files = [manifest]
+    # Inspect directories before os.walk descends into them. Windows junctions
+    # need their own check even when followlinks=False.
+    for directory, directories, filenames in os.walk(data, followlinks=False):
+        current = checked_child(Path(directory))
+        for name in directories:
+            checked_child(current / name)
+        for name in filenames:
+            child = checked_child(current / name)
+            if child.is_file():
+                files.append(child)
+    return files
 
 
 def _archive(path, dataset_id):
     from .datasets import DatasetStore, check_disk_space
-    manifest = invoke(DatasetStore(path.parent).verify_complete, dataset_id)
+    files = _export_files(path, dataset_id)
+    store = DatasetStore(path.parent)
+    kind = invoke(store.manifest, dataset_id).get("kind", "sam_rf_volume")
+    if kind == "xray_projection_volume":
+        from .xray_datasets import XrayDatasetStore
+        store = XrayDatasetStore(path.parent)
+    manifest = invoke(store.verify_complete, dataset_id)
     invoke(check_disk_space, path.parent, manifest.get("estimate", {}).get("total_bytes", 0))
     # Build on disk, not in API/browser RAM. Stored chunks already use their
     # declared Zarr compression. A unique temporary file prevents overwrites.
@@ -155,13 +227,11 @@ def _archive(path, dataset_id):
         output = Path(tmp.name)
     try:
         with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_STORED, allowZip64=True) as archive:
-            for child in [path / "manifest.json", *(path / "data.zarr").rglob("*")]:
-                if child.is_symlink():
-                    raise ValueError("Dataset exports do not follow symbolic links.")
-                if child.is_file():
-                    archive.write(child, child.relative_to(path).as_posix())
+            for child in files:
+                archive.write(child, child.relative_to(path).as_posix())
     except Exception:
         output.unlink(missing_ok=True)
         raise
-    return FileResponse(output, media_type="application/zip", filename=f"sam-volume-{dataset_id}.zip",
+    prefix = "xray-projections" if kind == "xray_projection_volume" else "sam-volume"
+    return FileResponse(output, media_type="application/zip", filename=f"{prefix}-{dataset_id}.zip",
                         background=BackgroundTask(output.unlink, missing_ok=True))

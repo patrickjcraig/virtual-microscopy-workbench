@@ -146,5 +146,6 @@ This is still a primary longitudinal echo model with nominal material properties
 approximate focus and no reverberation, refraction, shear conversion or full elastic
 propagation. A recorded signal's absence cannot establish the absence of material.
 Acoustic depth mapping requires a declared layered velocity/travel-time model and
-is not implemented here. Multiangle X-ray stacks and CT reconstruction follow in
-M4/M5 of [the expansion plan](EXPANSION_PLAN.md).
+is not implemented here. Version 0.4 adds [saved multiangle X-ray projections](XRAY_VOLUMES.md)
+in the same job/catalog system, using a separate projection viewer and detector
+coordinates. CT reconstruction follows in M5 of [the expansion plan](EXPANSION_PLAN.md).
