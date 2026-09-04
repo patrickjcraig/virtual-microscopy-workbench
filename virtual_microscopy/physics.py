@@ -1,0 +1,354 @@
+"""Quantitative, reduced-order X-ray and pulse-echo acoustic forward models.
+
+The shared representation is a voxel-center sampled material grid [y, x, z].
+This is not a full-wave solver, a CT reconstruction, or validated defect NDE.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from time import perf_counter
+
+import numpy as np
+from scipy.ndimage import gaussian_filter
+from scipy.signal import fftconvolve
+
+from .materials import (MATERIALS, WATER_ATTENUATION_DB_MM_AT_50MHZ,
+                        WATER_IMPEDANCE_MRAYL, WATER_SOUND_SPEED_M_S,
+                        linear_attenuation_mm)
+
+MATERIAL_IDS = tuple(MATERIALS)
+LABELS = {name: index + 1 for index, name in enumerate(MATERIAL_IDS)}
+DETECTOR_FWHM_MM = 0.020
+SAM_F_NUMBER = 2.0
+ECHO_FLOOR = 1.0e-8
+MAX_ACQUISITION_US = 12.0
+
+
+@dataclass
+class MaterialGrid:
+    labels: np.ndarray
+    size_mm: np.ndarray
+    pitch_mm: np.ndarray  # x, y, z order
+    warnings: list[str]
+
+
+@dataclass
+class Echoes:
+    rows: np.ndarray
+    cols: np.ndarray
+    times_us: np.ndarray
+    amplitudes: np.ndarray
+    max_time_us: float
+
+
+def reflection_coefficient(z1, z2):
+    """Signed normal-incidence pressure reflection coefficient."""
+    return (np.asarray(z2) - np.asarray(z1)) / (np.asarray(z2) + np.asarray(z1))
+
+
+def voxelize(twin: dict, resolution: int, include_defects: bool = True) -> MaterialGrid:
+    """Sample ordered CSG primitives; zero means ambient, never an explicit void."""
+    size = np.asarray(twin["size_mm"], dtype=float)
+    nx = ny = int(resolution)
+    nz = 2 * int(resolution)
+    pitch = size / np.array([nx, ny, nz])
+    labels = np.zeros((ny, nx, nz), dtype=np.uint8)
+    x = (np.arange(nx) + 0.5) * pitch[0]
+    y = (np.arange(ny) + 0.5) * pitch[1]
+    z = (np.arange(nz) + 0.5) * pitch[2]
+    warnings = []
+    for obj in twin["objects"]:
+        if not include_defects and obj["role"] == "defect":
+            continue
+        center = np.asarray(obj["center_mm"], dtype=float)
+        extent = np.asarray(obj["size_mm"], dtype=float)
+        lo, hi = center - extent / 2, center + extent / 2
+        ix = np.flatnonzero((x >= lo[0]) & (x <= hi[0]))
+        iy = np.flatnonzero((y >= lo[1]) & (y <= hi[1]))
+        iz = np.flatnonzero((z >= lo[2]) & (z <= hi[2]))
+        if np.any(extent < 2 * pitch):
+            warnings.append(
+                f"Object {obj['id']} has an extent below two grid samples; "
+                "its shape/thickness can be inaccurate or disappear. Increase resolution."
+            )
+        if not (len(ix) and len(iy) and len(iz)):
+            continue
+        sl = np.ix_(iy, ix, iz)
+        if obj["shape"] == "box":
+            labels[sl] = LABELS[obj["material"]]
+        else:
+            rx = (x[ix] - center[0])[None, :, None] / (extent[0] / 2)
+            ry = (y[iy] - center[1])[:, None, None] / (extent[1] / 2)
+            radial = rx * rx + ry * ry
+            if obj["shape"] == "sphere":
+                rz = (z[iz] - center[2])[None, None, :] / (extent[2] / 2)
+                mask = radial + rz * rz <= 1
+            else:  # schema has already restricted this to z-axis cylinders
+                mask = np.broadcast_to(radial <= 1, (len(iy), len(ix), len(iz)))
+            region = labels[sl]
+            region[mask] = LABELS[obj["material"]]
+            labels[sl] = region
+    return MaterialGrid(labels, size, pitch, warnings)
+
+
+def project_xray(grid: MaterialGrid, energy_kev: float, angle_deg: float = 0.0,
+                 photons: int = 50000, noise: bool = False, seed: int = 42,
+                 detector_fwhm_mm: float = DETECTOR_FWHM_MM) -> np.ndarray:
+    """Monochromatic parallel-beam Beer--Lambert projection onto detector x/y.
+
+    The specimen rotates about its center around y. For a detector coordinate u,
+    x(z) = cx + (u-cx)/cos(theta) + (z-cz)*tan(theta), ds=dz/cos(theta).
+    Sampling attenuation at those coordinates includes side exits and parallax.
+    Air attenuation outside primitives is omitted (open-beam referenced).
+    """
+    ny, nx, nz = grid.labels.shape
+    dx, dy, dz = grid.pitch_mm
+    lookup = np.array([0.0] + [linear_attenuation_mm(m, energy_kev) for m in MATERIAL_IDS])
+    angle = np.deg2rad(angle_deg)
+    if abs(angle) < 1e-12:
+        optical_depth = lookup[grid.labels].sum(axis=2) * dz
+    else:
+        cos_a = np.cos(angle)
+        detector_x = (np.arange(nx) + 0.5) * dx
+        center_x, center_z = grid.size_mm[[0, 2]] / 2
+        optical_depth = np.zeros((ny, nx), dtype=float)
+        for k in range(nz):
+            physical_x = center_x + (detector_x - center_x) / cos_a
+            physical_x += ((k + 0.5) * dz - center_z) * np.tan(angle)
+            # Piecewise-constant sampled material geometry. Each ray samples one
+            # voxel per depth slab; no interpolation invents fractional materials.
+            indices = np.floor(physical_x / dx).astype(int)
+            inside = (indices >= 0) & (indices < nx)
+            optical_depth[:, inside] += lookup[grid.labels[:, indices[inside], k]] * dz / cos_a
+    intensity = np.exp(-optical_depth)
+    if detector_fwhm_mm > 0:
+        sigma = detector_fwhm_mm / np.sqrt(8 * np.log(2))
+        intensity = gaussian_filter(intensity, (sigma / dy, sigma / dx), mode="nearest")
+    if noise:
+        # Expected detector intensity is blurred first, then independent counts
+        # sampled. I/I0 may exceed 1 under Poisson noise; never clip the result.
+        intensity = np.random.default_rng(seed).poisson(intensity * photons) / photons
+    return intensity
+
+
+def _acoustic_lookup(frequency_mhz: float):
+    materials = [MATERIALS[name] for name in MATERIAL_IDS]
+    speeds = np.array([WATER_SOUND_SPEED_M_S] + [m["sound_speed_m_s"] for m in materials]) / 1000
+    impedance = np.array([WATER_IMPEDANCE_MRAYL] + [m["impedance_mrayl"] for m in materials])
+    loss = [WATER_ATTENUATION_DB_MM_AT_50MHZ * (frequency_mhz / 50) ** 2]
+    loss += [m["attenuation_db_mm_at_50mhz"] * (frequency_mhz / 50) **
+             m["attenuation_frequency_exponent"] for m in materials]
+    return speeds, impedance, np.asarray(loss)
+
+
+def acoustic_echoes(grid: MaterialGrid, frequency_mhz: float, focus_mm: float,
+                    apply_focus: bool = True) -> Echoes:
+    """Primary echoes at sampled interfaces, with upstream round-trip losses.
+
+    time=0 at the specimen top plane. Interior ambient is immersion water;
+    explicit material='air' primitives are non-infiltrated cavities. Each path
+    is independent and vertical: no mode conversion, refraction or reverberation.
+    """
+    speeds, impedance, loss_db_mm = _acoustic_lookup(frequency_mhz)
+    ny, nx, nz = grid.labels.shape
+    dz = grid.pitch_mm[2]
+    current_time = np.zeros((ny, nx))
+    path_factor = np.ones((ny, nx))
+    previous = np.zeros((ny, nx), dtype=np.uint8)
+    rows, cols, times, amplitudes = [], [], [], []
+    wavelength_mm = (WATER_SOUND_SPEED_M_S / 1000) / frequency_mhz
+    rayleigh_mm = 2 * wavelength_mm * SAM_F_NUMBER ** 2
+    max_time = 0.0
+    for k in range(nz + 1):
+        current = grid.labels[:, :, k] if k < nz else np.zeros((ny, nx), dtype=np.uint8)
+        r = reflection_coefficient(impedance[previous], impedance[current])
+        focus_gain = 1 / (1 + ((k * dz - focus_mm) / rayleigh_mm) ** 2) if apply_focus else 1
+        echo = path_factor * r * focus_gain
+        active = np.abs(echo) >= ECHO_FLOOR
+        if np.any(active):
+            yy, xx = np.nonzero(active)
+            rows.append(yy)
+            cols.append(xx)
+            times.append(current_time[active].copy())
+            amplitudes.append(echo[active])
+            max_time = max(max_time, float(current_time[active].max()))
+        # t12*t21 = (1+r)*(1-r) = 1-r^2 for each traversed interface.
+        path_factor *= 1 - r * r
+        if k < nz:
+            path_factor *= np.exp(-2 * np.log(10) / 20 * loss_db_mm[current] * dz)
+            current_time += 2 * dz / speeds[current]
+        previous = current
+    if not rows:
+        return Echoes(np.array([], dtype=int), np.array([], dtype=int), np.array([]), np.array([]), 0.0)
+    return Echoes(np.concatenate(rows), np.concatenate(cols), np.concatenate(times),
+                  np.concatenate(amplitudes), max_time)
+
+
+def _bscan_summary(envelope: np.ndarray, time: np.ndarray, size_x: float, y_mm: float) -> dict:
+    """Max-pool envelope time bins; signed RF is never decimated into an image."""
+    nt = len(time)
+    stride = max(1, int(np.ceil(nt / 512)))
+    starts = np.arange(0, nt, stride)
+    image = np.maximum.reduceat(envelope, starts, axis=1).T
+    # Internal edges bisect neighboring RF sample times. Endpoint bins end at
+    # the acquisition boundary, retaining positive width even for one final sample.
+    edges = np.r_[time[0], (starts[1:] - 0.5) * (time[1] - time[0]), time[-1]]
+    return {
+        "image": image.astype(float).tolist(),
+        "extent": [0.0, float(size_x), 0.0, float(time[-1])],
+        "unit": "relative echo amplitude",
+        "y_mm": float(y_mm),
+        "time_reduction": "maximum analytic envelope per time bin",
+        "time_bin_edges_us": edges.tolist(),
+        "rf_samples_per_time_bin": stride,
+    }
+
+
+def _sam_signals(grid: MaterialGrid, settings: dict, full_image: bool) -> dict:
+    freq = settings["frequency_mhz"]
+    echoes = acoustic_echoes(grid, freq, settings["focus_mm"])
+    dt = 1.0 / (8 * freq)
+    sigma_t = 0.75 / freq
+    end = min(MAX_ACQUISITION_US, max(settings["gate_end_us"], echoes.max_time_us + 4 * sigma_t, 0.2))
+    nt = int(np.ceil(end / dt)) + 1
+    time = np.arange(nt) * dt
+    half = int(np.ceil(4 * sigma_t / dt))
+    nt_work = nt + 2 * half  # retain pulse tails at both acquisition boundaries
+    pulse_t = np.arange(-half, half + 1) * dt
+    wavelet = (np.exp(-0.5 * (pulse_t / sigma_t) ** 2) *
+               np.exp(2j * np.pi * freq * pulse_t)).astype(np.complex64)
+    ny, nx, _ = grid.labels.shape
+    dx, dy, _ = grid.pitch_mm
+    lateral_fwhm = 1.02 * SAM_F_NUMBER * (WATER_SOUND_SPEED_M_S / 1000) / freq
+    sigma_x = lateral_fwhm / np.sqrt(8 * np.log(2)) / dx
+    sigma_y = lateral_fwhm / np.sqrt(8 * np.log(2)) / dy
+    # scipy truncates its Gaussian at 4 sigma; exact halo avoids tile seams.
+    halo = int(4 * sigma_y + 0.5)
+    px = min(nx - 1, int(settings["probe_x_mm"] / dx))
+    py = min(ny - 1, int(settings["probe_y_mm"] / dy))
+    cscan = np.zeros((ny, nx), dtype=np.float32) if full_image else None
+    gate = (time >= settings["gate_start_us"]) & (time <= settings["gate_end_us"])
+    if not np.any(gate):
+        # A mathematically narrower-than-one-sample gate is evaluated at its
+        # nearest sample and called out in metadata, instead of an empty max.
+        gate[np.argmin(abs(time - (settings["gate_start_us"] + settings["gate_end_us"]) / 2))] = True
+    # Keep the complex tile below approximately 20 MiB before FFT workspace.
+    chunk = max(1, min(16, int(20_000_000 / (nx * nt_work * 8)) - 2 * halo))
+    starts = range(0, ny, chunk) if full_image else [py]
+    tile_cells = []
+    for start in starts:
+        stop = min(start + chunk, ny) if full_image else py + 1
+        tile_cells.append((min(ny, stop + halo) - max(0, start - halo)) * nx * nt_work)
+    if max(tile_cells) > 8_000_000 or sum(tile_cells) > 180_000_000:
+        raise ValueError(
+            "This specimen/acquisition exceeds the local RF computation budget. "
+            "Reduce resolution, shorten the gate end, or reduce acoustic frequency; "
+            "a very small lateral specimen may also require a higher frequency. "
+            "No acquisition settings were changed automatically."
+        )
+    ascan = bscan = None
+    for start in starts:
+        stop = min(start + chunk, ny) if full_image else py + 1
+        lo, hi = max(0, start - halo), min(ny, stop + halo)
+        cube = np.zeros((hi - lo, nx, nt_work), dtype=np.complex64)
+        chosen = ((echoes.rows >= lo) & (echoes.rows < hi) &
+                  (echoes.times_us <= time[-1] + 4 * sigma_t))
+        erow, ecol = echoes.rows[chosen] - lo, echoes.cols[chosen]
+        position = echoes.times_us[chosen] / dt + half
+        bins = np.floor(position).astype(int)
+        fraction = position - bins
+        amp = echoes.amplitudes[chosen]
+        # Phase-aware fractional deposition interpolates the pulse envelope
+        # without the spurious carrier attenuation of real linear deposition.
+        valid = bins < nt_work
+        w0 = amp * (1 - fraction) * np.exp(-2j * np.pi * freq * dt * fraction)
+        np.add.at(cube, (erow[valid], ecol[valid], bins[valid]), w0[valid])
+        valid = bins + 1 < nt_work
+        w1 = amp * fraction * np.exp(2j * np.pi * freq * dt * (1 - fraction))
+        np.add.at(cube, (erow[valid], ecol[valid], bins[valid] + 1), w1[valid])
+        rf = fftconvolve(cube, wavelet[None, None, :], mode="same", axes=2)
+        # Blur complex pressure, not the envelope. This preserves cancellation
+        # between unresolved interfaces and neighboring columns.
+        rf = gaussian_filter(rf, (sigma_y, sigma_x, 0), mode="nearest")
+        rf = rf[start - lo:stop - lo, :, half:half + nt]
+        envelope = np.abs(rf)
+        if full_image:
+            cscan[start:stop] = envelope[:, :, gate].max(axis=2)
+        if start <= py < stop:
+            line = rf[py - start]
+            line_envelope = envelope[py - start]
+            ascan = {
+                "time_us": time.tolist(),
+                "amplitude": line[px].real.astype(float).tolist(),
+                "envelope": line_envelope[px].astype(float).tolist(),
+                "probe_mm": [settings["probe_x_mm"], settings["probe_y_mm"]],
+                "sampled_probe_mm": [float((px + 0.5) * dx), float((py + 0.5) * dy)],
+            }
+            bscan = _bscan_summary(line_envelope, time, grid.size_mm[0], (py + 0.5) * dy)
+    warnings = []
+    if echoes.max_time_us > MAX_ACQUISITION_US:
+        warnings.append("Echoes later than 12 us are outside the finite acquisition window.")
+    if settings["gate_end_us"] - settings["gate_start_us"] < dt:
+        warnings.append("The acoustic gate is narrower than one RF time sample; nearest sample used if necessary.")
+    if max(dx, dy) > lateral_fwhm / 2:
+        warnings.append("The lateral grid undersamples the modeled acoustic focal spot; pixel pitch limits resolved detail.")
+    return {"image": cscan, "ascan": ascan, "bscan": bscan, "warnings": warnings,
+            "rf_sample_interval_us": dt, "acoustic_lateral_fwhm_mm": lateral_fwhm}
+
+
+def _image_result(image: np.ndarray, unit: str, size: np.ndarray) -> dict:
+    return {"image": image.astype(float).tolist(), "unit": unit,
+            "extent_mm": [0.0, float(size[0]), 0.0, float(size[1])],
+            "min": float(image.min()), "max": float(image.max())}
+
+
+def simulate(twin: dict, settings: dict) -> dict:
+    """Compute both registered modalities from a validated twin and settings."""
+    start = perf_counter()
+    grid = voxelize(twin, settings["resolution"], settings["include_defects"])
+    xray = project_xray(grid, settings["energy_kev"], settings["angle_deg"],
+                       settings["photons"], settings["noise"], settings["seed"])
+    sam = _sam_signals(grid, settings, full_image=True)
+    warnings = grid.warnings + sam["warnings"]
+    if settings["angle_deg"]:
+        warnings.append("Tilted X-ray pixels are detector projection coordinates; they are not exactly co-registered "
+                        "with the specimen x/y acoustic scan. The fixed detector extent can crop the projection.")
+    xray_result = _image_result(xray, "I / I0", grid.size_mm)
+    xray_result["mean_transmission"] = float(xray.mean())
+    sam_result = _image_result(sam["image"], "relative echo amplitude", grid.size_mm)
+    sam_result["peak_amplitude"] = float(sam["image"].max())
+    return {
+        "xray": xray_result, "sam": sam_result, "ascan": sam["ascan"], "bscan": sam["bscan"],
+        "metadata": {
+            "runtime_ms": round((perf_counter() - start) * 1000, 1),
+            "grid_shape": list(grid.labels.shape),
+            "pixel_pitch_um": (grid.pitch_mm[:2] * 1000).tolist(),
+            "voxel_depth_um": float(grid.pitch_mm[2] * 1000),
+            "seed": settings["seed"], "model_version": "0.1.0", "warnings": warnings,
+            "rf_sample_interval_us": sam["rf_sample_interval_us"],
+            "acoustic_lateral_fwhm_mm": sam["acoustic_lateral_fwhm_mm"],
+            "xray_detector_fwhm_mm": DETECTOR_FWHM_MM,
+            "assumptions": [
+                "Synthetic reduced-order forward simulation; no experimental validation or calibration.",
+                "Shared voxel-center sampled geometry: later primitives overwrite earlier; pixel pitch is not physical resolution.",
+                "X-ray: monochromatic parallel beams, NIST mass attenuation, Beer-Lambert line integral; no scatter, beam hardening or CT reconstruction.",
+                "X-ray detector: illustrative 20 um FWHM Gaussian PSF and optional seeded Poisson photon counts; values are not clipped or normalized per image.",
+                "Solder uses pure tin; epoxy uses PMMA attenuation; FR-4 uses an illustrative 60 wt% silica/40 wt% PMMA mixture.",
+                "SAM: immersion water surrounds primitives; explicit air voids remain air; time zero is specimen top plane, excluding transducer standoff.",
+                "SAM: normal-incidence primary longitudinal echoes with signed pressure reflection, round-trip transmission and frequency-dependent attenuation; no multiple reflections, refraction, shear conversion or full-wave scattering.",
+                "SAM acoustic speeds/densities are nominal inputs and loss laws are uncalibrated estimates; interfaces are treated as perfectly bonded except explicit voids.",
+                "SAM finite bandwidth: analytic Gaussian cosine pulse with sigma=0.75/f; eight RF samples per period and phase-aware fractional delays.",
+                "SAM illustrative focus model: F-number 2, lateral Gaussian FWHM=1.02*F#*water wavelength, depth gain=1/(1+((z-focus)/(2*wavelength*F#^2))^2).",
+                "SAM lateral PSF smooths complex pressure before envelope; Cscan is peak analytic envelope in the selected gate; Bscan is envelope maximum per time bin.",
+                "Echo amplitudes below 1e-8 are omitted and acquisition ends at 12 us; probe coordinates sample the nearest material-grid column.",
+            ],
+        },
+    }
+
+
+def probe(twin: dict, settings: dict) -> dict:
+    """Synthesize a local RF strip for linked A/B inspection without a full Cscan."""
+    grid = voxelize(twin, settings["resolution"], settings["include_defects"])
+    sam = _sam_signals(grid, settings, full_image=False)
+    return {"ascan": sam["ascan"], "bscan": sam["bscan"]}

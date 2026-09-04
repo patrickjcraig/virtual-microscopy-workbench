@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "name": "Power die / bonded copper",
+  "description": "Synthetic planar power-electronics coupon with a silicon die, solder attach and copper heat spreader. An attach void and corner delamination provide controlled acoustic/X-ray comparisons.",
+  "size_mm": [
+    6,
+    6,
+    1.5
+  ],
+  "objects": [
+    {
+      "id": "cap",
+      "name": "Epoxy package",
+      "material": "epoxy",
+      "center_mm": [
+        3,
+        3,
+        0.35
+      ],
+      "size_mm": [
+        6,
+        6,
+        0.7
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "die",
+      "name": "Silicon power die",
+      "material": "silicon",
+      "center_mm": [
+        3,
+        3,
+        0.43
+      ],
+      "size_mm": [
+        3.8,
+        3.8,
+        0.34
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "attach",
+      "name": "Solder die attach",
+      "material": "solder",
+      "center_mm": [
+        3,
+        3,
+        0.65
+      ],
+      "size_mm": [
+        4,
+        4,
+        0.1
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "spreader",
+      "name": "Copper heat spreader",
+      "material": "copper",
+      "center_mm": [
+        3,
+        3,
+        0.9
+      ],
+      "size_mm": [
+        5.8,
+        5.8,
+        0.4
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "carrier",
+      "name": "FR-4 carrier",
+      "material": "fr4",
+      "center_mm": [
+        3,
+        3,
+        1.25
+      ],
+      "size_mm": [
+        6,
+        6,
+        0.3
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "void",
+      "name": "Die-attach void",
+      "material": "air",
+      "center_mm": [
+        2.2,
+        2.4,
+        0.65
+      ],
+      "size_mm": [
+        0.7,
+        0.7,
+        0.06
+      ],
+      "shape": "cylinder",
+      "role": "defect"
+    },
+    {
+      "id": "delam",
+      "name": "Corner delamination",
+      "material": "air",
+      "center_mm": [
+        4.2,
+        4.2,
+        0.6075
+      ],
+      "size_mm": [
+        0.9,
+        0.9,
+        0.045
+      ],
+      "shape": "box",
+      "role": "defect"
+    }
+  ]
+}

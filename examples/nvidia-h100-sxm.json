@@ -1,0 +1,6223 @@
+{
+  "schema_version": 1,
+  "name": "NVIDIA H100 SXM / reference model",
+  "description": "Public-reference H100 SXM 80 GB teaching model: GH100 die and five functional HBM3 blocks, with an assumed interposer, package substrate and coarse interconnects. NVIDIA documents the 814 mm2 die area and five-stack HBM3 configuration; package dimensions, internal geometry and seeded defects are illustrative, not NVIDIA CAD or measured hardware.",
+  "size_mm": [
+    60,
+    60,
+    2.65
+  ],
+  "objects": [
+    {
+      "id": "substrate",
+      "name": "Assumed organic package substrate (FR-4 proxy)",
+      "material": "fr4",
+      "center_mm": [
+        30,
+        30,
+        1.715
+      ],
+      "size_mm": [
+        60,
+        60,
+        0.67
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "interposer-bond",
+      "name": "Assumed interposer attach / underfill",
+      "material": "epoxy",
+      "center_mm": [
+        30,
+        30,
+        1.3
+      ],
+      "size_mm": [
+        50,
+        44,
+        0.16
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "interposer",
+      "name": "Assumed silicon interposer",
+      "material": "silicon",
+      "center_mm": [
+        30,
+        30,
+        1.11
+      ],
+      "size_mm": [
+        50,
+        44,
+        0.22
+      ],
+      "shape": "box",
+      "role": "structure",
+      "display_label": "Silicon interposer"
+    },
+    {
+      "id": "gpu-underfill",
+      "name": "Assumed GH100 underfill",
+      "material": "epoxy",
+      "center_mm": [
+        30,
+        30,
+        0.91
+      ],
+      "size_mm": [
+        26.7,
+        30.48689138576779,
+        0.18
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "gh100",
+      "name": "GH100 die / 814 mm2; aspect and thickness assumed",
+      "material": "silicon",
+      "center_mm": [
+        30,
+        30,
+        0.485
+      ],
+      "size_mm": [
+        26.7,
+        30.48689138576779,
+        0.67
+      ],
+      "shape": "box",
+      "role": "structure",
+      "display_label": "GH100 · 814 mm²"
+    },
+    {
+      "id": "substrate-plane",
+      "name": "Assumed coarse copper reference plane",
+      "material": "copper",
+      "center_mm": [
+        30,
+        30,
+        1.92
+      ],
+      "size_mm": [
+        57,
+        57,
+        0.06
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-underfill-1",
+      "name": "HBM3 block 1 assumed underfill",
+      "material": "epoxy",
+      "center_mm": [
+        10.5,
+        20,
+        0.91
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.18
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-1",
+      "name": "HBM3 functional stack 1 / homogeneous silicon aggregate",
+      "material": "silicon",
+      "center_mm": [
+        10.5,
+        20,
+        0.51
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.62
+      ],
+      "shape": "box",
+      "role": "structure",
+      "display_label": "HBM3 1"
+    },
+    {
+      "id": "hbm-contact-1-1",
+      "name": "HBM3 1 aggregate solder contact 1 (assumed)",
+      "material": "solder",
+      "center_mm": [
+        10.5,
+        17.5,
+        0.91
+      ],
+      "size_mm": [
+        2.2,
+        2.2,
+        0.18
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-contact-1-2",
+      "name": "HBM3 1 aggregate solder contact 2 (assumed)",
+      "material": "solder",
+      "center_mm": [
+        10.5,
+        20,
+        0.91
+      ],
+      "size_mm": [
+        2.2,
+        2.2,
+        0.18
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-contact-1-3",
+      "name": "HBM3 1 aggregate solder contact 3 (assumed)",
+      "material": "solder",
+      "center_mm": [
+        10.5,
+        22.5,
+        0.91
+      ],
+      "size_mm": [
+        2.2,
+        2.2,
+        0.18
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-route-1-1",
+      "name": "HBM3 1 illustrative copper routing lane 1",
+      "material": "copper",
+      "center_mm": [
+        15.2,
+        17,
+        1.045
+      ],
+      "size_mm": [
+        7.5,
+        0.7,
+        0.05
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-route-1-2",
+      "name": "HBM3 1 illustrative copper routing lane 2",
+      "material": "copper",
+      "center_mm": [
+        15.2,
+        18.5,
+        1.045
+      ],
+      "size_mm": [
+        7.5,
+        0.7,
+        0.05
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-route-1-3",
+      "name": "HBM3 1 illustrative copper routing lane 3",
+      "material": "copper",
+      "center_mm": [
+        15.2,
+        20,
+        1.045
+      ],
+      "size_mm": [
+        7.5,
+        0.7,
+        0.05
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-route-1-4",
+      "name": "HBM3 1 illustrative copper routing lane 4",
+      "material": "copper",
+      "center_mm": [
+        15.2,
+        21.5,
+        1.045
+      ],
+      "size_mm": [
+        7.5,
+        0.7,
+        0.05
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-route-1-5",
+      "name": "HBM3 1 illustrative copper routing lane 5",
+      "material": "copper",
+      "center_mm": [
+        15.2,
+        23,
+        1.045
+      ],
+      "size_mm": [
+        7.5,
+        0.7,
+        0.05
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-underfill-2",
+      "name": "HBM3 block 2 assumed underfill",
+      "material": "epoxy",
+      "center_mm": [
+        10.5,
+        30,
+        0.91
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.18
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-2",
+      "name": "HBM3 functional stack 2 / homogeneous silicon aggregate",
+      "material": "silicon",
+      "center_mm": [
+        10.5,
+        30,
+        0.51
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.62
+      ],
+      "shape": "box",
+      "role": "structure",
+      "display_label": "HBM3 2"
+    },
+    {
+      "id": "hbm-contact-2-1",
+      "name": "HBM3 2 aggregate solder contact 1 (assumed)",
+      "material": "solder",
+      "center_mm": [
+        10.5,
+        27.5,
+        0.91
+      ],
+      "size_mm": [
+        2.2,
+        2.2,
+        0.18
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-contact-2-2",
+      "name": "HBM3 2 aggregate solder contact 2 (assumed)",
+      "material": "solder",
+      "center_mm": [
+        10.5,
+        30,
+        0.91
+      ],
+      "size_mm": [
+        2.2,
+        2.2,
+        0.18
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-contact-2-3",
+      "name": "HBM3 2 aggregate solder contact 3 (assumed)",
+      "material": "solder",
+      "center_mm": [
+        10.5,
+        32.5,
+        0.91
+      ],
+      "size_mm": [
+        2.2,
+        2.2,
+        0.18
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-route-2-1",
+      "name": "HBM3 2 illustrative copper routing lane 1",
+      "material": "copper",
+      "center_mm": [
+        15.2,
+        27,
+        1.045
+      ],
+      "size_mm": [
+        7.5,
+        0.7,
+        0.05
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-route-2-2",
+      "name": "HBM3 2 illustrative copper routing lane 2",
+      "material": "copper",
+      "center_mm": [
+        15.2,
+        28.5,
+        1.045
+      ],
+      "size_mm": [
+        7.5,
+        0.7,
+        0.05
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-route-2-3",
+      "name": "HBM3 2 illustrative copper routing lane 3",
+      "material": "copper",
+      "center_mm": [
+        15.2,
+        30,
+        1.045
+      ],
+      "size_mm": [
+        7.5,
+        0.7,
+        0.05
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-route-2-4",
+      "name": "HBM3 2 illustrative copper routing lane 4",
+      "material": "copper",
+      "center_mm": [
+        15.2,
+        31.5,
+        1.045
+      ],
+      "size_mm": [
+        7.5,
+        0.7,
+        0.05
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-route-2-5",
+      "name": "HBM3 2 illustrative copper routing lane 5",
+      "material": "copper",
+      "center_mm": [
+        15.2,
+        33,
+        1.045
+      ],
+      "size_mm": [
+        7.5,
+        0.7,
+        0.05
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-underfill-3",
+      "name": "HBM3 block 3 assumed underfill",
+      "material": "epoxy",
+      "center_mm": [
+        10.5,
+        40,
+        0.91
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.18
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-3",
+      "name": "HBM3 functional stack 3 / homogeneous silicon aggregate",
+      "material": "silicon",
+      "center_mm": [
+        10.5,
+        40,
+        0.51
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.62
+      ],
+      "shape": "box",
+      "role": "structure",
+      "display_label": "HBM3 3"
+    },
+    {
+      "id": "hbm-contact-3-1",
+      "name": "HBM3 3 aggregate solder contact 1 (assumed)",
+      "material": "solder",
+      "center_mm": [
+        10.5,
+        37.5,
+        0.91
+      ],
+      "size_mm": [
+        2.2,
+        2.2,
+        0.18
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-contact-3-2",
+      "name": "HBM3 3 aggregate solder contact 2 (assumed)",
+      "material": "solder",
+      "center_mm": [
+        10.5,
+        40,
+        0.91
+      ],
+      "size_mm": [
+        2.2,
+        2.2,
+        0.18
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-contact-3-3",
+      "name": "HBM3 3 aggregate solder contact 3 (assumed)",
+      "material": "solder",
+      "center_mm": [
+        10.5,
+        42.5,
+        0.91
+      ],
+      "size_mm": [
+        2.2,
+        2.2,
+        0.18
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-route-3-1",
+      "name": "HBM3 3 illustrative copper routing lane 1",
+      "material": "copper",
+      "center_mm": [
+        15.2,
+        37,
+        1.045
+      ],
+      "size_mm": [
+        7.5,
+        0.7,
+        0.05
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-route-3-2",
+      "name": "HBM3 3 illustrative copper routing lane 2",
+      "material": "copper",
+      "center_mm": [
+        15.2,
+        38.5,
+        1.045
+      ],
+      "size_mm": [
+        7.5,
+        0.7,
+        0.05
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-route-3-3",
+      "name": "HBM3 3 illustrative copper routing lane 3",
+      "material": "copper",
+      "center_mm": [
+        15.2,
+        40,
+        1.045
+      ],
+      "size_mm": [
+        7.5,
+        0.7,
+        0.05
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-route-3-4",
+      "name": "HBM3 3 illustrative copper routing lane 4",
+      "material": "copper",
+      "center_mm": [
+        15.2,
+        41.5,
+        1.045
+      ],
+      "size_mm": [
+        7.5,
+        0.7,
+        0.05
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-route-3-5",
+      "name": "HBM3 3 illustrative copper routing lane 5",
+      "material": "copper",
+      "center_mm": [
+        15.2,
+        43,
+        1.045
+      ],
+      "size_mm": [
+        7.5,
+        0.7,
+        0.05
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-underfill-4",
+      "name": "HBM3 block 4 assumed underfill",
+      "material": "epoxy",
+      "center_mm": [
+        49.5,
+        20,
+        0.91
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.18
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-4",
+      "name": "HBM3 functional stack 4 / homogeneous silicon aggregate",
+      "material": "silicon",
+      "center_mm": [
+        49.5,
+        20,
+        0.51
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.62
+      ],
+      "shape": "box",
+      "role": "structure",
+      "display_label": "HBM3 4"
+    },
+    {
+      "id": "hbm-contact-4-1",
+      "name": "HBM3 4 aggregate solder contact 1 (assumed)",
+      "material": "solder",
+      "center_mm": [
+        49.5,
+        17.5,
+        0.91
+      ],
+      "size_mm": [
+        2.2,
+        2.2,
+        0.18
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-contact-4-2",
+      "name": "HBM3 4 aggregate solder contact 2 (assumed)",
+      "material": "solder",
+      "center_mm": [
+        49.5,
+        20,
+        0.91
+      ],
+      "size_mm": [
+        2.2,
+        2.2,
+        0.18
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-contact-4-3",
+      "name": "HBM3 4 aggregate solder contact 3 (assumed)",
+      "material": "solder",
+      "center_mm": [
+        49.5,
+        22.5,
+        0.91
+      ],
+      "size_mm": [
+        2.2,
+        2.2,
+        0.18
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-route-4-1",
+      "name": "HBM3 4 illustrative copper routing lane 1",
+      "material": "copper",
+      "center_mm": [
+        44.8,
+        17,
+        1.045
+      ],
+      "size_mm": [
+        7.5,
+        0.7,
+        0.05
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-route-4-2",
+      "name": "HBM3 4 illustrative copper routing lane 2",
+      "material": "copper",
+      "center_mm": [
+        44.8,
+        18.5,
+        1.045
+      ],
+      "size_mm": [
+        7.5,
+        0.7,
+        0.05
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-route-4-3",
+      "name": "HBM3 4 illustrative copper routing lane 3",
+      "material": "copper",
+      "center_mm": [
+        44.8,
+        20,
+        1.045
+      ],
+      "size_mm": [
+        7.5,
+        0.7,
+        0.05
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-route-4-4",
+      "name": "HBM3 4 illustrative copper routing lane 4",
+      "material": "copper",
+      "center_mm": [
+        44.8,
+        21.5,
+        1.045
+      ],
+      "size_mm": [
+        7.5,
+        0.7,
+        0.05
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-route-4-5",
+      "name": "HBM3 4 illustrative copper routing lane 5",
+      "material": "copper",
+      "center_mm": [
+        44.8,
+        23,
+        1.045
+      ],
+      "size_mm": [
+        7.5,
+        0.7,
+        0.05
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-underfill-5",
+      "name": "HBM3 block 5 assumed underfill",
+      "material": "epoxy",
+      "center_mm": [
+        49.5,
+        30,
+        0.91
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.18
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-5",
+      "name": "HBM3 functional stack 5 / homogeneous silicon aggregate",
+      "material": "silicon",
+      "center_mm": [
+        49.5,
+        30,
+        0.51
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.62
+      ],
+      "shape": "box",
+      "role": "structure",
+      "display_label": "HBM3 5"
+    },
+    {
+      "id": "hbm-contact-5-1",
+      "name": "HBM3 5 aggregate solder contact 1 (assumed)",
+      "material": "solder",
+      "center_mm": [
+        49.5,
+        27.5,
+        0.91
+      ],
+      "size_mm": [
+        2.2,
+        2.2,
+        0.18
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-contact-5-2",
+      "name": "HBM3 5 aggregate solder contact 2 (assumed)",
+      "material": "solder",
+      "center_mm": [
+        49.5,
+        30,
+        0.91
+      ],
+      "size_mm": [
+        2.2,
+        2.2,
+        0.18
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-contact-5-3",
+      "name": "HBM3 5 aggregate solder contact 3 (assumed)",
+      "material": "solder",
+      "center_mm": [
+        49.5,
+        32.5,
+        0.91
+      ],
+      "size_mm": [
+        2.2,
+        2.2,
+        0.18
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-route-5-1",
+      "name": "HBM3 5 illustrative copper routing lane 1",
+      "material": "copper",
+      "center_mm": [
+        44.8,
+        27,
+        1.045
+      ],
+      "size_mm": [
+        7.5,
+        0.7,
+        0.05
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-route-5-2",
+      "name": "HBM3 5 illustrative copper routing lane 2",
+      "material": "copper",
+      "center_mm": [
+        44.8,
+        28.5,
+        1.045
+      ],
+      "size_mm": [
+        7.5,
+        0.7,
+        0.05
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-route-5-3",
+      "name": "HBM3 5 illustrative copper routing lane 3",
+      "material": "copper",
+      "center_mm": [
+        44.8,
+        30,
+        1.045
+      ],
+      "size_mm": [
+        7.5,
+        0.7,
+        0.05
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-route-5-4",
+      "name": "HBM3 5 illustrative copper routing lane 4",
+      "material": "copper",
+      "center_mm": [
+        44.8,
+        31.5,
+        1.045
+      ],
+      "size_mm": [
+        7.5,
+        0.7,
+        0.05
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-route-5-5",
+      "name": "HBM3 5 illustrative copper routing lane 5",
+      "material": "copper",
+      "center_mm": [
+        44.8,
+        33,
+        1.045
+      ],
+      "size_mm": [
+        7.5,
+        0.7,
+        0.05
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "gpu-contact-0-0",
+      "name": "GH100 aggregate solder contact 1:1",
+      "material": "solder",
+      "center_mm": [
+        20.5,
+        20.5,
+        0.94
+      ],
+      "size_mm": [
+        1.3,
+        1.3,
+        0.12
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "gpu-contact-0-1",
+      "name": "GH100 aggregate solder contact 1:2",
+      "material": "solder",
+      "center_mm": [
+        24.3,
+        20.5,
+        0.94
+      ],
+      "size_mm": [
+        1.3,
+        1.3,
+        0.12
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "gpu-contact-0-2",
+      "name": "GH100 aggregate solder contact 1:3",
+      "material": "solder",
+      "center_mm": [
+        28.1,
+        20.5,
+        0.94
+      ],
+      "size_mm": [
+        1.3,
+        1.3,
+        0.12
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "gpu-contact-0-3",
+      "name": "GH100 aggregate solder contact 1:4",
+      "material": "solder",
+      "center_mm": [
+        31.9,
+        20.5,
+        0.94
+      ],
+      "size_mm": [
+        1.3,
+        1.3,
+        0.12
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "gpu-contact-0-4",
+      "name": "GH100 aggregate solder contact 1:5",
+      "material": "solder",
+      "center_mm": [
+        35.7,
+        20.5,
+        0.94
+      ],
+      "size_mm": [
+        1.3,
+        1.3,
+        0.12
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "gpu-contact-0-5",
+      "name": "GH100 aggregate solder contact 1:6",
+      "material": "solder",
+      "center_mm": [
+        39.5,
+        20.5,
+        0.94
+      ],
+      "size_mm": [
+        1.3,
+        1.3,
+        0.12
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "gpu-contact-1-0",
+      "name": "GH100 aggregate solder contact 2:1",
+      "material": "solder",
+      "center_mm": [
+        20.5,
+        24.3,
+        0.94
+      ],
+      "size_mm": [
+        1.3,
+        1.3,
+        0.12
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "gpu-contact-1-1",
+      "name": "GH100 aggregate solder contact 2:2",
+      "material": "solder",
+      "center_mm": [
+        24.3,
+        24.3,
+        0.94
+      ],
+      "size_mm": [
+        1.3,
+        1.3,
+        0.12
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "gpu-contact-1-2",
+      "name": "GH100 aggregate solder contact 2:3",
+      "material": "solder",
+      "center_mm": [
+        28.1,
+        24.3,
+        0.94
+      ],
+      "size_mm": [
+        1.3,
+        1.3,
+        0.12
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "gpu-contact-1-3",
+      "name": "GH100 aggregate solder contact 2:4",
+      "material": "solder",
+      "center_mm": [
+        31.9,
+        24.3,
+        0.94
+      ],
+      "size_mm": [
+        1.3,
+        1.3,
+        0.12
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "gpu-contact-1-4",
+      "name": "GH100 aggregate solder contact 2:5",
+      "material": "solder",
+      "center_mm": [
+        35.7,
+        24.3,
+        0.94
+      ],
+      "size_mm": [
+        1.3,
+        1.3,
+        0.12
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "gpu-contact-1-5",
+      "name": "GH100 aggregate solder contact 2:6",
+      "material": "solder",
+      "center_mm": [
+        39.5,
+        24.3,
+        0.94
+      ],
+      "size_mm": [
+        1.3,
+        1.3,
+        0.12
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "gpu-contact-2-0",
+      "name": "GH100 aggregate solder contact 3:1",
+      "material": "solder",
+      "center_mm": [
+        20.5,
+        28.1,
+        0.94
+      ],
+      "size_mm": [
+        1.3,
+        1.3,
+        0.12
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "gpu-contact-2-1",
+      "name": "GH100 aggregate solder contact 3:2",
+      "material": "solder",
+      "center_mm": [
+        24.3,
+        28.1,
+        0.94
+      ],
+      "size_mm": [
+        1.3,
+        1.3,
+        0.12
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "gpu-contact-2-2",
+      "name": "GH100 aggregate solder contact 3:3",
+      "material": "solder",
+      "center_mm": [
+        28.1,
+        28.1,
+        0.94
+      ],
+      "size_mm": [
+        1.3,
+        1.3,
+        0.12
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "gpu-contact-2-3",
+      "name": "GH100 aggregate solder contact 3:4",
+      "material": "solder",
+      "center_mm": [
+        31.9,
+        28.1,
+        0.94
+      ],
+      "size_mm": [
+        1.3,
+        1.3,
+        0.12
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "gpu-contact-2-4",
+      "name": "GH100 aggregate solder contact 3:5",
+      "material": "solder",
+      "center_mm": [
+        35.7,
+        28.1,
+        0.94
+      ],
+      "size_mm": [
+        1.3,
+        1.3,
+        0.12
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "gpu-contact-2-5",
+      "name": "GH100 aggregate solder contact 3:6",
+      "material": "solder",
+      "center_mm": [
+        39.5,
+        28.1,
+        0.94
+      ],
+      "size_mm": [
+        1.3,
+        1.3,
+        0.12
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "gpu-contact-3-0",
+      "name": "GH100 aggregate solder contact 4:1",
+      "material": "solder",
+      "center_mm": [
+        20.5,
+        31.9,
+        0.94
+      ],
+      "size_mm": [
+        1.3,
+        1.3,
+        0.12
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "gpu-contact-3-1",
+      "name": "GH100 aggregate solder contact 4:2",
+      "material": "solder",
+      "center_mm": [
+        24.3,
+        31.9,
+        0.94
+      ],
+      "size_mm": [
+        1.3,
+        1.3,
+        0.12
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "gpu-contact-3-2",
+      "name": "GH100 aggregate solder contact 4:3",
+      "material": "solder",
+      "center_mm": [
+        28.1,
+        31.9,
+        0.94
+      ],
+      "size_mm": [
+        1.3,
+        1.3,
+        0.12
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "gpu-contact-3-3",
+      "name": "GH100 aggregate solder contact 4:4",
+      "material": "solder",
+      "center_mm": [
+        31.9,
+        31.9,
+        0.94
+      ],
+      "size_mm": [
+        1.3,
+        1.3,
+        0.12
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "gpu-contact-3-4",
+      "name": "GH100 aggregate solder contact 4:5",
+      "material": "solder",
+      "center_mm": [
+        35.7,
+        31.9,
+        0.94
+      ],
+      "size_mm": [
+        1.3,
+        1.3,
+        0.12
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "gpu-contact-3-5",
+      "name": "GH100 aggregate solder contact 4:6",
+      "material": "solder",
+      "center_mm": [
+        39.5,
+        31.9,
+        0.94
+      ],
+      "size_mm": [
+        1.3,
+        1.3,
+        0.12
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "gpu-contact-4-0",
+      "name": "GH100 aggregate solder contact 5:1",
+      "material": "solder",
+      "center_mm": [
+        20.5,
+        35.7,
+        0.94
+      ],
+      "size_mm": [
+        1.3,
+        1.3,
+        0.12
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "gpu-contact-4-1",
+      "name": "GH100 aggregate solder contact 5:2",
+      "material": "solder",
+      "center_mm": [
+        24.3,
+        35.7,
+        0.94
+      ],
+      "size_mm": [
+        1.3,
+        1.3,
+        0.12
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "gpu-contact-4-2",
+      "name": "GH100 aggregate solder contact 5:3",
+      "material": "solder",
+      "center_mm": [
+        28.1,
+        35.7,
+        0.94
+      ],
+      "size_mm": [
+        1.3,
+        1.3,
+        0.12
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "gpu-contact-4-3",
+      "name": "GH100 aggregate solder contact 5:4",
+      "material": "solder",
+      "center_mm": [
+        31.9,
+        35.7,
+        0.94
+      ],
+      "size_mm": [
+        1.3,
+        1.3,
+        0.12
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "gpu-contact-4-4",
+      "name": "GH100 aggregate solder contact 5:5",
+      "material": "solder",
+      "center_mm": [
+        35.7,
+        35.7,
+        0.94
+      ],
+      "size_mm": [
+        1.3,
+        1.3,
+        0.12
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "gpu-contact-4-5",
+      "name": "GH100 aggregate solder contact 5:6",
+      "material": "solder",
+      "center_mm": [
+        39.5,
+        35.7,
+        0.94
+      ],
+      "size_mm": [
+        1.3,
+        1.3,
+        0.12
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "gpu-contact-5-0",
+      "name": "GH100 aggregate solder contact 6:1",
+      "material": "solder",
+      "center_mm": [
+        20.5,
+        39.5,
+        0.94
+      ],
+      "size_mm": [
+        1.3,
+        1.3,
+        0.12
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "gpu-contact-5-1",
+      "name": "GH100 aggregate solder contact 6:2",
+      "material": "solder",
+      "center_mm": [
+        24.3,
+        39.5,
+        0.94
+      ],
+      "size_mm": [
+        1.3,
+        1.3,
+        0.12
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "gpu-contact-5-2",
+      "name": "GH100 aggregate solder contact 6:3",
+      "material": "solder",
+      "center_mm": [
+        28.1,
+        39.5,
+        0.94
+      ],
+      "size_mm": [
+        1.3,
+        1.3,
+        0.12
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "gpu-contact-5-3",
+      "name": "GH100 aggregate solder contact 6:4",
+      "material": "solder",
+      "center_mm": [
+        31.9,
+        39.5,
+        0.94
+      ],
+      "size_mm": [
+        1.3,
+        1.3,
+        0.12
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "gpu-contact-5-4",
+      "name": "GH100 aggregate solder contact 6:5",
+      "material": "solder",
+      "center_mm": [
+        35.7,
+        39.5,
+        0.94
+      ],
+      "size_mm": [
+        1.3,
+        1.3,
+        0.12
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "gpu-contact-5-5",
+      "name": "GH100 aggregate solder contact 6:6",
+      "material": "solder",
+      "center_mm": [
+        39.5,
+        39.5,
+        0.94
+      ],
+      "size_mm": [
+        1.3,
+        1.3,
+        0.12
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "route-x-0",
+      "name": "Assumed substrate copper lane X 1",
+      "material": "copper",
+      "center_mm": [
+        30,
+        6.6,
+        1.5
+      ],
+      "size_mm": [
+        53,
+        0.55,
+        0.06
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "route-y-0",
+      "name": "Assumed substrate copper lane Y 1",
+      "material": "copper",
+      "center_mm": [
+        6.6,
+        30,
+        1.68
+      ],
+      "size_mm": [
+        0.55,
+        53,
+        0.06
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-0-0",
+      "name": "Assumed package terminal aggregate 1:1",
+      "material": "solder",
+      "center_mm": [
+        6.6,
+        6.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-0-1",
+      "name": "Assumed package terminal aggregate 1:2",
+      "material": "solder",
+      "center_mm": [
+        6.6,
+        10.2,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-0-2",
+      "name": "Assumed package terminal aggregate 1:3",
+      "material": "solder",
+      "center_mm": [
+        6.6,
+        13.8,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-0-3",
+      "name": "Assumed package terminal aggregate 1:4",
+      "material": "solder",
+      "center_mm": [
+        6.6,
+        17.4,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-0-4",
+      "name": "Assumed package terminal aggregate 1:5",
+      "material": "solder",
+      "center_mm": [
+        6.6,
+        21.0,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-0-5",
+      "name": "Assumed package terminal aggregate 1:6",
+      "material": "solder",
+      "center_mm": [
+        6.6,
+        24.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-0-6",
+      "name": "Assumed package terminal aggregate 1:7",
+      "material": "solder",
+      "center_mm": [
+        6.6,
+        28.200000000000003,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-0-7",
+      "name": "Assumed package terminal aggregate 1:8",
+      "material": "solder",
+      "center_mm": [
+        6.6,
+        31.799999999999997,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-0-8",
+      "name": "Assumed package terminal aggregate 1:9",
+      "material": "solder",
+      "center_mm": [
+        6.6,
+        35.4,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-0-9",
+      "name": "Assumed package terminal aggregate 1:10",
+      "material": "solder",
+      "center_mm": [
+        6.6,
+        39.0,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-0-10",
+      "name": "Assumed package terminal aggregate 1:11",
+      "material": "solder",
+      "center_mm": [
+        6.6,
+        42.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-0-11",
+      "name": "Assumed package terminal aggregate 1:12",
+      "material": "solder",
+      "center_mm": [
+        6.6,
+        46.2,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-0-12",
+      "name": "Assumed package terminal aggregate 1:13",
+      "material": "solder",
+      "center_mm": [
+        6.6,
+        49.800000000000004,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-0-13",
+      "name": "Assumed package terminal aggregate 1:14",
+      "material": "solder",
+      "center_mm": [
+        6.6,
+        53.400000000000006,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "route-x-1",
+      "name": "Assumed substrate copper lane X 2",
+      "material": "copper",
+      "center_mm": [
+        30,
+        10.2,
+        1.5
+      ],
+      "size_mm": [
+        53,
+        0.55,
+        0.06
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "route-y-1",
+      "name": "Assumed substrate copper lane Y 2",
+      "material": "copper",
+      "center_mm": [
+        10.2,
+        30,
+        1.68
+      ],
+      "size_mm": [
+        0.55,
+        53,
+        0.06
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-1-0",
+      "name": "Assumed package terminal aggregate 2:1",
+      "material": "solder",
+      "center_mm": [
+        10.2,
+        6.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-1-1",
+      "name": "Assumed package terminal aggregate 2:2",
+      "material": "solder",
+      "center_mm": [
+        10.2,
+        10.2,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-1-2",
+      "name": "Assumed package terminal aggregate 2:3",
+      "material": "solder",
+      "center_mm": [
+        10.2,
+        13.8,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-1-3",
+      "name": "Assumed package terminal aggregate 2:4",
+      "material": "solder",
+      "center_mm": [
+        10.2,
+        17.4,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-1-4",
+      "name": "Assumed package terminal aggregate 2:5",
+      "material": "solder",
+      "center_mm": [
+        10.2,
+        21.0,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-1-5",
+      "name": "Assumed package terminal aggregate 2:6",
+      "material": "solder",
+      "center_mm": [
+        10.2,
+        24.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-1-6",
+      "name": "Assumed package terminal aggregate 2:7",
+      "material": "solder",
+      "center_mm": [
+        10.2,
+        28.200000000000003,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-1-7",
+      "name": "Assumed package terminal aggregate 2:8",
+      "material": "solder",
+      "center_mm": [
+        10.2,
+        31.799999999999997,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-1-8",
+      "name": "Assumed package terminal aggregate 2:9",
+      "material": "solder",
+      "center_mm": [
+        10.2,
+        35.4,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-1-9",
+      "name": "Assumed package terminal aggregate 2:10",
+      "material": "solder",
+      "center_mm": [
+        10.2,
+        39.0,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-1-10",
+      "name": "Assumed package terminal aggregate 2:11",
+      "material": "solder",
+      "center_mm": [
+        10.2,
+        42.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-1-11",
+      "name": "Assumed package terminal aggregate 2:12",
+      "material": "solder",
+      "center_mm": [
+        10.2,
+        46.2,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-1-12",
+      "name": "Assumed package terminal aggregate 2:13",
+      "material": "solder",
+      "center_mm": [
+        10.2,
+        49.800000000000004,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-1-13",
+      "name": "Assumed package terminal aggregate 2:14",
+      "material": "solder",
+      "center_mm": [
+        10.2,
+        53.400000000000006,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "route-x-2",
+      "name": "Assumed substrate copper lane X 3",
+      "material": "copper",
+      "center_mm": [
+        30,
+        13.8,
+        1.5
+      ],
+      "size_mm": [
+        53,
+        0.55,
+        0.06
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "route-y-2",
+      "name": "Assumed substrate copper lane Y 3",
+      "material": "copper",
+      "center_mm": [
+        13.8,
+        30,
+        1.68
+      ],
+      "size_mm": [
+        0.55,
+        53,
+        0.06
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-2-0",
+      "name": "Assumed package terminal aggregate 3:1",
+      "material": "solder",
+      "center_mm": [
+        13.8,
+        6.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-2-1",
+      "name": "Assumed package terminal aggregate 3:2",
+      "material": "solder",
+      "center_mm": [
+        13.8,
+        10.2,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-2-2",
+      "name": "Assumed package terminal aggregate 3:3",
+      "material": "solder",
+      "center_mm": [
+        13.8,
+        13.8,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-2-3",
+      "name": "Assumed package terminal aggregate 3:4",
+      "material": "solder",
+      "center_mm": [
+        13.8,
+        17.4,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-2-4",
+      "name": "Assumed package terminal aggregate 3:5",
+      "material": "solder",
+      "center_mm": [
+        13.8,
+        21.0,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-2-5",
+      "name": "Assumed package terminal aggregate 3:6",
+      "material": "solder",
+      "center_mm": [
+        13.8,
+        24.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-2-6",
+      "name": "Assumed package terminal aggregate 3:7",
+      "material": "solder",
+      "center_mm": [
+        13.8,
+        28.200000000000003,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-2-7",
+      "name": "Assumed package terminal aggregate 3:8",
+      "material": "solder",
+      "center_mm": [
+        13.8,
+        31.799999999999997,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-2-8",
+      "name": "Assumed package terminal aggregate 3:9",
+      "material": "solder",
+      "center_mm": [
+        13.8,
+        35.4,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-2-9",
+      "name": "Assumed package terminal aggregate 3:10",
+      "material": "solder",
+      "center_mm": [
+        13.8,
+        39.0,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-2-10",
+      "name": "Assumed package terminal aggregate 3:11",
+      "material": "solder",
+      "center_mm": [
+        13.8,
+        42.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-2-11",
+      "name": "Assumed package terminal aggregate 3:12",
+      "material": "solder",
+      "center_mm": [
+        13.8,
+        46.2,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-2-12",
+      "name": "Assumed package terminal aggregate 3:13",
+      "material": "solder",
+      "center_mm": [
+        13.8,
+        49.800000000000004,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-2-13",
+      "name": "Assumed package terminal aggregate 3:14",
+      "material": "solder",
+      "center_mm": [
+        13.8,
+        53.400000000000006,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "route-x-3",
+      "name": "Assumed substrate copper lane X 4",
+      "material": "copper",
+      "center_mm": [
+        30,
+        17.4,
+        1.5
+      ],
+      "size_mm": [
+        53,
+        0.55,
+        0.06
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "route-y-3",
+      "name": "Assumed substrate copper lane Y 4",
+      "material": "copper",
+      "center_mm": [
+        17.4,
+        30,
+        1.68
+      ],
+      "size_mm": [
+        0.55,
+        53,
+        0.06
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-3-0",
+      "name": "Assumed package terminal aggregate 4:1",
+      "material": "solder",
+      "center_mm": [
+        17.4,
+        6.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-3-1",
+      "name": "Assumed package terminal aggregate 4:2",
+      "material": "solder",
+      "center_mm": [
+        17.4,
+        10.2,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-3-2",
+      "name": "Assumed package terminal aggregate 4:3",
+      "material": "solder",
+      "center_mm": [
+        17.4,
+        13.8,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-3-3",
+      "name": "Assumed package terminal aggregate 4:4",
+      "material": "solder",
+      "center_mm": [
+        17.4,
+        17.4,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-3-4",
+      "name": "Assumed package terminal aggregate 4:5",
+      "material": "solder",
+      "center_mm": [
+        17.4,
+        21.0,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-3-5",
+      "name": "Assumed package terminal aggregate 4:6",
+      "material": "solder",
+      "center_mm": [
+        17.4,
+        24.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-3-6",
+      "name": "Assumed package terminal aggregate 4:7",
+      "material": "solder",
+      "center_mm": [
+        17.4,
+        28.200000000000003,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-3-7",
+      "name": "Assumed package terminal aggregate 4:8",
+      "material": "solder",
+      "center_mm": [
+        17.4,
+        31.799999999999997,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-3-8",
+      "name": "Assumed package terminal aggregate 4:9",
+      "material": "solder",
+      "center_mm": [
+        17.4,
+        35.4,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-3-9",
+      "name": "Assumed package terminal aggregate 4:10",
+      "material": "solder",
+      "center_mm": [
+        17.4,
+        39.0,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-3-10",
+      "name": "Assumed package terminal aggregate 4:11",
+      "material": "solder",
+      "center_mm": [
+        17.4,
+        42.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-3-11",
+      "name": "Assumed package terminal aggregate 4:12",
+      "material": "solder",
+      "center_mm": [
+        17.4,
+        46.2,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-3-12",
+      "name": "Assumed package terminal aggregate 4:13",
+      "material": "solder",
+      "center_mm": [
+        17.4,
+        49.800000000000004,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-3-13",
+      "name": "Assumed package terminal aggregate 4:14",
+      "material": "solder",
+      "center_mm": [
+        17.4,
+        53.400000000000006,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "route-x-4",
+      "name": "Assumed substrate copper lane X 5",
+      "material": "copper",
+      "center_mm": [
+        30,
+        21.0,
+        1.5
+      ],
+      "size_mm": [
+        53,
+        0.55,
+        0.06
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "route-y-4",
+      "name": "Assumed substrate copper lane Y 5",
+      "material": "copper",
+      "center_mm": [
+        21.0,
+        30,
+        1.68
+      ],
+      "size_mm": [
+        0.55,
+        53,
+        0.06
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-4-0",
+      "name": "Assumed package terminal aggregate 5:1",
+      "material": "solder",
+      "center_mm": [
+        21.0,
+        6.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-4-1",
+      "name": "Assumed package terminal aggregate 5:2",
+      "material": "solder",
+      "center_mm": [
+        21.0,
+        10.2,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-4-2",
+      "name": "Assumed package terminal aggregate 5:3",
+      "material": "solder",
+      "center_mm": [
+        21.0,
+        13.8,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-4-3",
+      "name": "Assumed package terminal aggregate 5:4",
+      "material": "solder",
+      "center_mm": [
+        21.0,
+        17.4,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-4-4",
+      "name": "Assumed package terminal aggregate 5:5",
+      "material": "solder",
+      "center_mm": [
+        21.0,
+        21.0,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-4-5",
+      "name": "Assumed package terminal aggregate 5:6",
+      "material": "solder",
+      "center_mm": [
+        21.0,
+        24.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-4-6",
+      "name": "Assumed package terminal aggregate 5:7",
+      "material": "solder",
+      "center_mm": [
+        21.0,
+        28.200000000000003,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-4-7",
+      "name": "Assumed package terminal aggregate 5:8",
+      "material": "solder",
+      "center_mm": [
+        21.0,
+        31.799999999999997,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-4-8",
+      "name": "Assumed package terminal aggregate 5:9",
+      "material": "solder",
+      "center_mm": [
+        21.0,
+        35.4,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-4-9",
+      "name": "Assumed package terminal aggregate 5:10",
+      "material": "solder",
+      "center_mm": [
+        21.0,
+        39.0,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-4-10",
+      "name": "Assumed package terminal aggregate 5:11",
+      "material": "solder",
+      "center_mm": [
+        21.0,
+        42.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-4-11",
+      "name": "Assumed package terminal aggregate 5:12",
+      "material": "solder",
+      "center_mm": [
+        21.0,
+        46.2,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-4-12",
+      "name": "Assumed package terminal aggregate 5:13",
+      "material": "solder",
+      "center_mm": [
+        21.0,
+        49.800000000000004,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-4-13",
+      "name": "Assumed package terminal aggregate 5:14",
+      "material": "solder",
+      "center_mm": [
+        21.0,
+        53.400000000000006,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "route-x-5",
+      "name": "Assumed substrate copper lane X 6",
+      "material": "copper",
+      "center_mm": [
+        30,
+        24.6,
+        1.5
+      ],
+      "size_mm": [
+        53,
+        0.55,
+        0.06
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "route-y-5",
+      "name": "Assumed substrate copper lane Y 6",
+      "material": "copper",
+      "center_mm": [
+        24.6,
+        30,
+        1.68
+      ],
+      "size_mm": [
+        0.55,
+        53,
+        0.06
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-5-0",
+      "name": "Assumed package terminal aggregate 6:1",
+      "material": "solder",
+      "center_mm": [
+        24.6,
+        6.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-5-1",
+      "name": "Assumed package terminal aggregate 6:2",
+      "material": "solder",
+      "center_mm": [
+        24.6,
+        10.2,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-5-2",
+      "name": "Assumed package terminal aggregate 6:3",
+      "material": "solder",
+      "center_mm": [
+        24.6,
+        13.8,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-5-3",
+      "name": "Assumed package terminal aggregate 6:4",
+      "material": "solder",
+      "center_mm": [
+        24.6,
+        17.4,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-5-4",
+      "name": "Assumed package terminal aggregate 6:5",
+      "material": "solder",
+      "center_mm": [
+        24.6,
+        21.0,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-5-5",
+      "name": "Assumed package terminal aggregate 6:6",
+      "material": "solder",
+      "center_mm": [
+        24.6,
+        24.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-5-6",
+      "name": "Assumed package terminal aggregate 6:7",
+      "material": "solder",
+      "center_mm": [
+        24.6,
+        28.200000000000003,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-5-7",
+      "name": "Assumed package terminal aggregate 6:8",
+      "material": "solder",
+      "center_mm": [
+        24.6,
+        31.799999999999997,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-5-8",
+      "name": "Assumed package terminal aggregate 6:9",
+      "material": "solder",
+      "center_mm": [
+        24.6,
+        35.4,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-5-9",
+      "name": "Assumed package terminal aggregate 6:10",
+      "material": "solder",
+      "center_mm": [
+        24.6,
+        39.0,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-5-10",
+      "name": "Assumed package terminal aggregate 6:11",
+      "material": "solder",
+      "center_mm": [
+        24.6,
+        42.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-5-11",
+      "name": "Assumed package terminal aggregate 6:12",
+      "material": "solder",
+      "center_mm": [
+        24.6,
+        46.2,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-5-12",
+      "name": "Assumed package terminal aggregate 6:13",
+      "material": "solder",
+      "center_mm": [
+        24.6,
+        49.800000000000004,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-5-13",
+      "name": "Assumed package terminal aggregate 6:14",
+      "material": "solder",
+      "center_mm": [
+        24.6,
+        53.400000000000006,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "route-x-6",
+      "name": "Assumed substrate copper lane X 7",
+      "material": "copper",
+      "center_mm": [
+        30,
+        28.200000000000003,
+        1.5
+      ],
+      "size_mm": [
+        53,
+        0.55,
+        0.06
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "route-y-6",
+      "name": "Assumed substrate copper lane Y 7",
+      "material": "copper",
+      "center_mm": [
+        28.200000000000003,
+        30,
+        1.68
+      ],
+      "size_mm": [
+        0.55,
+        53,
+        0.06
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-6-0",
+      "name": "Assumed package terminal aggregate 7:1",
+      "material": "solder",
+      "center_mm": [
+        28.200000000000003,
+        6.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-6-1",
+      "name": "Assumed package terminal aggregate 7:2",
+      "material": "solder",
+      "center_mm": [
+        28.200000000000003,
+        10.2,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-6-2",
+      "name": "Assumed package terminal aggregate 7:3",
+      "material": "solder",
+      "center_mm": [
+        28.200000000000003,
+        13.8,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-6-3",
+      "name": "Assumed package terminal aggregate 7:4",
+      "material": "solder",
+      "center_mm": [
+        28.200000000000003,
+        17.4,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-6-4",
+      "name": "Assumed package terminal aggregate 7:5",
+      "material": "solder",
+      "center_mm": [
+        28.200000000000003,
+        21.0,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-6-5",
+      "name": "Assumed package terminal aggregate 7:6",
+      "material": "solder",
+      "center_mm": [
+        28.200000000000003,
+        24.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-6-6",
+      "name": "Assumed package terminal aggregate 7:7",
+      "material": "solder",
+      "center_mm": [
+        28.200000000000003,
+        28.200000000000003,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-6-7",
+      "name": "Assumed package terminal aggregate 7:8",
+      "material": "solder",
+      "center_mm": [
+        28.200000000000003,
+        31.799999999999997,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-6-8",
+      "name": "Assumed package terminal aggregate 7:9",
+      "material": "solder",
+      "center_mm": [
+        28.200000000000003,
+        35.4,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-6-9",
+      "name": "Assumed package terminal aggregate 7:10",
+      "material": "solder",
+      "center_mm": [
+        28.200000000000003,
+        39.0,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-6-10",
+      "name": "Assumed package terminal aggregate 7:11",
+      "material": "solder",
+      "center_mm": [
+        28.200000000000003,
+        42.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-6-11",
+      "name": "Assumed package terminal aggregate 7:12",
+      "material": "solder",
+      "center_mm": [
+        28.200000000000003,
+        46.2,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-6-12",
+      "name": "Assumed package terminal aggregate 7:13",
+      "material": "solder",
+      "center_mm": [
+        28.200000000000003,
+        49.800000000000004,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-6-13",
+      "name": "Assumed package terminal aggregate 7:14",
+      "material": "solder",
+      "center_mm": [
+        28.200000000000003,
+        53.400000000000006,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "route-x-7",
+      "name": "Assumed substrate copper lane X 8",
+      "material": "copper",
+      "center_mm": [
+        30,
+        31.799999999999997,
+        1.5
+      ],
+      "size_mm": [
+        53,
+        0.55,
+        0.06
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "route-y-7",
+      "name": "Assumed substrate copper lane Y 8",
+      "material": "copper",
+      "center_mm": [
+        31.799999999999997,
+        30,
+        1.68
+      ],
+      "size_mm": [
+        0.55,
+        53,
+        0.06
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-7-0",
+      "name": "Assumed package terminal aggregate 8:1",
+      "material": "solder",
+      "center_mm": [
+        31.799999999999997,
+        6.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-7-1",
+      "name": "Assumed package terminal aggregate 8:2",
+      "material": "solder",
+      "center_mm": [
+        31.799999999999997,
+        10.2,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-7-2",
+      "name": "Assumed package terminal aggregate 8:3",
+      "material": "solder",
+      "center_mm": [
+        31.799999999999997,
+        13.8,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-7-3",
+      "name": "Assumed package terminal aggregate 8:4",
+      "material": "solder",
+      "center_mm": [
+        31.799999999999997,
+        17.4,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-7-4",
+      "name": "Assumed package terminal aggregate 8:5",
+      "material": "solder",
+      "center_mm": [
+        31.799999999999997,
+        21.0,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-7-5",
+      "name": "Assumed package terminal aggregate 8:6",
+      "material": "solder",
+      "center_mm": [
+        31.799999999999997,
+        24.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-7-6",
+      "name": "Assumed package terminal aggregate 8:7",
+      "material": "solder",
+      "center_mm": [
+        31.799999999999997,
+        28.200000000000003,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-7-7",
+      "name": "Assumed package terminal aggregate 8:8",
+      "material": "solder",
+      "center_mm": [
+        31.799999999999997,
+        31.799999999999997,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-7-8",
+      "name": "Assumed package terminal aggregate 8:9",
+      "material": "solder",
+      "center_mm": [
+        31.799999999999997,
+        35.4,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-7-9",
+      "name": "Assumed package terminal aggregate 8:10",
+      "material": "solder",
+      "center_mm": [
+        31.799999999999997,
+        39.0,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-7-10",
+      "name": "Assumed package terminal aggregate 8:11",
+      "material": "solder",
+      "center_mm": [
+        31.799999999999997,
+        42.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-7-11",
+      "name": "Assumed package terminal aggregate 8:12",
+      "material": "solder",
+      "center_mm": [
+        31.799999999999997,
+        46.2,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-7-12",
+      "name": "Assumed package terminal aggregate 8:13",
+      "material": "solder",
+      "center_mm": [
+        31.799999999999997,
+        49.800000000000004,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-7-13",
+      "name": "Assumed package terminal aggregate 8:14",
+      "material": "solder",
+      "center_mm": [
+        31.799999999999997,
+        53.400000000000006,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "route-x-8",
+      "name": "Assumed substrate copper lane X 9",
+      "material": "copper",
+      "center_mm": [
+        30,
+        35.4,
+        1.5
+      ],
+      "size_mm": [
+        53,
+        0.55,
+        0.06
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "route-y-8",
+      "name": "Assumed substrate copper lane Y 9",
+      "material": "copper",
+      "center_mm": [
+        35.4,
+        30,
+        1.68
+      ],
+      "size_mm": [
+        0.55,
+        53,
+        0.06
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-8-0",
+      "name": "Assumed package terminal aggregate 9:1",
+      "material": "solder",
+      "center_mm": [
+        35.4,
+        6.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-8-1",
+      "name": "Assumed package terminal aggregate 9:2",
+      "material": "solder",
+      "center_mm": [
+        35.4,
+        10.2,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-8-2",
+      "name": "Assumed package terminal aggregate 9:3",
+      "material": "solder",
+      "center_mm": [
+        35.4,
+        13.8,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-8-3",
+      "name": "Assumed package terminal aggregate 9:4",
+      "material": "solder",
+      "center_mm": [
+        35.4,
+        17.4,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-8-4",
+      "name": "Assumed package terminal aggregate 9:5",
+      "material": "solder",
+      "center_mm": [
+        35.4,
+        21.0,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-8-5",
+      "name": "Assumed package terminal aggregate 9:6",
+      "material": "solder",
+      "center_mm": [
+        35.4,
+        24.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-8-6",
+      "name": "Assumed package terminal aggregate 9:7",
+      "material": "solder",
+      "center_mm": [
+        35.4,
+        28.200000000000003,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-8-7",
+      "name": "Assumed package terminal aggregate 9:8",
+      "material": "solder",
+      "center_mm": [
+        35.4,
+        31.799999999999997,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-8-8",
+      "name": "Assumed package terminal aggregate 9:9",
+      "material": "solder",
+      "center_mm": [
+        35.4,
+        35.4,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-8-9",
+      "name": "Assumed package terminal aggregate 9:10",
+      "material": "solder",
+      "center_mm": [
+        35.4,
+        39.0,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-8-10",
+      "name": "Assumed package terminal aggregate 9:11",
+      "material": "solder",
+      "center_mm": [
+        35.4,
+        42.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-8-11",
+      "name": "Assumed package terminal aggregate 9:12",
+      "material": "solder",
+      "center_mm": [
+        35.4,
+        46.2,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-8-12",
+      "name": "Assumed package terminal aggregate 9:13",
+      "material": "solder",
+      "center_mm": [
+        35.4,
+        49.800000000000004,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-8-13",
+      "name": "Assumed package terminal aggregate 9:14",
+      "material": "solder",
+      "center_mm": [
+        35.4,
+        53.400000000000006,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "route-x-9",
+      "name": "Assumed substrate copper lane X 10",
+      "material": "copper",
+      "center_mm": [
+        30,
+        39.0,
+        1.5
+      ],
+      "size_mm": [
+        53,
+        0.55,
+        0.06
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "route-y-9",
+      "name": "Assumed substrate copper lane Y 10",
+      "material": "copper",
+      "center_mm": [
+        39.0,
+        30,
+        1.68
+      ],
+      "size_mm": [
+        0.55,
+        53,
+        0.06
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-9-0",
+      "name": "Assumed package terminal aggregate 10:1",
+      "material": "solder",
+      "center_mm": [
+        39.0,
+        6.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-9-1",
+      "name": "Assumed package terminal aggregate 10:2",
+      "material": "solder",
+      "center_mm": [
+        39.0,
+        10.2,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-9-2",
+      "name": "Assumed package terminal aggregate 10:3",
+      "material": "solder",
+      "center_mm": [
+        39.0,
+        13.8,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-9-3",
+      "name": "Assumed package terminal aggregate 10:4",
+      "material": "solder",
+      "center_mm": [
+        39.0,
+        17.4,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-9-4",
+      "name": "Assumed package terminal aggregate 10:5",
+      "material": "solder",
+      "center_mm": [
+        39.0,
+        21.0,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-9-5",
+      "name": "Assumed package terminal aggregate 10:6",
+      "material": "solder",
+      "center_mm": [
+        39.0,
+        24.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-9-6",
+      "name": "Assumed package terminal aggregate 10:7",
+      "material": "solder",
+      "center_mm": [
+        39.0,
+        28.200000000000003,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-9-7",
+      "name": "Assumed package terminal aggregate 10:8",
+      "material": "solder",
+      "center_mm": [
+        39.0,
+        31.799999999999997,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-9-8",
+      "name": "Assumed package terminal aggregate 10:9",
+      "material": "solder",
+      "center_mm": [
+        39.0,
+        35.4,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-9-9",
+      "name": "Assumed package terminal aggregate 10:10",
+      "material": "solder",
+      "center_mm": [
+        39.0,
+        39.0,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-9-10",
+      "name": "Assumed package terminal aggregate 10:11",
+      "material": "solder",
+      "center_mm": [
+        39.0,
+        42.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-9-11",
+      "name": "Assumed package terminal aggregate 10:12",
+      "material": "solder",
+      "center_mm": [
+        39.0,
+        46.2,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-9-12",
+      "name": "Assumed package terminal aggregate 10:13",
+      "material": "solder",
+      "center_mm": [
+        39.0,
+        49.800000000000004,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-9-13",
+      "name": "Assumed package terminal aggregate 10:14",
+      "material": "solder",
+      "center_mm": [
+        39.0,
+        53.400000000000006,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "route-x-10",
+      "name": "Assumed substrate copper lane X 11",
+      "material": "copper",
+      "center_mm": [
+        30,
+        42.6,
+        1.5
+      ],
+      "size_mm": [
+        53,
+        0.55,
+        0.06
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "route-y-10",
+      "name": "Assumed substrate copper lane Y 11",
+      "material": "copper",
+      "center_mm": [
+        42.6,
+        30,
+        1.68
+      ],
+      "size_mm": [
+        0.55,
+        53,
+        0.06
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-10-0",
+      "name": "Assumed package terminal aggregate 11:1",
+      "material": "solder",
+      "center_mm": [
+        42.6,
+        6.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-10-1",
+      "name": "Assumed package terminal aggregate 11:2",
+      "material": "solder",
+      "center_mm": [
+        42.6,
+        10.2,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-10-2",
+      "name": "Assumed package terminal aggregate 11:3",
+      "material": "solder",
+      "center_mm": [
+        42.6,
+        13.8,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-10-3",
+      "name": "Assumed package terminal aggregate 11:4",
+      "material": "solder",
+      "center_mm": [
+        42.6,
+        17.4,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-10-4",
+      "name": "Assumed package terminal aggregate 11:5",
+      "material": "solder",
+      "center_mm": [
+        42.6,
+        21.0,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-10-5",
+      "name": "Assumed package terminal aggregate 11:6",
+      "material": "solder",
+      "center_mm": [
+        42.6,
+        24.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-10-6",
+      "name": "Assumed package terminal aggregate 11:7",
+      "material": "solder",
+      "center_mm": [
+        42.6,
+        28.200000000000003,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-10-7",
+      "name": "Assumed package terminal aggregate 11:8",
+      "material": "solder",
+      "center_mm": [
+        42.6,
+        31.799999999999997,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-10-8",
+      "name": "Assumed package terminal aggregate 11:9",
+      "material": "solder",
+      "center_mm": [
+        42.6,
+        35.4,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-10-9",
+      "name": "Assumed package terminal aggregate 11:10",
+      "material": "solder",
+      "center_mm": [
+        42.6,
+        39.0,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-10-10",
+      "name": "Assumed package terminal aggregate 11:11",
+      "material": "solder",
+      "center_mm": [
+        42.6,
+        42.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-10-11",
+      "name": "Assumed package terminal aggregate 11:12",
+      "material": "solder",
+      "center_mm": [
+        42.6,
+        46.2,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-10-12",
+      "name": "Assumed package terminal aggregate 11:13",
+      "material": "solder",
+      "center_mm": [
+        42.6,
+        49.800000000000004,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-10-13",
+      "name": "Assumed package terminal aggregate 11:14",
+      "material": "solder",
+      "center_mm": [
+        42.6,
+        53.400000000000006,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "route-x-11",
+      "name": "Assumed substrate copper lane X 12",
+      "material": "copper",
+      "center_mm": [
+        30,
+        46.2,
+        1.5
+      ],
+      "size_mm": [
+        53,
+        0.55,
+        0.06
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "route-y-11",
+      "name": "Assumed substrate copper lane Y 12",
+      "material": "copper",
+      "center_mm": [
+        46.2,
+        30,
+        1.68
+      ],
+      "size_mm": [
+        0.55,
+        53,
+        0.06
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-11-0",
+      "name": "Assumed package terminal aggregate 12:1",
+      "material": "solder",
+      "center_mm": [
+        46.2,
+        6.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-11-1",
+      "name": "Assumed package terminal aggregate 12:2",
+      "material": "solder",
+      "center_mm": [
+        46.2,
+        10.2,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-11-2",
+      "name": "Assumed package terminal aggregate 12:3",
+      "material": "solder",
+      "center_mm": [
+        46.2,
+        13.8,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-11-3",
+      "name": "Assumed package terminal aggregate 12:4",
+      "material": "solder",
+      "center_mm": [
+        46.2,
+        17.4,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-11-4",
+      "name": "Assumed package terminal aggregate 12:5",
+      "material": "solder",
+      "center_mm": [
+        46.2,
+        21.0,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-11-5",
+      "name": "Assumed package terminal aggregate 12:6",
+      "material": "solder",
+      "center_mm": [
+        46.2,
+        24.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-11-6",
+      "name": "Assumed package terminal aggregate 12:7",
+      "material": "solder",
+      "center_mm": [
+        46.2,
+        28.200000000000003,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-11-7",
+      "name": "Assumed package terminal aggregate 12:8",
+      "material": "solder",
+      "center_mm": [
+        46.2,
+        31.799999999999997,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-11-8",
+      "name": "Assumed package terminal aggregate 12:9",
+      "material": "solder",
+      "center_mm": [
+        46.2,
+        35.4,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-11-9",
+      "name": "Assumed package terminal aggregate 12:10",
+      "material": "solder",
+      "center_mm": [
+        46.2,
+        39.0,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-11-10",
+      "name": "Assumed package terminal aggregate 12:11",
+      "material": "solder",
+      "center_mm": [
+        46.2,
+        42.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-11-11",
+      "name": "Assumed package terminal aggregate 12:12",
+      "material": "solder",
+      "center_mm": [
+        46.2,
+        46.2,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-11-12",
+      "name": "Assumed package terminal aggregate 12:13",
+      "material": "solder",
+      "center_mm": [
+        46.2,
+        49.800000000000004,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-11-13",
+      "name": "Assumed package terminal aggregate 12:14",
+      "material": "solder",
+      "center_mm": [
+        46.2,
+        53.400000000000006,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "route-x-12",
+      "name": "Assumed substrate copper lane X 13",
+      "material": "copper",
+      "center_mm": [
+        30,
+        49.800000000000004,
+        1.5
+      ],
+      "size_mm": [
+        53,
+        0.55,
+        0.06
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "route-y-12",
+      "name": "Assumed substrate copper lane Y 13",
+      "material": "copper",
+      "center_mm": [
+        49.800000000000004,
+        30,
+        1.68
+      ],
+      "size_mm": [
+        0.55,
+        53,
+        0.06
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-12-0",
+      "name": "Assumed package terminal aggregate 13:1",
+      "material": "solder",
+      "center_mm": [
+        49.800000000000004,
+        6.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-12-1",
+      "name": "Assumed package terminal aggregate 13:2",
+      "material": "solder",
+      "center_mm": [
+        49.800000000000004,
+        10.2,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-12-2",
+      "name": "Assumed package terminal aggregate 13:3",
+      "material": "solder",
+      "center_mm": [
+        49.800000000000004,
+        13.8,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-12-3",
+      "name": "Assumed package terminal aggregate 13:4",
+      "material": "solder",
+      "center_mm": [
+        49.800000000000004,
+        17.4,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-12-4",
+      "name": "Assumed package terminal aggregate 13:5",
+      "material": "solder",
+      "center_mm": [
+        49.800000000000004,
+        21.0,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-12-5",
+      "name": "Assumed package terminal aggregate 13:6",
+      "material": "solder",
+      "center_mm": [
+        49.800000000000004,
+        24.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-12-6",
+      "name": "Assumed package terminal aggregate 13:7",
+      "material": "solder",
+      "center_mm": [
+        49.800000000000004,
+        28.200000000000003,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-12-7",
+      "name": "Assumed package terminal aggregate 13:8",
+      "material": "solder",
+      "center_mm": [
+        49.800000000000004,
+        31.799999999999997,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-12-8",
+      "name": "Assumed package terminal aggregate 13:9",
+      "material": "solder",
+      "center_mm": [
+        49.800000000000004,
+        35.4,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-12-9",
+      "name": "Assumed package terminal aggregate 13:10",
+      "material": "solder",
+      "center_mm": [
+        49.800000000000004,
+        39.0,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-12-10",
+      "name": "Assumed package terminal aggregate 13:11",
+      "material": "solder",
+      "center_mm": [
+        49.800000000000004,
+        42.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-12-11",
+      "name": "Assumed package terminal aggregate 13:12",
+      "material": "solder",
+      "center_mm": [
+        49.800000000000004,
+        46.2,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-12-12",
+      "name": "Assumed package terminal aggregate 13:13",
+      "material": "solder",
+      "center_mm": [
+        49.800000000000004,
+        49.800000000000004,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-12-13",
+      "name": "Assumed package terminal aggregate 13:14",
+      "material": "solder",
+      "center_mm": [
+        49.800000000000004,
+        53.400000000000006,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "route-x-13",
+      "name": "Assumed substrate copper lane X 14",
+      "material": "copper",
+      "center_mm": [
+        30,
+        53.400000000000006,
+        1.5
+      ],
+      "size_mm": [
+        53,
+        0.55,
+        0.06
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "route-y-13",
+      "name": "Assumed substrate copper lane Y 14",
+      "material": "copper",
+      "center_mm": [
+        53.400000000000006,
+        30,
+        1.68
+      ],
+      "size_mm": [
+        0.55,
+        53,
+        0.06
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-13-0",
+      "name": "Assumed package terminal aggregate 14:1",
+      "material": "solder",
+      "center_mm": [
+        53.400000000000006,
+        6.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-13-1",
+      "name": "Assumed package terminal aggregate 14:2",
+      "material": "solder",
+      "center_mm": [
+        53.400000000000006,
+        10.2,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-13-2",
+      "name": "Assumed package terminal aggregate 14:3",
+      "material": "solder",
+      "center_mm": [
+        53.400000000000006,
+        13.8,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-13-3",
+      "name": "Assumed package terminal aggregate 14:4",
+      "material": "solder",
+      "center_mm": [
+        53.400000000000006,
+        17.4,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-13-4",
+      "name": "Assumed package terminal aggregate 14:5",
+      "material": "solder",
+      "center_mm": [
+        53.400000000000006,
+        21.0,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-13-5",
+      "name": "Assumed package terminal aggregate 14:6",
+      "material": "solder",
+      "center_mm": [
+        53.400000000000006,
+        24.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-13-6",
+      "name": "Assumed package terminal aggregate 14:7",
+      "material": "solder",
+      "center_mm": [
+        53.400000000000006,
+        28.200000000000003,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-13-7",
+      "name": "Assumed package terminal aggregate 14:8",
+      "material": "solder",
+      "center_mm": [
+        53.400000000000006,
+        31.799999999999997,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-13-8",
+      "name": "Assumed package terminal aggregate 14:9",
+      "material": "solder",
+      "center_mm": [
+        53.400000000000006,
+        35.4,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-13-9",
+      "name": "Assumed package terminal aggregate 14:10",
+      "material": "solder",
+      "center_mm": [
+        53.400000000000006,
+        39.0,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-13-10",
+      "name": "Assumed package terminal aggregate 14:11",
+      "material": "solder",
+      "center_mm": [
+        53.400000000000006,
+        42.6,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-13-11",
+      "name": "Assumed package terminal aggregate 14:12",
+      "material": "solder",
+      "center_mm": [
+        53.400000000000006,
+        46.2,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-13-12",
+      "name": "Assumed package terminal aggregate 14:13",
+      "material": "solder",
+      "center_mm": [
+        53.400000000000006,
+        49.800000000000004,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "terminal-13-13",
+      "name": "Assumed package terminal aggregate 14:14",
+      "material": "solder",
+      "center_mm": [
+        53.400000000000006,
+        53.400000000000006,
+        2.28
+      ],
+      "size_mm": [
+        1.5,
+        1.5,
+        0.46
+      ],
+      "shape": "cylinder",
+      "role": "structure"
+    },
+    {
+      "id": "passive-body-0-0",
+      "name": "Assumed peripheral passive / epoxy proxy",
+      "material": "epoxy",
+      "center_mm": [
+        8.0,
+        4,
+        1.2
+      ],
+      "size_mm": [
+        2.3,
+        1.5,
+        0.36
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "passive-contact-0-0",
+      "name": "Assumed passive solder aggregate",
+      "material": "solder",
+      "center_mm": [
+        8.0,
+        4,
+        1.34
+      ],
+      "size_mm": [
+        2.7,
+        1.5,
+        0.08
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "passive-body-0-1",
+      "name": "Assumed peripheral passive / epoxy proxy",
+      "material": "epoxy",
+      "center_mm": [
+        12.9,
+        4,
+        1.2
+      ],
+      "size_mm": [
+        2.3,
+        1.5,
+        0.36
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "passive-contact-0-1",
+      "name": "Assumed passive solder aggregate",
+      "material": "solder",
+      "center_mm": [
+        12.9,
+        4,
+        1.34
+      ],
+      "size_mm": [
+        2.7,
+        1.5,
+        0.08
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "passive-body-0-2",
+      "name": "Assumed peripheral passive / epoxy proxy",
+      "material": "epoxy",
+      "center_mm": [
+        17.8,
+        4,
+        1.2
+      ],
+      "size_mm": [
+        2.3,
+        1.5,
+        0.36
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "passive-contact-0-2",
+      "name": "Assumed passive solder aggregate",
+      "material": "solder",
+      "center_mm": [
+        17.8,
+        4,
+        1.34
+      ],
+      "size_mm": [
+        2.7,
+        1.5,
+        0.08
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "passive-body-0-3",
+      "name": "Assumed peripheral passive / epoxy proxy",
+      "material": "epoxy",
+      "center_mm": [
+        22.700000000000003,
+        4,
+        1.2
+      ],
+      "size_mm": [
+        2.3,
+        1.5,
+        0.36
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "passive-contact-0-3",
+      "name": "Assumed passive solder aggregate",
+      "material": "solder",
+      "center_mm": [
+        22.700000000000003,
+        4,
+        1.34
+      ],
+      "size_mm": [
+        2.7,
+        1.5,
+        0.08
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "passive-body-0-4",
+      "name": "Assumed peripheral passive / epoxy proxy",
+      "material": "epoxy",
+      "center_mm": [
+        27.6,
+        4,
+        1.2
+      ],
+      "size_mm": [
+        2.3,
+        1.5,
+        0.36
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "passive-contact-0-4",
+      "name": "Assumed passive solder aggregate",
+      "material": "solder",
+      "center_mm": [
+        27.6,
+        4,
+        1.34
+      ],
+      "size_mm": [
+        2.7,
+        1.5,
+        0.08
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "passive-body-0-5",
+      "name": "Assumed peripheral passive / epoxy proxy",
+      "material": "epoxy",
+      "center_mm": [
+        32.5,
+        4,
+        1.2
+      ],
+      "size_mm": [
+        2.3,
+        1.5,
+        0.36
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "passive-contact-0-5",
+      "name": "Assumed passive solder aggregate",
+      "material": "solder",
+      "center_mm": [
+        32.5,
+        4,
+        1.34
+      ],
+      "size_mm": [
+        2.7,
+        1.5,
+        0.08
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "passive-body-0-6",
+      "name": "Assumed peripheral passive / epoxy proxy",
+      "material": "epoxy",
+      "center_mm": [
+        37.400000000000006,
+        4,
+        1.2
+      ],
+      "size_mm": [
+        2.3,
+        1.5,
+        0.36
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "passive-contact-0-6",
+      "name": "Assumed passive solder aggregate",
+      "material": "solder",
+      "center_mm": [
+        37.400000000000006,
+        4,
+        1.34
+      ],
+      "size_mm": [
+        2.7,
+        1.5,
+        0.08
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "passive-body-0-7",
+      "name": "Assumed peripheral passive / epoxy proxy",
+      "material": "epoxy",
+      "center_mm": [
+        42.300000000000004,
+        4,
+        1.2
+      ],
+      "size_mm": [
+        2.3,
+        1.5,
+        0.36
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "passive-contact-0-7",
+      "name": "Assumed passive solder aggregate",
+      "material": "solder",
+      "center_mm": [
+        42.300000000000004,
+        4,
+        1.34
+      ],
+      "size_mm": [
+        2.7,
+        1.5,
+        0.08
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "passive-body-0-8",
+      "name": "Assumed peripheral passive / epoxy proxy",
+      "material": "epoxy",
+      "center_mm": [
+        47.2,
+        4,
+        1.2
+      ],
+      "size_mm": [
+        2.3,
+        1.5,
+        0.36
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "passive-contact-0-8",
+      "name": "Assumed passive solder aggregate",
+      "material": "solder",
+      "center_mm": [
+        47.2,
+        4,
+        1.34
+      ],
+      "size_mm": [
+        2.7,
+        1.5,
+        0.08
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "passive-body-0-9",
+      "name": "Assumed peripheral passive / epoxy proxy",
+      "material": "epoxy",
+      "center_mm": [
+        52.1,
+        4,
+        1.2
+      ],
+      "size_mm": [
+        2.3,
+        1.5,
+        0.36
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "passive-contact-0-9",
+      "name": "Assumed passive solder aggregate",
+      "material": "solder",
+      "center_mm": [
+        52.1,
+        4,
+        1.34
+      ],
+      "size_mm": [
+        2.7,
+        1.5,
+        0.08
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "passive-body-1-0",
+      "name": "Assumed peripheral passive / epoxy proxy",
+      "material": "epoxy",
+      "center_mm": [
+        8.0,
+        56,
+        1.2
+      ],
+      "size_mm": [
+        2.3,
+        1.5,
+        0.36
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "passive-contact-1-0",
+      "name": "Assumed passive solder aggregate",
+      "material": "solder",
+      "center_mm": [
+        8.0,
+        56,
+        1.34
+      ],
+      "size_mm": [
+        2.7,
+        1.5,
+        0.08
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "passive-body-1-1",
+      "name": "Assumed peripheral passive / epoxy proxy",
+      "material": "epoxy",
+      "center_mm": [
+        12.9,
+        56,
+        1.2
+      ],
+      "size_mm": [
+        2.3,
+        1.5,
+        0.36
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "passive-contact-1-1",
+      "name": "Assumed passive solder aggregate",
+      "material": "solder",
+      "center_mm": [
+        12.9,
+        56,
+        1.34
+      ],
+      "size_mm": [
+        2.7,
+        1.5,
+        0.08
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "passive-body-1-2",
+      "name": "Assumed peripheral passive / epoxy proxy",
+      "material": "epoxy",
+      "center_mm": [
+        17.8,
+        56,
+        1.2
+      ],
+      "size_mm": [
+        2.3,
+        1.5,
+        0.36
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "passive-contact-1-2",
+      "name": "Assumed passive solder aggregate",
+      "material": "solder",
+      "center_mm": [
+        17.8,
+        56,
+        1.34
+      ],
+      "size_mm": [
+        2.7,
+        1.5,
+        0.08
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "passive-body-1-3",
+      "name": "Assumed peripheral passive / epoxy proxy",
+      "material": "epoxy",
+      "center_mm": [
+        22.700000000000003,
+        56,
+        1.2
+      ],
+      "size_mm": [
+        2.3,
+        1.5,
+        0.36
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "passive-contact-1-3",
+      "name": "Assumed passive solder aggregate",
+      "material": "solder",
+      "center_mm": [
+        22.700000000000003,
+        56,
+        1.34
+      ],
+      "size_mm": [
+        2.7,
+        1.5,
+        0.08
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "passive-body-1-4",
+      "name": "Assumed peripheral passive / epoxy proxy",
+      "material": "epoxy",
+      "center_mm": [
+        27.6,
+        56,
+        1.2
+      ],
+      "size_mm": [
+        2.3,
+        1.5,
+        0.36
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "passive-contact-1-4",
+      "name": "Assumed passive solder aggregate",
+      "material": "solder",
+      "center_mm": [
+        27.6,
+        56,
+        1.34
+      ],
+      "size_mm": [
+        2.7,
+        1.5,
+        0.08
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "passive-body-1-5",
+      "name": "Assumed peripheral passive / epoxy proxy",
+      "material": "epoxy",
+      "center_mm": [
+        32.5,
+        56,
+        1.2
+      ],
+      "size_mm": [
+        2.3,
+        1.5,
+        0.36
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "passive-contact-1-5",
+      "name": "Assumed passive solder aggregate",
+      "material": "solder",
+      "center_mm": [
+        32.5,
+        56,
+        1.34
+      ],
+      "size_mm": [
+        2.7,
+        1.5,
+        0.08
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "passive-body-1-6",
+      "name": "Assumed peripheral passive / epoxy proxy",
+      "material": "epoxy",
+      "center_mm": [
+        37.400000000000006,
+        56,
+        1.2
+      ],
+      "size_mm": [
+        2.3,
+        1.5,
+        0.36
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "passive-contact-1-6",
+      "name": "Assumed passive solder aggregate",
+      "material": "solder",
+      "center_mm": [
+        37.400000000000006,
+        56,
+        1.34
+      ],
+      "size_mm": [
+        2.7,
+        1.5,
+        0.08
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "passive-body-1-7",
+      "name": "Assumed peripheral passive / epoxy proxy",
+      "material": "epoxy",
+      "center_mm": [
+        42.300000000000004,
+        56,
+        1.2
+      ],
+      "size_mm": [
+        2.3,
+        1.5,
+        0.36
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "passive-contact-1-7",
+      "name": "Assumed passive solder aggregate",
+      "material": "solder",
+      "center_mm": [
+        42.300000000000004,
+        56,
+        1.34
+      ],
+      "size_mm": [
+        2.7,
+        1.5,
+        0.08
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "passive-body-1-8",
+      "name": "Assumed peripheral passive / epoxy proxy",
+      "material": "epoxy",
+      "center_mm": [
+        47.2,
+        56,
+        1.2
+      ],
+      "size_mm": [
+        2.3,
+        1.5,
+        0.36
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "passive-contact-1-8",
+      "name": "Assumed passive solder aggregate",
+      "material": "solder",
+      "center_mm": [
+        47.2,
+        56,
+        1.34
+      ],
+      "size_mm": [
+        2.7,
+        1.5,
+        0.08
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "passive-body-1-9",
+      "name": "Assumed peripheral passive / epoxy proxy",
+      "material": "epoxy",
+      "center_mm": [
+        52.1,
+        56,
+        1.2
+      ],
+      "size_mm": [
+        2.3,
+        1.5,
+        0.36
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "passive-contact-1-9",
+      "name": "Assumed passive solder aggregate",
+      "material": "solder",
+      "center_mm": [
+        52.1,
+        56,
+        1.34
+      ],
+      "size_mm": [
+        2.7,
+        1.5,
+        0.08
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "gpu-delamination",
+      "name": "Synthetic GH100 / underfill interfacial delamination",
+      "material": "air",
+      "center_mm": [
+        22.5,
+        24,
+        0.85
+      ],
+      "size_mm": [
+        5.0,
+        4.0,
+        0.06
+      ],
+      "shape": "box",
+      "role": "defect",
+      "display_label": "Synthetic delamination"
+    },
+    {
+      "id": "hbm-delamination",
+      "name": "Synthetic HBM3 2 / underfill disbond",
+      "material": "air",
+      "center_mm": [
+        8,
+        30,
+        0.85
+      ],
+      "size_mm": [
+        1.8,
+        4.0,
+        0.06
+      ],
+      "shape": "box",
+      "role": "defect"
+    },
+    {
+      "id": "hbm-contact-void",
+      "name": "Synthetic void in HBM3 1 aggregate solder contact",
+      "material": "air",
+      "center_mm": [
+        10.5,
+        20,
+        0.92
+      ],
+      "size_mm": [
+        1.3,
+        1.3,
+        0.14
+      ],
+      "shape": "cylinder",
+      "role": "defect"
+    },
+    {
+      "id": "terminal-void",
+      "name": "Synthetic void in an assumed package terminal",
+      "material": "air",
+      "center_mm": [
+        46.2,
+        42.6,
+        2.28
+      ],
+      "size_mm": [
+        0.95,
+        0.95,
+        0.3
+      ],
+      "shape": "cylinder",
+      "role": "defect"
+    }
+  ],
+  "recommended_settings": {
+    "resolution": 128,
+    "energy_kev": 80,
+    "angle_deg": 0,
+    "photons": 100000,
+    "noise": false,
+    "frequency_mhz": 50,
+    "gate_start_us": 0.34,
+    "gate_end_us": 0.45,
+    "focus_mm": 0.85,
+    "probe_x_mm": 22.5,
+    "probe_y_mm": 24,
+    "include_defects": true,
+    "seed": 42
+  },
+  "reference": {
+    "product": "NVIDIA H100 SXM (80 GB HBM3)",
+    "summary": "Reference-informed package surrogate, not vendor CAD. Published die area and functional memory configuration are retained; all other geometry is assumed. Synthetic defects demonstrate the existing reduced-order imaging models.",
+    "sources": [
+      {
+        "id": "h100-whitepaper",
+        "title": "NVIDIA H100 Tensor Core GPU Architecture v1.04, pages 17–18 and 36",
+        "url": "https://resources.nvidia.com/en-us-hopper-architecture/nvidia-h100-tensor-c"
+      },
+      {
+        "id": "hopper-architecture",
+        "title": "NVIDIA Hopper Architecture In-Depth (22 March 2022)",
+        "url": "https://developer.nvidia.com/blog/nvidia-hopper-architecture-in-depth/"
+      },
+      {
+        "id": "h100-product",
+        "title": "NVIDIA H100 product specifications (accessed 4 September 2026)",
+        "url": "https://www.nvidia.com/en-us/data-center/h100/"
+      }
+    ],
+    "published_facts": [
+      {
+        "label": "GH100 die area",
+        "value": "814 mm²",
+        "source_ids": [
+          "h100-whitepaper",
+          "hopper-architecture"
+        ]
+      },
+      {
+        "label": "GH100 fabrication",
+        "value": "80 billion transistors; TSMC 4N customized for NVIDIA",
+        "source_ids": [
+          "h100-whitepaper",
+          "hopper-architecture"
+        ]
+      },
+      {
+        "label": "H100 SXM memory",
+        "value": "80 GB HBM3; five functional HBM3 stacks",
+        "source_ids": [
+          "h100-whitepaper",
+          "hopper-architecture",
+          "h100-product"
+        ]
+      },
+      {
+        "label": "Full GH100 architecture",
+        "value": "Six HBM stack interfaces; distinct from the five-stack H100 SXM configuration",
+        "source_ids": [
+          "h100-whitepaper",
+          "hopper-architecture"
+        ]
+      }
+    ],
+    "assumptions": [
+      "60 × 60 × 2.65 mm is a chosen simulation envelope, not a published H100 package or SXM module dimension.",
+      "The die is 26.7 × (814 / 26.7) mm with a chosen 0.67 mm thickness: area is published; rectangular aspect ratio and thickness are assumed.",
+      "Five homogeneous silicon HBM blocks represent the functional memory configuration. Their 8 × 9 × 0.62 mm dimensions, placement and material simplification are assumed; internal DRAM dies, TSVs and microbumps are unresolved.",
+      "Five functional blocks do not establish the real physical population of six possible sites. The sixth site's occupancy is unknown here and is omitted from this simplified geometry.",
+      "Interposer, underfill, substrate, copper lanes, coarse contacts, terminals and passive blocks are illustrative. The terminal field is not an SXM connector or actual H100 pinout.",
+      "The organic substrate uses the existing FR-4 composite proxy, underfill uses the epoxy proxy, and solder uses pure tin; none is a verified H100 material composition.",
+      "Air-filled delaminations and voids are intentionally seeded synthetic defects, not claims of NVIDIA product defects. Air cavities remain sealed in the model.",
+      "The heat spreader, cooling assembly, complete SXM board and transistor circuitry are omitted. Top-entry immersion SAM assumes an exposed package with no overlying lid.",
+      "Whole-package sampling is 468.75 µm laterally at 128 pixels or 312.5 µm at 192 pixels; coarse contacts and small voids are not metrology-resolved. Sampling is not physical instrument resolution.",
+      "X-ray and SAM use the workbench's uncalibrated reduced-order forward models. No experimental H100 validation, electromagnetic simulation, thermal field or CUDA execution is provided by this specimen."
+    ]
+  }
+}
