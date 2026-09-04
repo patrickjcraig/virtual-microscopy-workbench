@@ -2,6 +2,57 @@
 
 This record concerns the first local implementation in `E:\git\Dissertation`. It establishes software and analytical-model behavior, not experimental imaging accuracy.
 
+## Version 0.3 — saved acoustic volumes
+
+The complete Python suite passed **139 tests in 19.58 seconds**, including the 82
+existing regression cases and 57 new solver, storage, view and process/API cases.
+The same two third-party deprecation warnings remain. Analytical checks cover
+front/back-interface timing, pressure polarity and loss, explicit external water
+delay/attenuation, pulse bandwidth, arbitrary recording starts and contributing
+tails, and correspondence with the legacy preview at its equivalent bandwidth.
+Rectangular axes, global ROI coordinates, neighboring PSF context, tile seams and
+byte-identical resumed RF/envelope data are tested.
+
+Storage checks run actual spawned workers and verify owner locks, cancellation,
+restart recovery, worker replacement, frozen inputs, missing/corrupted partial
+chunks, read-back commits, completed-dataset immutability, disk budgets and path
+boundaries. Completed export checks independently verify combined input identity,
+coordinate shape/type/checksum, RF/envelope shape/type and every committed row.
+
+Independent asymmetric arrays verify XY/X–time/Y–time axis order, exact signed
+traces, temporal display pooling and gate equations. View/gate calls leave all
+dataset bytes unchanged. A real API job is acquired, gated, exported, and reopened
+after an application lifespan restart; traces remain identical and a subsequent
+legacy preview succeeds. Requests beyond resource limits fail before allocation.
+
+The native Chrome H100 regression check passed on version 0.3, retaining seven
+component labels, references, exports, imported presets and probe behavior. This
+record distinguishes these software checks from measured microscopy validation.
+
+The native Chrome `verify:volumes` check passed with a real HBM6 ROI dataset of
+**24 × 32 × 401** samples. It verifies the frozen ROI, retained RF polarity,
+XY/X–time/Y–time orientation and physical cursor, post hoc RMS gating without a
+new acquisition, a native Zarr ZIP download, catalog reopening after page reload,
+and desktop/390 px mobile layouts without horizontal overflow. No uncaught page
+errors occurred. The 17-check HBM editor/ROI regression also passed.
+
+The separate native Chrome `verify:volume-jobs` check cancelled a 64-row HBM6
+acquisition before its first committed row, verified the incomplete dataset's
+disabled UI and HTTP 409 view response, then resumed the same dataset and frozen
+request through completion. No uncaught page errors occurred. This browser check
+complements the Python tests for already-committed partial chunks. The
+[saved-volume workspace screenshot](images/sam-volume-workspace.png) shows the
+completed time volume and its retained signed RF; the source image is absent.
+
+A separate delivered HBM6 dataset records **64 × 64 × 801** samples over 0–2 µs
+at 400 MHz, using 1,024 material depth samples, a 50 MHz carrier and 0.5 fractional
+bandwidth. All committed coordinates and chunks passed export integrity checks.
+Its uncompressed arrays/coordinates occupy **26,254,600 bytes**; the local Zarr ZIP
+is **1,921,799 bytes**. This compression ratio is an observation for this synthetic
+layered specimen, not a preflight assumption or general guarantee. The local
+dataset ID is `b407c38d-244b-4158-8683-bc4e56c03b37`; generated volumes and browser
+test artifacts stay outside Git.
+
 ## Version 0.2 — layered HBM and region scans
 
 The complete numerical/API suite passed **82 tests in 13.33 seconds**. The same two third-party deprecation warnings remain. Twenty HBM cases cover six physical sites, contiguous layers, parameter edits, 12-high templates, functional-state material invariance, strict import consistency, material-precedence protection, fixed defects and generator safety. Twenty ROI/section cases cover analytical full-depth attenuation and echo times, independent depth sampling, global coordinates and endpoint probes, PSF context outside the ROI, XZ/YZ material sections and invalid input. Existing physics/API cases remain passing.

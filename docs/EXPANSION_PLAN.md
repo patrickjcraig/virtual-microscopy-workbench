@@ -2,7 +2,7 @@
 
 Prepared 4 September 2026 against commit `140f433`. Status: roadmap; the implementation note below identifies delivered work.
 
-Implementation note: version 0.2 delivers the first M1 increment: six physical HBM sites, editable layered assemblies, material sections, provisional reference-image metadata and full-depth HBM ROI previews with independent depth sampling. Saved RF/projection volumes, reconstruction, general hierarchical transforms/materials and explicit TSV/microbump geometry remain planned below.
+Implementation note: version 0.2 delivered the first M1 increment: six physical HBM sites, editable layered assemblies, material sections, provisional reference-image metadata and full-depth HBM ROI previews with independent depth sampling. Version 0.3 adds the M2 dataset/job foundation and first M3 SAM volume workflow: chunked signed RF/envelope storage, frozen provenance, estimates, process worker, progress/cancel/resume, independent record/bandwidth/standoff controls, saved slices and post hoc gates. See [SAVED_VOLUMES.md](SAVED_VOLUMES.md). Material lateral sampling currently shares the acoustic raster; general independent grids, projection volumes, reconstruction, depth conversion, hierarchical transforms/materials and explicit TSV/microbump geometry remain planned below.
 
 The next release should support a six-site H100 package with detailed HBM regions, saved X-ray projection stacks and reconstructed volumes, saved acoustic RF volumes, and independently controlled acquisition parameters. The present app is a useful preview engine; the next architecture should make datasets and instrument geometry first-class objects.
 
@@ -187,7 +187,7 @@ Never silently lower the requested sampling. Offer a smaller ROI, fewer views, s
 
 M3 and M4 can proceed in parallel after M2. M5 depends on M4. M6 builds on M1 and the saved-data pipelines. Full-wave work follows a stable RF/ROI system; it should not delay useful numerical volumes.
 
-Keep the existing 46-test suite as a regression baseline, then add tests that measure the new scientific and storage behaviors. Do not use visual similarity or a forward/inverse pair with identical discretization as the only validation. Separate sampling pitch, image resolution, registration error, reconstruction error and defect detectability. For registered measured volumes, report held-out 3D landmark error separately from pixel size.
+Keep the existing regression suite, then add tests that measure the new scientific and storage behaviors. Do not use visual similarity or a forward/inverse pair with identical discretization as the only validation. Separate sampling pitch, image resolution, registration error, reconstruction error and defect detectability. For registered measured volumes, report held-out 3D landmark error separately from pixel size.
 
 ## Recommended next release
 

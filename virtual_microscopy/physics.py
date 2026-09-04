@@ -61,28 +61,31 @@ def reflection_coefficient(z1, z2):
     return (np.asarray(z2) - np.asarray(z1)) / (np.asarray(z2) + np.asarray(z1))
 
 
-def voxelize(twin: dict, resolution: int, include_defects: bool = True,
+def voxelize(twin: dict, resolution: int | tuple[int, int], include_defects: bool = True,
              roi_mm=None, depth_samples=None, halo_pixels=(0, 0)) -> MaterialGrid:
     """Sample ordered CSG primitives; zero means ambient, never an explicit void."""
     specimen = np.asarray(twin["size_mm"], dtype=float)
-    n = int(resolution)
-    nz = int(depth_samples or 2 * n)
+    lateral = np.asarray([resolution, resolution] if np.isscalar(resolution) else resolution, dtype=int)
+    if lateral.shape != (2,) or np.any(lateral <= 0):
+        raise ValueError("Lateral resolution must be a positive integer or (nx, ny) pair.")
+    nz = int(depth_samples or 2 * int(lateral.max()))
     bounds = np.asarray(roi_mm if roi_mm is not None else [0, 0, *specimen[:2]], dtype=float)
     if (bounds.shape != (4,) or not np.isfinite(bounds).all() or
             np.any(bounds[:2] < 0) or np.any(bounds[2:] > specimen[:2]) or
             np.any(bounds[2:] <= bounds[:2])):
         raise ValueError("ROI bounds must be finite, ordered and inside the specimen.")
-    pitch = np.r_[(bounds[2:] - bounds[:2]) / n, specimen[2] / nz]
+    pitch = np.r_[(bounds[2:] - bounds[:2]) / lateral, specimen[2] / nz]
     padding = np.asarray(halo_pixels, dtype=int)
     before = np.minimum(padding, np.floor(bounds[:2] / pitch[:2] + 1e-9).astype(int))
     after = np.minimum(padding, np.floor((specimen[:2] - bounds[2:]) / pitch[:2] + 1e-9).astype(int))
-    nx, ny = (n + before + after).tolist()
+    nx, ny = (lateral + before + after).tolist()
     if nx * ny * nz > 64_000_000:
         raise ValueError("This geometry grid exceeds 64 million cells. Reduce depth samples or raster size, "
                          "or enlarge a very small ROI to reduce acoustic halo overhead.")
     origin = np.r_[bounds[:2] - before * pitch[:2], 0.0]
     size = pitch * [nx, ny, nz]
-    scan = (slice(int(before[1]), int(before[1]) + n), slice(int(before[0]), int(before[0]) + n))
+    scan = (slice(int(before[1]), int(before[1] + lateral[1])),
+            slice(int(before[0]), int(before[0] + lateral[0])))
     labels = np.zeros((ny, nx, nz), dtype=np.uint8)
     x = origin[0] + (np.arange(nx) + 0.5) * pitch[0]
     y = origin[1] + (np.arange(ny) + 0.5) * pitch[1]

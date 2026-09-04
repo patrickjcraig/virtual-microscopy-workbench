@@ -2,7 +2,7 @@
 
 [![Verify workbench](https://github.com/patrickjcraig/virtual-microscopy-workbench/actions/workflows/ci.yml/badge.svg)](https://github.com/patrickjcraig/virtual-microscopy-workbench/actions/workflows/ci.yml)
 
-A local research prototype that loads a material-aware digital twin of a microelectronic package and simulates X-ray radiography and scanning acoustic microscopy from the same geometry. A browser workbench combines a 3D specimen, acquisition controls, quantitative images, and pulse-echo inspection.
+A local research prototype that loads a material-aware digital twin of a microelectronic package and simulates X-ray radiography and scanning acoustic microscopy from the same geometry. A browser workbench combines a 3D specimen, acquisition controls, quantitative images, pulse-echo inspection, and saved acoustic RF volumes.
 
 **Evidence status:** synthetic, reduced-order forward models. This version provides two imaging physics models sharing one specimen. It has no experimental calibration and does not claim a coupled elastic/electromagnetic solver or measured instrument accuracy.
 
@@ -98,6 +98,21 @@ The supplied reference has a provisional user estimate of approximately 4.6 µm/
 
 ## Numerical exports and headless execution
 
+**New in 0.3: saved SAM volumes.** Open **Saved volumes** to record signed RF at
+every raster position, with independent record start/duration, sample rate, pulse
+bandwidth, water standoff and rectangular raster controls. A local background
+worker saves chunked Zarr arrays with progress, cancellation and resume. Reopen a
+completed dataset to inspect XY/X–time/Y–time views and change gates without
+rerunning propagation. Download the full data and frozen provenance as a Zarr ZIP.
+
+These datasets have axes `[y,x,time]`; the time axis is not reconstructed depth.
+The original X-ray preview remains a single projection. Multiangle X-ray stacks,
+CT reconstruction and layered acoustic depth conversion are subsequent milestones.
+See [Saved volumes](docs/SAVED_VOLUMES.md) for controls, storage, Python access and
+the current numerical/resource limits.
+
+![Saved HBM6 acoustic time volume with linked slices, processing gate and retained signed RF](docs/images/sam-volume-workspace.png)
+
 The UI exports JSON containing numerical arrays and provenance. Python users can run the same engine without the browser:
 
 ```powershell
@@ -130,9 +145,9 @@ uv run pytest -q
 
 Tests cover analytical forward-model cases and public API validation/reproducibility. Passing tests establish numerical behavior in those cases; measured phantom experiments, convergence studies, transducer characterization, and cross-modal calibration remain necessary before scientific accuracy claims.
 
-The executed checks and their scope are recorded in [docs/VERIFICATION.md](docs/VERIFICATION.md). Native browser checks are also available: with the server running, set `MICROSCOPY_CHROME_PATH` to a local Chrome/Chromium executable and run `npm.cmd run verify:exports`, `npm.cmd run verify:h100` or `npm.cmd run verify:hbm` from `web`. They verify downloads, provenance and the HBM editing/region workflow.
+The executed checks and their scope are recorded in [docs/VERIFICATION.md](docs/VERIFICATION.md). Native browser checks are also available: with the server running, set `MICROSCOPY_CHROME_PATH` to a local Chrome/Chromium executable and run `npm.cmd run verify:exports`, `npm.cmd run verify:h100`, `npm.cmd run verify:hbm`, `npm.cmd run verify:volumes` or `npm.cmd run verify:volume-jobs` from `web`. They verify downloads, provenance, HBM editing/regions and saved-volume acquisition, slices, gates, reopening and cancellation/resume. Volume checks create synthetic datasets in the local catalog.
 
-The next milestones are saved SAM RF volumes, multiangle X-ray acquisition and reconstruction, with richer independent instrument controls. See [EXPANSION_PLAN.md](docs/EXPANSION_PLAN.md) for the proposed sequence and acceptance gates. Version 0.2 still returns single-projection and A/B/C preview data rather than saved volumetric acquisitions.
+The next milestones are multiangle X-ray acquisition and reconstruction, followed by explicitly modeled acoustic depth conversion and richer microstructure/propagation controls. See [EXPANSION_PLAN.md](docs/EXPANSION_PLAN.md) for the sequence and acceptance gates. Version 0.3 saves full SAM RF/envelope time volumes; X-ray acquisition remains a single radiographic preview.
 
 The implementation is separated into `virtual_microscopy/physics.py` and `materials.py`, strict schemas and local API, `web/` UI, reproducible example geometry, and tests. This leaves room for higher-fidelity solvers and CAD/voxel import while keeping the current demo runnable.
 

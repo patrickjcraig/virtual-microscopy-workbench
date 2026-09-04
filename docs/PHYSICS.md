@@ -2,7 +2,7 @@
 
 This workbench produces synthetic X-ray projections and scanning acoustic microscopy (SAM) data from the same geometric specimen. It is a reduced-order forward simulator for exploring contrast, defects and acquisition settings. It has no experimental calibration, measured resolution claim, or coupled thermal, electrical or mechanical field solution. Sharing a digital twin gives both modalities consistent input geometry; it does not establish experimental registration accuracy.
 
-The models and links below were reviewed on 4 September 2026. Implementation is in `virtual_microscopy/physics.py` and material defaults in `virtual_microscopy/materials.py`.
+The models and links below were reviewed on 4 September 2026. The original preview implementation is in `virtual_microscopy/physics.py` and material defaults in `virtual_microscopy/materials.py`. Version 0.3 adds `sam_volume.py`: the same primary-echo model with explicit recording start/duration/sample rate, Gaussian pulse bandwidth, external water-standoff delay/loss, and persistent signed RF/envelope tiles. See [Saved acoustic acquisitions](SAVED_VOLUMES.md) for those acquisition equations and limits. The gate-dependent record duration and excluded water standoff described below apply to the legacy preview.
 
 ## Digital-twin interpretation and units
 

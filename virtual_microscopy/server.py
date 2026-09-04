@@ -22,7 +22,15 @@ _compute_lock = threading.Lock()
 
 @asynccontextmanager
 async def lifespan(app):
-    yield
+    from .volume_jobs import VolumeJobManager
+    jobs = VolumeJobManager()
+    jobs.start()
+    app.state.volume_jobs = jobs
+    try:
+        yield
+    finally:
+        jobs.close()
+        app.state.volume_jobs = None
 
 
 app = FastAPI(title="Virtual microscopy", version=__version__, lifespan=lifespan)
@@ -107,6 +115,10 @@ def run(request: SimulationRequest, probe_only=False):
     if not _compute_lock.acquire(blocking=False):
         raise HTTPException(409, "A simulation is already running. Wait for completion and retry.")
     try:
+        volume_jobs = getattr(app.state, "volume_jobs", None)
+        if volume_jobs is not None and any(job["status"] in ("queued", "running", "cancelling")
+                                           for job in volume_jobs.list_jobs()):
+            raise HTTPException(409, "A saved volume acquisition is active. Inspect saved datasets now, or wait/cancel before running another preview.")
         twin = request.twin.model_dump(mode="json", exclude_none=True)
         settings = request.settings.model_dump(mode="json", exclude_none=True)
         try:
@@ -140,6 +152,9 @@ def simulate_api(request: SimulationRequest):
 def probe_api(request: SimulationRequest):
     return run(request, probe_only=True)
 
+
+from .volume_api import router as volume_router
+app.include_router(volume_router)
 
 dist = ROOT / "web" / "dist"
 if dist.is_dir():

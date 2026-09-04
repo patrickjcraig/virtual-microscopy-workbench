@@ -1,4 +1,4 @@
-# Virtual microscopy 0.2 integration contract (compatible twin schema 1)
+# Virtual microscopy 0.3 integration contract (compatible twin schema 1)
 
 Local application: Python FastAPI serves a Vite/vanilla JS + Three.js client. Source in `virtual_microscopy/` and `web/`. Physical dimensions use millimetres. Coordinates x right, y down in image, z depth from specimen top; surrounding material is water for SAM and air for X-ray. Later primitives replace earlier ones. This is a reduced-order synthetic forward simulator, not experimentally validated or coupled full-wave multiphysics.
 
@@ -20,7 +20,7 @@ Optional `image_reference` contains SHA-256, raster width/height, pixel_size_um,
 
 ## API
 
-- GET /api/health -> {status:'ok',version:'0.2.0'}
+- GET /api/health -> {status:'ok',version:'0.3.0'}
 - GET /api/examples -> [{id,name,description,twin}]
 - GET /api/materials -> list of material dicts with id,name,color,density_g_cm3,sound_speed_m_s,impedance_mrayl and provenance; extra properties permitted.
 - POST /api/validate -> twin body -> {valid:true,twin:normalized twin,warnings:[]}; errors HTTP 422.
@@ -36,6 +36,48 @@ Optional acquisition `roi_mm` is `[xmin,ymin,xmax,ymax]` in global millimetres w
 ## Python engine callable
 
 `virtual_microscopy.physics.simulate(twin:dict, settings:dict)->dict` receives fully populated validated settings; `probe(twin,settings)->dict`. `virtual_microscopy.materials.MATERIALS` is dict keyed material id; public values include id. Schemas/API live alongside those modules. Examples and analytical/API tests are independent of the frontend.
+
+## Saved-volume API (v2 routes, dataset schema 1)
+
+`SamVolumeRequest` is `{twin,acquisition}`. The strict acquisition schema has
+`scan_nx`, `scan_ny`, `depth_samples`, optional `roi_mm`, `frequency_mhz`,
+`fractional_bandwidth`, `focus_mm`, `record_start_us`, `record_duration_us`,
+`sample_rate_mhz`, `water_standoff_mm` and `include_defects`. Gate/display fields
+are not acquisition settings. Defaults and numerical bounds are documented in
+[SAVED_VOLUMES.md](docs/SAVED_VOLUMES.md) and `/openapi.json`.
+
+- POST `/api/v2/estimate` -> shape `[y,x,time]`, RF/envelope/coordinate/total bytes,
+  estimated numerical peak workspace, time range/sample count, pitch, grid/PSF
+  metadata, warnings and local disk preflight. Invalid/out-of-budget requests fail
+  before allocation.
+- POST `/api/v2/jobs` -> HTTP 202 job; GET `/api/v2/jobs` -> `{jobs:[...]}`;
+  GET `/api/v2/jobs/{id}` -> job. Jobs include ID, dataset ID, status, row progress,
+  timestamps and any error.
+- POST `/api/v2/jobs/{id}/cancel` or `/resume` -> updated job. Resume keeps immutable
+  inputs and checks solver/material identity and committed data. Processing runs
+  in a single local child process; status reads and saved-data inspection remain
+  available. Preview and volume propagation cannot run concurrently through API.
+- GET `/api/v2/datasets` -> `{datasets:[summary,...]}` with names, IDs, shape,
+  state, completion flag and input hash. GET `/api/v2/datasets/{id}` -> the full
+  manifest, including frozen inputs and the completed-chunk registry. Incomplete
+  states explicitly report `complete:false`. Detail responses also include
+  acquisition, extent_mm and time_range_us for the viewer.
+- GET `/api/v2/datasets/{id}/view` query parameters: x_index, y_index, time_index,
+  gate_start_us, gate_end_us, gate_mode (`peak_envelope` or `rms_rf`). Returns
+  `xy`, `xt`, `yt`, `ascan`, `cscan`, `cursor`, `gate`, and `metadata` read from
+  stored arrays. XY/Cscan extents use `[xmin,xmax,ymin,ymax]`; XT/YT use
+  `[position_min,position_max,time_min,time_max]`. Sections report exact temporal
+  bin edges; all trace samples are returned. Indices/gates outside recorded bounds
+  or gates with no samples fail with 422. Incomplete datasets return 409.
+- GET `/api/v2/datasets/{id}/export` -> integrity-checked ZIP containing
+  `manifest.json` and `data.zarr/`. Full float32 RF/envelope, float64 coordinates;
+  authoritative axes `[y,x,time]`. Incomplete datasets return 409.
+
+Catalog/data root defaults to ignored `artifacts/volumes`, configurable through
+`VM_DATA_ROOT`. UUID-only identifiers cannot select arbitrary filesystem paths.
+No API supports replacing completed datasets. `time` is not a depth coordinate;
+relative modeled amplitudes are not calibrated Pa or volts.
+
 
 ## Simulation response (plain JSON numeric arrays)
 
