@@ -35,6 +35,7 @@ export class TwinViewer {
     this.model = new THREE.Group(); this.scene.add(this.model);
     this.floor = new THREE.Group(); this.scene.add(this.floor);
     this.probe = new THREE.Group(); this.scene.add(this.probe);
+    this.roi = new THREE.Group(); this.scene.add(this.roi);
     this.resize = new ResizeObserver(() => {
       const { width, height } = element.getBoundingClientRect();
       if (!width || !height) return;
@@ -120,6 +121,12 @@ export class TwinViewer {
     this.probe.add(ring);
     const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(x - sx / 2, h, y - sy / 2), new THREE.Vector3(x - sx / 2, h + this.span * .13, y - sy / 2)]), new THREE.LineDashedMaterial({ color:0x2357d8,dashSize:this.span * .007,gapSize:this.span * .004,transparent:true,opacity:.7,depthTest:false }));
     line.computeLineDistances(); line.renderOrder = 8; this.probe.add(line); this.render();
+  }
+  setROI(bounds) {
+    this.clear(this.roi);if(!this.twin || !bounds){this.render();return;}
+    const [sx,sy,sz]=this.twin.size_mm,[x0,y0,x1,y1]=bounds,h=sz/2+(this.exploded?sz*1.35:0)+.09;
+    const points=[[x0,y0],[x1,y0],[x1,y1],[x0,y1],[x0,y0]].map(([x,y])=>new THREE.Vector3(x-sx/2,h,y-sy/2));
+    const outline=new THREE.Line(new THREE.BufferGeometry().setFromPoints(points),new THREE.LineBasicMaterial({color:0xb86b27,depthTest:false}));outline.renderOrder=9;this.roi.add(outline);this.render();
   }
   reset() {
     const span = this.span || 6;

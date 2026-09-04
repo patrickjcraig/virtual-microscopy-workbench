@@ -28,7 +28,7 @@ try {
   const examples=await response.json(),example=examples.find(item=>item.id==='nvidia-h100-sxm');
   assert(example,'H100 must appear in the public specimen catalog.');
   const sourceTwin=example.twin,reference=sourceTwin.reference;
-  assert.equal(sourceTwin.objects.filter(item=>/^HBM3/.test(item.display_label || '')).length,5);
+  assert.equal(sourceTwin.objects.filter(item=>/^HBM3/.test(item.display_label || '')).length,6);
   assert(reference.sources.length>0);assert(reference.published_facts.length>0);assert(reference.assumptions.length>0);
 
   const initialResponse=responseFor('/api/simulate');

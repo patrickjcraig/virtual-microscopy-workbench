@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "name": "NVIDIA H100 SXM / reference model",
-  "description": "Public-reference H100 SXM 80 GB teaching model: GH100 die and five functional HBM3 blocks, with an assumed interposer, package substrate and coarse interconnects. NVIDIA documents the 814 mm2 die area and five-stack HBM3 configuration; package dimensions, internal geometry and seeded defects are illustrative, not NVIDIA CAD or measured hardware.",
+  "description": "Public-reference H100 SXM 80 GB teaching model with editable HBM assemblies. The initial fixture has six physical sites: five marked enabled and the sixth with unknown functional state and assumed construction. Current construction and state are recorded in hbm_assemblies. NVIDIA documents the 814 mm2 die area and five enabled HBM3 stacks. Package dimensions, layer parameters, coarse interconnects and seeded defects are illustrative, not NVIDIA CAD or measured hardware.",
   "size_mm": [
     60,
     60,
@@ -113,90 +113,423 @@
       "role": "structure"
     },
     {
-      "id": "hbm-underfill-1",
-      "name": "HBM3 block 1 assumed underfill",
+      "id": "hbm-1-underfill",
+      "name": "HBM3 1 / underfill (assumed)",
+      "shape": "box",
       "material": "epoxy",
       "center_mm": [
         10.5,
         20,
-        0.91
+        0.9099999999999999
       ],
       "size_mm": [
         8,
         9,
         0.18
       ],
-      "shape": "box",
-      "role": "structure"
-    },
-    {
-      "id": "hbm-1",
-      "name": "HBM3 functional stack 1 / homogeneous silicon aggregate",
-      "material": "silicon",
-      "center_mm": [
-        10.5,
-        20,
-        0.51
-      ],
-      "size_mm": [
-        8,
-        9,
-        0.62
-      ],
-      "shape": "box",
       "role": "structure",
-      "display_label": "HBM3 1"
+      "assembly_id": "hbm-1",
+      "layer_role": "underfill"
     },
     {
-      "id": "hbm-contact-1-1",
-      "name": "HBM3 1 aggregate solder contact 1 (assumed)",
+      "id": "hbm-1-contact-01",
+      "name": "HBM3 1 / contact-01 (assumed)",
+      "shape": "cylinder",
       "material": "solder",
       "center_mm": [
         10.5,
         17.5,
-        0.91
+        0.9099999999999999
       ],
       "size_mm": [
         2.2,
         2.2,
         0.18
       ],
-      "shape": "cylinder",
-      "role": "structure"
+      "role": "structure",
+      "assembly_id": "hbm-1",
+      "layer_role": "contact"
     },
     {
-      "id": "hbm-contact-1-2",
-      "name": "HBM3 1 aggregate solder contact 2 (assumed)",
+      "id": "hbm-1-contact-02",
+      "name": "HBM3 1 / contact-02 (assumed)",
+      "shape": "cylinder",
       "material": "solder",
       "center_mm": [
         10.5,
         20,
-        0.91
+        0.9099999999999999
       ],
       "size_mm": [
         2.2,
         2.2,
         0.18
       ],
-      "shape": "cylinder",
-      "role": "structure"
+      "role": "structure",
+      "assembly_id": "hbm-1",
+      "layer_role": "contact"
     },
     {
-      "id": "hbm-contact-1-3",
-      "name": "HBM3 1 aggregate solder contact 3 (assumed)",
+      "id": "hbm-1-contact-03",
+      "name": "HBM3 1 / contact-03 (assumed)",
+      "shape": "cylinder",
       "material": "solder",
       "center_mm": [
         10.5,
         22.5,
-        0.91
+        0.9099999999999999
       ],
       "size_mm": [
         2.2,
         2.2,
         0.18
       ],
-      "shape": "cylinder",
-      "role": "structure"
+      "role": "structure",
+      "assembly_id": "hbm-1",
+      "layer_role": "contact"
+    },
+    {
+      "id": "hbm-1-base",
+      "name": "HBM3 1 / base (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        10.5,
+        20,
+        0.785
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.07
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-1",
+      "layer_role": "base_die"
+    },
+    {
+      "id": "hbm-1-gap-01",
+      "name": "HBM3 1 / gap-01 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        10.5,
+        20,
+        0.7425
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-1",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-1-dram-01",
+      "name": "HBM3 1 / dram-01 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        10.5,
+        20,
+        0.71
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-1",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-1-gap-02",
+      "name": "HBM3 1 / gap-02 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        10.5,
+        20,
+        0.6775
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-1",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-1-dram-02",
+      "name": "HBM3 1 / dram-02 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        10.5,
+        20,
+        0.645
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-1",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-1-gap-03",
+      "name": "HBM3 1 / gap-03 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        10.5,
+        20,
+        0.6125
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-1",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-1-dram-03",
+      "name": "HBM3 1 / dram-03 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        10.5,
+        20,
+        0.58
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-1",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-1-gap-04",
+      "name": "HBM3 1 / gap-04 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        10.5,
+        20,
+        0.5475
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-1",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-1-dram-04",
+      "name": "HBM3 1 / dram-04 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        10.5,
+        20,
+        0.515
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-1",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-1-gap-05",
+      "name": "HBM3 1 / gap-05 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        10.5,
+        20,
+        0.4825
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-1",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-1-dram-05",
+      "name": "HBM3 1 / dram-05 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        10.5,
+        20,
+        0.45
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-1",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-1-gap-06",
+      "name": "HBM3 1 / gap-06 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        10.5,
+        20,
+        0.4175
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-1",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-1-dram-06",
+      "name": "HBM3 1 / dram-06 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        10.5,
+        20,
+        0.385
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-1",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-1-gap-07",
+      "name": "HBM3 1 / gap-07 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        10.5,
+        20,
+        0.3525
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-1",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-1-dram-07",
+      "name": "HBM3 1 / dram-07 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        10.5,
+        20,
+        0.32
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-1",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-1-gap-08",
+      "name": "HBM3 1 / gap-08 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        10.5,
+        20,
+        0.2875
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-1",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-1-dram-08",
+      "name": "HBM3 1 / dram-08 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        10.5,
+        20,
+        0.255
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-1",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-1-cap",
+      "name": "HBM3 1 / cap (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        10.5,
+        20,
+        0.215
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.03
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-1",
+      "layer_role": "cap",
+      "display_label": "HBM3 1"
     },
     {
       "id": "hbm-route-1-1",
@@ -284,90 +617,423 @@
       "role": "structure"
     },
     {
-      "id": "hbm-underfill-2",
-      "name": "HBM3 block 2 assumed underfill",
+      "id": "hbm-2-underfill",
+      "name": "HBM3 2 / underfill (assumed)",
+      "shape": "box",
       "material": "epoxy",
       "center_mm": [
         10.5,
         30,
-        0.91
+        0.9099999999999999
       ],
       "size_mm": [
         8,
         9,
         0.18
       ],
-      "shape": "box",
-      "role": "structure"
-    },
-    {
-      "id": "hbm-2",
-      "name": "HBM3 functional stack 2 / homogeneous silicon aggregate",
-      "material": "silicon",
-      "center_mm": [
-        10.5,
-        30,
-        0.51
-      ],
-      "size_mm": [
-        8,
-        9,
-        0.62
-      ],
-      "shape": "box",
       "role": "structure",
-      "display_label": "HBM3 2"
+      "assembly_id": "hbm-2",
+      "layer_role": "underfill"
     },
     {
-      "id": "hbm-contact-2-1",
-      "name": "HBM3 2 aggregate solder contact 1 (assumed)",
+      "id": "hbm-2-contact-01",
+      "name": "HBM3 2 / contact-01 (assumed)",
+      "shape": "cylinder",
       "material": "solder",
       "center_mm": [
         10.5,
         27.5,
-        0.91
+        0.9099999999999999
       ],
       "size_mm": [
         2.2,
         2.2,
         0.18
       ],
-      "shape": "cylinder",
-      "role": "structure"
+      "role": "structure",
+      "assembly_id": "hbm-2",
+      "layer_role": "contact"
     },
     {
-      "id": "hbm-contact-2-2",
-      "name": "HBM3 2 aggregate solder contact 2 (assumed)",
+      "id": "hbm-2-contact-02",
+      "name": "HBM3 2 / contact-02 (assumed)",
+      "shape": "cylinder",
       "material": "solder",
       "center_mm": [
         10.5,
         30,
-        0.91
+        0.9099999999999999
       ],
       "size_mm": [
         2.2,
         2.2,
         0.18
       ],
-      "shape": "cylinder",
-      "role": "structure"
+      "role": "structure",
+      "assembly_id": "hbm-2",
+      "layer_role": "contact"
     },
     {
-      "id": "hbm-contact-2-3",
-      "name": "HBM3 2 aggregate solder contact 3 (assumed)",
+      "id": "hbm-2-contact-03",
+      "name": "HBM3 2 / contact-03 (assumed)",
+      "shape": "cylinder",
       "material": "solder",
       "center_mm": [
         10.5,
         32.5,
-        0.91
+        0.9099999999999999
       ],
       "size_mm": [
         2.2,
         2.2,
         0.18
       ],
-      "shape": "cylinder",
-      "role": "structure"
+      "role": "structure",
+      "assembly_id": "hbm-2",
+      "layer_role": "contact"
+    },
+    {
+      "id": "hbm-2-base",
+      "name": "HBM3 2 / base (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        10.5,
+        30,
+        0.785
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.07
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-2",
+      "layer_role": "base_die"
+    },
+    {
+      "id": "hbm-2-gap-01",
+      "name": "HBM3 2 / gap-01 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        10.5,
+        30,
+        0.7425
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-2",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-2-dram-01",
+      "name": "HBM3 2 / dram-01 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        10.5,
+        30,
+        0.71
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-2",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-2-gap-02",
+      "name": "HBM3 2 / gap-02 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        10.5,
+        30,
+        0.6775
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-2",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-2-dram-02",
+      "name": "HBM3 2 / dram-02 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        10.5,
+        30,
+        0.645
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-2",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-2-gap-03",
+      "name": "HBM3 2 / gap-03 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        10.5,
+        30,
+        0.6125
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-2",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-2-dram-03",
+      "name": "HBM3 2 / dram-03 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        10.5,
+        30,
+        0.58
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-2",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-2-gap-04",
+      "name": "HBM3 2 / gap-04 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        10.5,
+        30,
+        0.5475
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-2",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-2-dram-04",
+      "name": "HBM3 2 / dram-04 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        10.5,
+        30,
+        0.515
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-2",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-2-gap-05",
+      "name": "HBM3 2 / gap-05 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        10.5,
+        30,
+        0.4825
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-2",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-2-dram-05",
+      "name": "HBM3 2 / dram-05 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        10.5,
+        30,
+        0.45
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-2",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-2-gap-06",
+      "name": "HBM3 2 / gap-06 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        10.5,
+        30,
+        0.4175
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-2",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-2-dram-06",
+      "name": "HBM3 2 / dram-06 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        10.5,
+        30,
+        0.385
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-2",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-2-gap-07",
+      "name": "HBM3 2 / gap-07 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        10.5,
+        30,
+        0.3525
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-2",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-2-dram-07",
+      "name": "HBM3 2 / dram-07 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        10.5,
+        30,
+        0.32
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-2",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-2-gap-08",
+      "name": "HBM3 2 / gap-08 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        10.5,
+        30,
+        0.2875
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-2",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-2-dram-08",
+      "name": "HBM3 2 / dram-08 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        10.5,
+        30,
+        0.255
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-2",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-2-cap",
+      "name": "HBM3 2 / cap (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        10.5,
+        30,
+        0.215
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.03
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-2",
+      "layer_role": "cap",
+      "display_label": "HBM3 2"
     },
     {
       "id": "hbm-route-2-1",
@@ -455,90 +1121,423 @@
       "role": "structure"
     },
     {
-      "id": "hbm-underfill-3",
-      "name": "HBM3 block 3 assumed underfill",
+      "id": "hbm-3-underfill",
+      "name": "HBM3 3 / underfill (assumed)",
+      "shape": "box",
       "material": "epoxy",
       "center_mm": [
         10.5,
         40,
-        0.91
+        0.9099999999999999
       ],
       "size_mm": [
         8,
         9,
         0.18
       ],
-      "shape": "box",
-      "role": "structure"
-    },
-    {
-      "id": "hbm-3",
-      "name": "HBM3 functional stack 3 / homogeneous silicon aggregate",
-      "material": "silicon",
-      "center_mm": [
-        10.5,
-        40,
-        0.51
-      ],
-      "size_mm": [
-        8,
-        9,
-        0.62
-      ],
-      "shape": "box",
       "role": "structure",
-      "display_label": "HBM3 3"
+      "assembly_id": "hbm-3",
+      "layer_role": "underfill"
     },
     {
-      "id": "hbm-contact-3-1",
-      "name": "HBM3 3 aggregate solder contact 1 (assumed)",
+      "id": "hbm-3-contact-01",
+      "name": "HBM3 3 / contact-01 (assumed)",
+      "shape": "cylinder",
       "material": "solder",
       "center_mm": [
         10.5,
         37.5,
-        0.91
+        0.9099999999999999
       ],
       "size_mm": [
         2.2,
         2.2,
         0.18
       ],
-      "shape": "cylinder",
-      "role": "structure"
+      "role": "structure",
+      "assembly_id": "hbm-3",
+      "layer_role": "contact"
     },
     {
-      "id": "hbm-contact-3-2",
-      "name": "HBM3 3 aggregate solder contact 2 (assumed)",
+      "id": "hbm-3-contact-02",
+      "name": "HBM3 3 / contact-02 (assumed)",
+      "shape": "cylinder",
       "material": "solder",
       "center_mm": [
         10.5,
         40,
-        0.91
+        0.9099999999999999
       ],
       "size_mm": [
         2.2,
         2.2,
         0.18
       ],
-      "shape": "cylinder",
-      "role": "structure"
+      "role": "structure",
+      "assembly_id": "hbm-3",
+      "layer_role": "contact"
     },
     {
-      "id": "hbm-contact-3-3",
-      "name": "HBM3 3 aggregate solder contact 3 (assumed)",
+      "id": "hbm-3-contact-03",
+      "name": "HBM3 3 / contact-03 (assumed)",
+      "shape": "cylinder",
       "material": "solder",
       "center_mm": [
         10.5,
         42.5,
-        0.91
+        0.9099999999999999
       ],
       "size_mm": [
         2.2,
         2.2,
         0.18
       ],
-      "shape": "cylinder",
-      "role": "structure"
+      "role": "structure",
+      "assembly_id": "hbm-3",
+      "layer_role": "contact"
+    },
+    {
+      "id": "hbm-3-base",
+      "name": "HBM3 3 / base (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        10.5,
+        40,
+        0.785
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.07
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-3",
+      "layer_role": "base_die"
+    },
+    {
+      "id": "hbm-3-gap-01",
+      "name": "HBM3 3 / gap-01 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        10.5,
+        40,
+        0.7425
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-3",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-3-dram-01",
+      "name": "HBM3 3 / dram-01 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        10.5,
+        40,
+        0.71
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-3",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-3-gap-02",
+      "name": "HBM3 3 / gap-02 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        10.5,
+        40,
+        0.6775
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-3",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-3-dram-02",
+      "name": "HBM3 3 / dram-02 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        10.5,
+        40,
+        0.645
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-3",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-3-gap-03",
+      "name": "HBM3 3 / gap-03 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        10.5,
+        40,
+        0.6125
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-3",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-3-dram-03",
+      "name": "HBM3 3 / dram-03 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        10.5,
+        40,
+        0.58
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-3",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-3-gap-04",
+      "name": "HBM3 3 / gap-04 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        10.5,
+        40,
+        0.5475
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-3",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-3-dram-04",
+      "name": "HBM3 3 / dram-04 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        10.5,
+        40,
+        0.515
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-3",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-3-gap-05",
+      "name": "HBM3 3 / gap-05 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        10.5,
+        40,
+        0.4825
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-3",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-3-dram-05",
+      "name": "HBM3 3 / dram-05 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        10.5,
+        40,
+        0.45
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-3",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-3-gap-06",
+      "name": "HBM3 3 / gap-06 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        10.5,
+        40,
+        0.4175
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-3",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-3-dram-06",
+      "name": "HBM3 3 / dram-06 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        10.5,
+        40,
+        0.385
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-3",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-3-gap-07",
+      "name": "HBM3 3 / gap-07 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        10.5,
+        40,
+        0.3525
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-3",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-3-dram-07",
+      "name": "HBM3 3 / dram-07 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        10.5,
+        40,
+        0.32
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-3",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-3-gap-08",
+      "name": "HBM3 3 / gap-08 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        10.5,
+        40,
+        0.2875
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-3",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-3-dram-08",
+      "name": "HBM3 3 / dram-08 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        10.5,
+        40,
+        0.255
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-3",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-3-cap",
+      "name": "HBM3 3 / cap (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        10.5,
+        40,
+        0.215
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.03
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-3",
+      "layer_role": "cap",
+      "display_label": "HBM3 3"
     },
     {
       "id": "hbm-route-3-1",
@@ -626,90 +1625,423 @@
       "role": "structure"
     },
     {
-      "id": "hbm-underfill-4",
-      "name": "HBM3 block 4 assumed underfill",
+      "id": "hbm-4-underfill",
+      "name": "HBM3 4 / underfill (assumed)",
+      "shape": "box",
       "material": "epoxy",
       "center_mm": [
         49.5,
         20,
-        0.91
+        0.9099999999999999
       ],
       "size_mm": [
         8,
         9,
         0.18
       ],
-      "shape": "box",
-      "role": "structure"
-    },
-    {
-      "id": "hbm-4",
-      "name": "HBM3 functional stack 4 / homogeneous silicon aggregate",
-      "material": "silicon",
-      "center_mm": [
-        49.5,
-        20,
-        0.51
-      ],
-      "size_mm": [
-        8,
-        9,
-        0.62
-      ],
-      "shape": "box",
       "role": "structure",
-      "display_label": "HBM3 4"
+      "assembly_id": "hbm-4",
+      "layer_role": "underfill"
     },
     {
-      "id": "hbm-contact-4-1",
-      "name": "HBM3 4 aggregate solder contact 1 (assumed)",
+      "id": "hbm-4-contact-01",
+      "name": "HBM3 4 / contact-01 (assumed)",
+      "shape": "cylinder",
       "material": "solder",
       "center_mm": [
         49.5,
         17.5,
-        0.91
+        0.9099999999999999
       ],
       "size_mm": [
         2.2,
         2.2,
         0.18
       ],
-      "shape": "cylinder",
-      "role": "structure"
+      "role": "structure",
+      "assembly_id": "hbm-4",
+      "layer_role": "contact"
     },
     {
-      "id": "hbm-contact-4-2",
-      "name": "HBM3 4 aggregate solder contact 2 (assumed)",
+      "id": "hbm-4-contact-02",
+      "name": "HBM3 4 / contact-02 (assumed)",
+      "shape": "cylinder",
       "material": "solder",
       "center_mm": [
         49.5,
         20,
-        0.91
+        0.9099999999999999
       ],
       "size_mm": [
         2.2,
         2.2,
         0.18
       ],
-      "shape": "cylinder",
-      "role": "structure"
+      "role": "structure",
+      "assembly_id": "hbm-4",
+      "layer_role": "contact"
     },
     {
-      "id": "hbm-contact-4-3",
-      "name": "HBM3 4 aggregate solder contact 3 (assumed)",
+      "id": "hbm-4-contact-03",
+      "name": "HBM3 4 / contact-03 (assumed)",
+      "shape": "cylinder",
       "material": "solder",
       "center_mm": [
         49.5,
         22.5,
-        0.91
+        0.9099999999999999
       ],
       "size_mm": [
         2.2,
         2.2,
         0.18
       ],
-      "shape": "cylinder",
-      "role": "structure"
+      "role": "structure",
+      "assembly_id": "hbm-4",
+      "layer_role": "contact"
+    },
+    {
+      "id": "hbm-4-base",
+      "name": "HBM3 4 / base (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        49.5,
+        20,
+        0.785
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.07
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-4",
+      "layer_role": "base_die"
+    },
+    {
+      "id": "hbm-4-gap-01",
+      "name": "HBM3 4 / gap-01 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        49.5,
+        20,
+        0.7425
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-4",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-4-dram-01",
+      "name": "HBM3 4 / dram-01 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        49.5,
+        20,
+        0.71
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-4",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-4-gap-02",
+      "name": "HBM3 4 / gap-02 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        49.5,
+        20,
+        0.6775
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-4",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-4-dram-02",
+      "name": "HBM3 4 / dram-02 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        49.5,
+        20,
+        0.645
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-4",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-4-gap-03",
+      "name": "HBM3 4 / gap-03 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        49.5,
+        20,
+        0.6125
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-4",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-4-dram-03",
+      "name": "HBM3 4 / dram-03 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        49.5,
+        20,
+        0.58
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-4",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-4-gap-04",
+      "name": "HBM3 4 / gap-04 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        49.5,
+        20,
+        0.5475
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-4",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-4-dram-04",
+      "name": "HBM3 4 / dram-04 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        49.5,
+        20,
+        0.515
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-4",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-4-gap-05",
+      "name": "HBM3 4 / gap-05 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        49.5,
+        20,
+        0.4825
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-4",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-4-dram-05",
+      "name": "HBM3 4 / dram-05 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        49.5,
+        20,
+        0.45
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-4",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-4-gap-06",
+      "name": "HBM3 4 / gap-06 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        49.5,
+        20,
+        0.4175
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-4",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-4-dram-06",
+      "name": "HBM3 4 / dram-06 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        49.5,
+        20,
+        0.385
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-4",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-4-gap-07",
+      "name": "HBM3 4 / gap-07 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        49.5,
+        20,
+        0.3525
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-4",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-4-dram-07",
+      "name": "HBM3 4 / dram-07 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        49.5,
+        20,
+        0.32
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-4",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-4-gap-08",
+      "name": "HBM3 4 / gap-08 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        49.5,
+        20,
+        0.2875
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-4",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-4-dram-08",
+      "name": "HBM3 4 / dram-08 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        49.5,
+        20,
+        0.255
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-4",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-4-cap",
+      "name": "HBM3 4 / cap (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        49.5,
+        20,
+        0.215
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.03
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-4",
+      "layer_role": "cap",
+      "display_label": "HBM3 4"
     },
     {
       "id": "hbm-route-4-1",
@@ -797,90 +2129,423 @@
       "role": "structure"
     },
     {
-      "id": "hbm-underfill-5",
-      "name": "HBM3 block 5 assumed underfill",
+      "id": "hbm-5-underfill",
+      "name": "HBM3 5 / underfill (assumed)",
+      "shape": "box",
       "material": "epoxy",
       "center_mm": [
         49.5,
         30,
-        0.91
+        0.9099999999999999
       ],
       "size_mm": [
         8,
         9,
         0.18
       ],
-      "shape": "box",
-      "role": "structure"
-    },
-    {
-      "id": "hbm-5",
-      "name": "HBM3 functional stack 5 / homogeneous silicon aggregate",
-      "material": "silicon",
-      "center_mm": [
-        49.5,
-        30,
-        0.51
-      ],
-      "size_mm": [
-        8,
-        9,
-        0.62
-      ],
-      "shape": "box",
       "role": "structure",
-      "display_label": "HBM3 5"
+      "assembly_id": "hbm-5",
+      "layer_role": "underfill"
     },
     {
-      "id": "hbm-contact-5-1",
-      "name": "HBM3 5 aggregate solder contact 1 (assumed)",
+      "id": "hbm-5-contact-01",
+      "name": "HBM3 5 / contact-01 (assumed)",
+      "shape": "cylinder",
       "material": "solder",
       "center_mm": [
         49.5,
         27.5,
-        0.91
+        0.9099999999999999
       ],
       "size_mm": [
         2.2,
         2.2,
         0.18
       ],
-      "shape": "cylinder",
-      "role": "structure"
+      "role": "structure",
+      "assembly_id": "hbm-5",
+      "layer_role": "contact"
     },
     {
-      "id": "hbm-contact-5-2",
-      "name": "HBM3 5 aggregate solder contact 2 (assumed)",
+      "id": "hbm-5-contact-02",
+      "name": "HBM3 5 / contact-02 (assumed)",
+      "shape": "cylinder",
       "material": "solder",
       "center_mm": [
         49.5,
         30,
-        0.91
+        0.9099999999999999
       ],
       "size_mm": [
         2.2,
         2.2,
         0.18
       ],
-      "shape": "cylinder",
-      "role": "structure"
+      "role": "structure",
+      "assembly_id": "hbm-5",
+      "layer_role": "contact"
     },
     {
-      "id": "hbm-contact-5-3",
-      "name": "HBM3 5 aggregate solder contact 3 (assumed)",
+      "id": "hbm-5-contact-03",
+      "name": "HBM3 5 / contact-03 (assumed)",
+      "shape": "cylinder",
       "material": "solder",
       "center_mm": [
         49.5,
         32.5,
-        0.91
+        0.9099999999999999
       ],
       "size_mm": [
         2.2,
         2.2,
         0.18
       ],
-      "shape": "cylinder",
-      "role": "structure"
+      "role": "structure",
+      "assembly_id": "hbm-5",
+      "layer_role": "contact"
+    },
+    {
+      "id": "hbm-5-base",
+      "name": "HBM3 5 / base (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        49.5,
+        30,
+        0.785
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.07
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-5",
+      "layer_role": "base_die"
+    },
+    {
+      "id": "hbm-5-gap-01",
+      "name": "HBM3 5 / gap-01 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        49.5,
+        30,
+        0.7425
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-5",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-5-dram-01",
+      "name": "HBM3 5 / dram-01 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        49.5,
+        30,
+        0.71
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-5",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-5-gap-02",
+      "name": "HBM3 5 / gap-02 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        49.5,
+        30,
+        0.6775
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-5",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-5-dram-02",
+      "name": "HBM3 5 / dram-02 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        49.5,
+        30,
+        0.645
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-5",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-5-gap-03",
+      "name": "HBM3 5 / gap-03 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        49.5,
+        30,
+        0.6125
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-5",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-5-dram-03",
+      "name": "HBM3 5 / dram-03 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        49.5,
+        30,
+        0.58
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-5",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-5-gap-04",
+      "name": "HBM3 5 / gap-04 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        49.5,
+        30,
+        0.5475
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-5",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-5-dram-04",
+      "name": "HBM3 5 / dram-04 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        49.5,
+        30,
+        0.515
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-5",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-5-gap-05",
+      "name": "HBM3 5 / gap-05 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        49.5,
+        30,
+        0.4825
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-5",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-5-dram-05",
+      "name": "HBM3 5 / dram-05 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        49.5,
+        30,
+        0.45
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-5",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-5-gap-06",
+      "name": "HBM3 5 / gap-06 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        49.5,
+        30,
+        0.4175
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-5",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-5-dram-06",
+      "name": "HBM3 5 / dram-06 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        49.5,
+        30,
+        0.385
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-5",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-5-gap-07",
+      "name": "HBM3 5 / gap-07 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        49.5,
+        30,
+        0.3525
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-5",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-5-dram-07",
+      "name": "HBM3 5 / dram-07 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        49.5,
+        30,
+        0.32
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-5",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-5-gap-08",
+      "name": "HBM3 5 / gap-08 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        49.5,
+        30,
+        0.2875
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-5",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-5-dram-08",
+      "name": "HBM3 5 / dram-08 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        49.5,
+        30,
+        0.255
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-5",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-5-cap",
+      "name": "HBM3 5 / cap (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        49.5,
+        30,
+        0.215
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.03
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-5",
+      "layer_role": "cap",
+      "display_label": "HBM3 5"
     },
     {
       "id": "hbm-route-5-1",
@@ -957,6 +2622,510 @@
       "center_mm": [
         44.8,
         33,
+        1.045
+      ],
+      "size_mm": [
+        7.5,
+        0.7,
+        0.05
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-6-underfill",
+      "name": "HBM3 6 / underfill (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        49.5,
+        40,
+        0.9099999999999999
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.18
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-6",
+      "layer_role": "underfill"
+    },
+    {
+      "id": "hbm-6-contact-01",
+      "name": "HBM3 6 / contact-01 (assumed)",
+      "shape": "cylinder",
+      "material": "solder",
+      "center_mm": [
+        49.5,
+        37.5,
+        0.9099999999999999
+      ],
+      "size_mm": [
+        2.2,
+        2.2,
+        0.18
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-6",
+      "layer_role": "contact"
+    },
+    {
+      "id": "hbm-6-contact-02",
+      "name": "HBM3 6 / contact-02 (assumed)",
+      "shape": "cylinder",
+      "material": "solder",
+      "center_mm": [
+        49.5,
+        40,
+        0.9099999999999999
+      ],
+      "size_mm": [
+        2.2,
+        2.2,
+        0.18
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-6",
+      "layer_role": "contact"
+    },
+    {
+      "id": "hbm-6-contact-03",
+      "name": "HBM3 6 / contact-03 (assumed)",
+      "shape": "cylinder",
+      "material": "solder",
+      "center_mm": [
+        49.5,
+        42.5,
+        0.9099999999999999
+      ],
+      "size_mm": [
+        2.2,
+        2.2,
+        0.18
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-6",
+      "layer_role": "contact"
+    },
+    {
+      "id": "hbm-6-base",
+      "name": "HBM3 6 / base (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        49.5,
+        40,
+        0.785
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.07
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-6",
+      "layer_role": "base_die"
+    },
+    {
+      "id": "hbm-6-gap-01",
+      "name": "HBM3 6 / gap-01 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        49.5,
+        40,
+        0.7425
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-6",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-6-dram-01",
+      "name": "HBM3 6 / dram-01 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        49.5,
+        40,
+        0.71
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-6",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-6-gap-02",
+      "name": "HBM3 6 / gap-02 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        49.5,
+        40,
+        0.6775
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-6",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-6-dram-02",
+      "name": "HBM3 6 / dram-02 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        49.5,
+        40,
+        0.645
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-6",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-6-gap-03",
+      "name": "HBM3 6 / gap-03 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        49.5,
+        40,
+        0.6125
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-6",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-6-dram-03",
+      "name": "HBM3 6 / dram-03 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        49.5,
+        40,
+        0.58
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-6",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-6-gap-04",
+      "name": "HBM3 6 / gap-04 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        49.5,
+        40,
+        0.5475
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-6",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-6-dram-04",
+      "name": "HBM3 6 / dram-04 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        49.5,
+        40,
+        0.515
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-6",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-6-gap-05",
+      "name": "HBM3 6 / gap-05 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        49.5,
+        40,
+        0.4825
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-6",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-6-dram-05",
+      "name": "HBM3 6 / dram-05 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        49.5,
+        40,
+        0.45
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-6",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-6-gap-06",
+      "name": "HBM3 6 / gap-06 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        49.5,
+        40,
+        0.4175
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-6",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-6-dram-06",
+      "name": "HBM3 6 / dram-06 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        49.5,
+        40,
+        0.385
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-6",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-6-gap-07",
+      "name": "HBM3 6 / gap-07 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        49.5,
+        40,
+        0.3525
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-6",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-6-dram-07",
+      "name": "HBM3 6 / dram-07 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        49.5,
+        40,
+        0.32
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-6",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-6-gap-08",
+      "name": "HBM3 6 / gap-08 (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        49.5,
+        40,
+        0.2875
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.015
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-6",
+      "layer_role": "interdie_gap"
+    },
+    {
+      "id": "hbm-6-dram-08",
+      "name": "HBM3 6 / dram-08 (assumed)",
+      "shape": "box",
+      "material": "silicon",
+      "center_mm": [
+        49.5,
+        40,
+        0.255
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.05
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-6",
+      "layer_role": "dram_die"
+    },
+    {
+      "id": "hbm-6-cap",
+      "name": "HBM3 6 / cap (assumed)",
+      "shape": "box",
+      "material": "epoxy",
+      "center_mm": [
+        49.5,
+        40,
+        0.215
+      ],
+      "size_mm": [
+        8,
+        9,
+        0.03
+      ],
+      "role": "structure",
+      "assembly_id": "hbm-6",
+      "layer_role": "cap",
+      "display_label": "HBM3 6"
+    },
+    {
+      "id": "hbm-route-6-1",
+      "name": "HBM3 6 illustrative copper routing lane 1",
+      "material": "copper",
+      "center_mm": [
+        44.8,
+        37,
+        1.045
+      ],
+      "size_mm": [
+        7.5,
+        0.7,
+        0.05
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-route-6-2",
+      "name": "HBM3 6 illustrative copper routing lane 2",
+      "material": "copper",
+      "center_mm": [
+        44.8,
+        38.5,
+        1.045
+      ],
+      "size_mm": [
+        7.5,
+        0.7,
+        0.05
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-route-6-3",
+      "name": "HBM3 6 illustrative copper routing lane 3",
+      "material": "copper",
+      "center_mm": [
+        44.8,
+        40,
+        1.045
+      ],
+      "size_mm": [
+        7.5,
+        0.7,
+        0.05
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-route-6-4",
+      "name": "HBM3 6 illustrative copper routing lane 4",
+      "material": "copper",
+      "center_mm": [
+        44.8,
+        41.5,
+        1.045
+      ],
+      "size_mm": [
+        7.5,
+        0.7,
+        0.05
+      ],
+      "shape": "box",
+      "role": "structure"
+    },
+    {
+      "id": "hbm-route-6-5",
+      "name": "HBM3 6 illustrative copper routing lane 5",
+      "material": "copper",
+      "center_mm": [
+        44.8,
+        43,
         1.045
       ],
       "size_mm": [
@@ -6137,6 +8306,143 @@
       "role": "defect"
     }
   ],
+  "hbm_assemblies": [
+    {
+      "id": "hbm-1",
+      "name": "HBM3 1",
+      "center_xy_mm": [
+        10.5,
+        20
+      ],
+      "footprint_mm": [
+        8,
+        9
+      ],
+      "bottom_z_mm": 0.82,
+      "die_count": 8,
+      "die_thickness_um": 50,
+      "gap_um": 15,
+      "base_thickness_um": 70,
+      "cap_thickness_um": 30,
+      "functional_state": "enabled",
+      "physical_present": true,
+      "evidence": "Assumed silicon/epoxy layer template; current layer count, dimensions and functional state are recorded in this assembly's parameters. Internal construction is unverified for this H100 specimen."
+    },
+    {
+      "id": "hbm-2",
+      "name": "HBM3 2",
+      "center_xy_mm": [
+        10.5,
+        30
+      ],
+      "footprint_mm": [
+        8,
+        9
+      ],
+      "bottom_z_mm": 0.82,
+      "die_count": 8,
+      "die_thickness_um": 50,
+      "gap_um": 15,
+      "base_thickness_um": 70,
+      "cap_thickness_um": 30,
+      "functional_state": "enabled",
+      "physical_present": true,
+      "evidence": "Assumed silicon/epoxy layer template; current layer count, dimensions and functional state are recorded in this assembly's parameters. Internal construction is unverified for this H100 specimen."
+    },
+    {
+      "id": "hbm-3",
+      "name": "HBM3 3",
+      "center_xy_mm": [
+        10.5,
+        40
+      ],
+      "footprint_mm": [
+        8,
+        9
+      ],
+      "bottom_z_mm": 0.82,
+      "die_count": 8,
+      "die_thickness_um": 50,
+      "gap_um": 15,
+      "base_thickness_um": 70,
+      "cap_thickness_um": 30,
+      "functional_state": "enabled",
+      "physical_present": true,
+      "evidence": "Assumed silicon/epoxy layer template; current layer count, dimensions and functional state are recorded in this assembly's parameters. Internal construction is unverified for this H100 specimen."
+    },
+    {
+      "id": "hbm-4",
+      "name": "HBM3 4",
+      "center_xy_mm": [
+        49.5,
+        20
+      ],
+      "footprint_mm": [
+        8,
+        9
+      ],
+      "bottom_z_mm": 0.82,
+      "die_count": 8,
+      "die_thickness_um": 50,
+      "gap_um": 15,
+      "base_thickness_um": 70,
+      "cap_thickness_um": 30,
+      "functional_state": "enabled",
+      "physical_present": true,
+      "evidence": "Assumed silicon/epoxy layer template; current layer count, dimensions and functional state are recorded in this assembly's parameters. Internal construction is unverified for this H100 specimen."
+    },
+    {
+      "id": "hbm-5",
+      "name": "HBM3 5",
+      "center_xy_mm": [
+        49.5,
+        30
+      ],
+      "footprint_mm": [
+        8,
+        9
+      ],
+      "bottom_z_mm": 0.82,
+      "die_count": 8,
+      "die_thickness_um": 50,
+      "gap_um": 15,
+      "base_thickness_um": 70,
+      "cap_thickness_um": 30,
+      "functional_state": "enabled",
+      "physical_present": true,
+      "evidence": "Assumed silicon/epoxy layer template; current layer count, dimensions and functional state are recorded in this assembly's parameters. Internal construction is unverified for this H100 specimen."
+    },
+    {
+      "id": "hbm-6",
+      "name": "HBM3 6",
+      "center_xy_mm": [
+        49.5,
+        40
+      ],
+      "footprint_mm": [
+        8,
+        9
+      ],
+      "bottom_z_mm": 0.82,
+      "die_count": 8,
+      "die_thickness_um": 50,
+      "gap_um": 15,
+      "base_thickness_um": 70,
+      "cap_thickness_um": 30,
+      "functional_state": "unknown",
+      "physical_present": true,
+      "evidence": "Assumed silicon/epoxy layer template; current layer count, dimensions and functional state are recorded in this assembly's parameters. Internal construction is unverified for this H100 specimen. References do not establish the sixth physical body's internal population or vendor-enabled state."
+    }
+  ],
+  "image_reference": {
+    "sha256": "e2b1274b5593236fff9c9a3183cd6f73808f890ab2acca32e267c057ec8d12d9",
+    "width_px": 693,
+    "height_px": 502,
+    "pixel_size_um": 4.6,
+    "scale_status": "user_estimate",
+    "title": "User-supplied HBM cross-section reference",
+    "source_note": "User estimates approximately 4.6 um/pixel for the supplied raster; resizing history, instrument, H100 variant, source, orientation and feature identities remain unverified. Used for structural guidance, not fitted layer dimensions or validation. Original image is local and is not included in this public specimen."
+  },
   "recommended_settings": {
     "resolution": 128,
     "energy_kev": 80,
@@ -6154,7 +8460,7 @@
   },
   "reference": {
     "product": "NVIDIA H100 SXM (80 GB HBM3)",
-    "summary": "Reference-informed package surrogate, not vendor CAD. Published die area and functional memory configuration are retained; all other geometry is assumed. Synthetic defects demonstrate the existing reduced-order imaging models.",
+    "summary": "Reference-informed package surrogate, not vendor CAD. The initial fixture has six physical HBM sites independently of the five enabled stacks in the published SXM memory configuration. Current edited construction and state are recorded in hbm_assemblies. Internal layers and other package geometry are assumed. Synthetic defects demonstrate reduced-order imaging models.",
     "sources": [
       {
         "id": "h100-whitepaper",
@@ -6170,6 +8476,11 @@
         "id": "h100-product",
         "title": "NVIDIA H100 product specifications (accessed 4 September 2026)",
         "url": "https://www.nvidia.com/en-us/data-center/h100/"
+      },
+      {
+        "id": "hbm3-stacks",
+        "title": "SK hynix: eight-layer 16 GB and twelve-layer 24 GB HBM3 constructions",
+        "url": "https://news.skhynix.com/en/meet-the-sk-hynix-team-behind-the-worlds-first-12-layer-hbm3/"
       }
     ],
     "published_facts": [
@@ -6205,13 +8516,29 @@
           "h100-whitepaper",
           "hopper-architecture"
         ]
+      },
+      {
+        "label": "Package reference rendering",
+        "value": "NVIDIA's Hopper package rendering depicts six peripheral bodies; their individual enabled state and complete internal construction are not established by the rendering.",
+        "source_ids": [
+          "hopper-architecture"
+        ]
+      },
+      {
+        "label": "Available HBM3 stack templates",
+        "value": "SK hynix describes eight-layer 16 GB and twelve-layer 24 GB HBM3; this does not identify the construction in the user-supplied image.",
+        "source_ids": [
+          "hbm3-stacks"
+        ]
       }
     ],
     "assumptions": [
       "60 × 60 × 2.65 mm is a chosen simulation envelope, not a published H100 package or SXM module dimension.",
       "The die is 26.7 × (814 / 26.7) mm with a chosen 0.67 mm thickness: area is published; rectangular aspect ratio and thickness are assumed.",
-      "Five homogeneous silicon HBM blocks represent the functional memory configuration. Their 8 × 9 × 0.62 mm dimensions, placement and material simplification are assumed; internal DRAM dies, TSVs and microbumps are unresolved.",
-      "Five functional blocks do not establish the real physical population of six possible sites. The sixth site's occupancy is unknown here and is omitted from this simplified geometry.",
+      "The initial fixture has six 8 × 9 mm HBM sites using assumed eight-high templates: 70 µm silicon base, eight 50 µm silicon DRAM dies, eight 15 µm epoxy interfaces and a 30 µm epoxy cap; total 620 µm. Current dimensions are recorded in hbm_assemblies. These dimensions and materials are not measured H100 construction. TSVs and microbumps remain unresolved; aggregate attachment contacts are illustrative.",
+      "The initial fixture marks five sites functionally enabled and the sixth's state unknown. The sixth physical body's vendor internal population and enabled state are unverified; the fixture uses the same assumed template there. Current chosen state and physical presence are recorded in hbm_assemblies. Changing functional state never removes material; physical presence is a separate explicit parameter.",
+      "The alternate twelve-high template uses 34 µm dies and 8 µm gaps (604 µm total with the same base and cap). Template availability is documented, but neither template's dimensions or assignment to this specimen are established by NVIDIA or the image.",
+      "The user-supplied 693 × 502 pixel cross-section has an estimated 4.6 µm/pixel scale, corresponding to approximately 3.19 × 2.31 mm if it applies to this exact raster. Scale and interpretation are provisional; model parameters were not fitted to this image.",
       "Interposer, underfill, substrate, copper lanes, coarse contacts, terminals and passive blocks are illustrative. The terminal field is not an SXM connector or actual H100 pinout.",
       "The organic substrate uses the existing FR-4 composite proxy, underfill uses the epoxy proxy, and solder uses pure tin; none is a verified H100 material composition.",
       "Air-filled delaminations and voids are intentionally seeded synthetic defects, not claims of NVIDIA product defects. Air cavities remain sealed in the model.",

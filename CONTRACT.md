@@ -1,4 +1,4 @@
-# Virtual microscopy v1 integration contract
+# Virtual microscopy 0.2 integration contract (compatible twin schema 1)
 
 Local application: Python FastAPI serves a Vite/vanilla JS + Three.js client. Source in `virtual_microscopy/` and `web/`. Physical dimensions use millimetres. Coordinates x right, y down in image, z depth from specimen top; surrounding material is water for SAM and air for X-ray. Later primitives replace earlier ones. This is a reduced-order synthetic forward simulator, not experimentally validated or coupled full-wave multiphysics.
 
@@ -10,14 +10,28 @@ Object: `{id:string,name:string,shape:'box'|'sphere'|'cylinder',material:'silico
 
 Optional primitive `display_label` supplies a short 3D label. Optional twin `reference` is `{product,summary,sources:[{id,title,url}],published_facts:[{label,value,source_ids}],assumptions:[string]}`; sources use valid HTTP(S) URLs, unique IDs, and each fact must cite existing source IDs. Optional `recommended_settings` follows the complete Settings schema below and must keep its probe/focus in bounds. These fields are retained in exported twins; absent optional fields are omitted to preserve legacy shapes. Specimen/probe x/y extents support 100 mm; depth supports 6 mm and primitive count is bounded at 600. Raster limits remain unchanged.
 
+## Layered HBM extension
+
+Optional `hbm_assemblies` contains at most 12 parameter assemblies: `id`, `name`, `center_xy_mm`, `footprint_mm`, `bottom_z_mm`, `die_count` (8 or 12), `die_thickness_um`, `gap_um`, `base_thickness_um`, `cap_thickness_um`, `functional_state` (enabled/disabled/unknown), `physical_present`, and `evidence`. Total height is base + die_count × (die + gap) + cap, in µm. Positive dimensions and specimen bounds are validated.
+
+Compiled primitives use `assembly_id` and `layer_role` (base_die/dram_die/interdie_gap/cap/underfill/contact). Each group's primitives must be contiguous and match the compiler's ordered geometry exactly. This prevents import metadata divergence and edits that accidentally reorder unrelated material. Functional state does not affect material geometry. Arbitrary imported evidence is preserved; the default specimen describes its initial assumptions explicitly.
+
+Optional `image_reference` contains SHA-256, raster width/height, pixel_size_um, scale_status (user_estimate/calibrated), title and source_note. Declared calibration is metadata supplied by the importer, not a server certification. Image bytes and filesystem paths are not carried in exported twins.
+
 ## API
 
-- GET /api/health -> {status:'ok',version:'0.1.0'}
+- GET /api/health -> {status:'ok',version:'0.2.0'}
 - GET /api/examples -> [{id,name,description,twin}]
 - GET /api/materials -> list of material dicts with id,name,color,density_g_cm3,sound_speed_m_s,impedance_mrayl and provenance; extra properties permitted.
 - POST /api/validate -> twin body -> {valid:true,twin:normalized twin,warnings:[]}; errors HTTP 422.
 - POST /api/simulate -> `{twin,settings}`. Settings defaults: `{resolution:128,energy_kev:80,angle_deg:0,photons:50000,noise:true,frequency_mhz:50,gate_start_us:0.42,gate_end_us:0.56,focus_mm:0.5,probe_x_mm:3.1,probe_y_mm:3.1,include_defects:true,seed:42}`. resolution allowed 64,128,192; energy 40..150, angle -45..45 about y, photons 1000..1000000, frequency 10..150, gate_start 0..10, gate_end up to 12 with end>start; focus 0..specimen z; probe within xy. Water standoff excluded from time (t=0 at top plane). Probe coordinates are physical x/y, not detector coordinates when tilted.
 - POST /api/probe same body/settings -> `{ascan:...,bscan:...}`; synthesizes a local strip. All runs bounded by dimensions, primitive counts and RF work budget.
+
+Optional acquisition `roi_mm` is `[xmin,ymin,xmax,ymax]` in global millimetres with at least 0.05 mm width/height. ROI and probe must fit the specimen; probes must also fit the ROI. ROI acquisition requires angle_deg=0. Optional `depth_samples` accepts 128/256/512/1024 independently of the lateral raster; omission retains nz=2×resolution. The image extent is `[xmin,xmax,ymin,ymax]`. The sampled grid includes the complete specimen depth and a clipped 4-sigma lateral context for both Gaussian PSFs. Geometry allocation is capped at 64 million cells, in addition to the existing RF work budget. Missing optional settings are omitted from acquisition snapshots.
+
+- POST /api/hbm/compose -> `{twin,assembly_id,parameters:partial HBM parameters}` -> `{twin,warnings}`. Invalid or null patch values return 422. The input snapshot is not mutated. Geometry updates preserve unrelated objects and fixed-coordinate defects; updated objects stay before those defects.
+- POST /api/hbm/section -> `{twin,assembly_id,axis:'xz'|'yz',resolution:128|256|512,include_defects?:boolean}` -> material `image` labels, `materials` legend, `extent_mm:[u0,u1,z0,z1]`, axis, fixed_coordinate_mm, pixel_pitch_um and warnings. Section sampling includes intersecting package geometry. `mode:'material_geometry'` distinguishes it from microscope/reconstruction output.
+- GET /api/reference-image -> the locally installed user image (PNG) or 404. Its identity is returned as `X-Reference-SHA256`. The client compares it to the selected twin before display; the endpoint serves only the fixed local reference and accepts no arbitrary file path.
 
 ## Python engine callable
 
@@ -31,7 +45,7 @@ Optional primitive `display_label` supplies a short 3D label. Optional twin `ref
   sam:{image:[[float]],unit:'relative echo amplitude',extent_mm:[0,x,0,y],min:float,max:float,peak_amplitude:float},
   ascan:{time_us:[float],amplitude:[float],envelope:[float],probe_mm:[x,y]},
   bscan:{image:[[float]],extent:[0,x,0,time_max_us],unit:'relative echo amplitude',y_mm:float},
-  metadata:{runtime_ms:float,grid_shape:[ny,nx,nz],pixel_pitch_um:[x/n*1000,y/n*1000],voxel_depth_um:float,seed:42,model_version:'0.1.0',warnings:[string],assumptions:[string]}
+  metadata:{runtime_ms:float,grid_shape:[ny,nx,nz],grid_origin_mm:[x,y,0],acquisition_shape:[n,n],roi_mm:null|[xmin,ymin,xmax,ymax],pixel_pitch_um:[dx*1000,dy*1000],voxel_depth_um:float,seed:42,model_version:'0.2.0',warnings:[string],assumptions:[string]}
 }
 ```
 

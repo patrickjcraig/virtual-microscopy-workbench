@@ -75,17 +75,26 @@ Use the workbench JSON import and start from [the BGA example](examples/flip-chi
 - `role: "defect"` allows a geometry feature to be switched off without changing the original twin.
 - The workbench accepts up to 600 primitives in a specimen up to 100 × 100 × 6 mm. Inputs are validated before simulation. Increasing the physical extent does not increase the raster resolution; thin features may be undersampled. Consult each run's warnings.
 - Optional `reference` metadata carries source-linked published facts and explicit geometry assumptions. Optional `recommended_settings` provides a validated initial acquisition preset, and primitive `display_label` adds a 3D label. These fields survive import/export. Older specimens remain compatible.
+- Optional `hbm_assemblies` describes editable layered HBM stacks. Their compiled material primitives are validated together with the parameters, including contiguous assembly ordering, so a metadata edit cannot silently change material precedence. Optional `image_reference` preserves image identity and scale provenance. The original supplied image stays local.
 - Native STEP, STL, Gerber, ODB++, and proprietary digital-twin files require a future importer that preserves material and layer semantics. They are **not** accepted directly in this version.
 
 The machine-readable schema is available at `/api/twin-schema`; interactive API documentation is at `/docs`. See [CONTRACT.md](CONTRACT.md) for API fields and array axis conventions.
 
 ## NVIDIA H100 reference specimen
 
-Select **NVIDIA H100 SXM / reference model**, or open `http://127.0.0.1:8765/?specimen=nvidia-h100-sxm`. The preset includes a GH100 die, five HBM3 memory blocks, an assumed silicon interposer and organic substrate, coarse metal interconnects, and four synthetic void/delamination features. The app exposes published facts, primary references and inferred geometry in **Specimen references**.
+Select **NVIDIA H100 SXM / reference model**, or open `http://127.0.0.1:8765/?specimen=nvidia-h100-sxm`. Version 0.2 includes six physical HBM sites around GH100, with five enabled and the sixth's functional state unknown in the default fixture. Every default stack contains a base die, eight DRAM dies, eight epoxy interfaces and a mold cap. The interposer, substrate, contacts and four synthetic defects remain assumed geometry. The app exposes primary references and construction assumptions in **Specimen references**.
 
 NVIDIA documents the **814 mm² GH100 die** and the **80 GB / five-stack HBM3 SXM configuration** in its [Hopper architecture article](https://developer.nvidia.com/blog/nvidia-hopper-architecture-in-depth/). The chosen **60 × 60 × 2.65 mm envelope**, die aspect ratio/thickness, layer stack, memory placement and interconnect dimensions are modeling assumptions. This is a package-level teaching specimen based on public references; it is not vendor CAD, a full SXM board, an electrical/performance emulator, or a transistor-resolved twin.
 
 The initial acquisition uses 80 keV X-rays and a 50 MHz acoustic probe with a 0.34–0.45 µs gate. Read [H100_MODEL.md](docs/H100_MODEL.md) for construction details and [H100_REVIEW.md](docs/H100_REVIEW.md) for the independent checks. NVIDIA's product specifications do not validate the assumed materials or simulated microscopy output.
+
+Open the **HBM assembly laboratory** to select any of the six sites, switch between generic 8-high and 12-high templates, edit die/gap/base/cap thicknesses and set electrical state. Electrical state does not remove material. Applied geometry is visible in XZ/YZ material sections; the previous microscope acquisition remains labeled stale until you run again. Material sections are geometry views, not reconstructed images.
+
+![Editable HBM layers and the material YZ section of a 12-high template](docs/images/hbm-layer-editor.png)
+
+Use **Set this stack as scan ROI** to scan its footprint with global coordinates and the complete specimen depth. When depth sampling was automatic, stack selection uses 1,024 material planes; the depth count can also be controlled independently from lateral sampling. Neighboring material is sampled in a numerical halo for detector/acoustic blur. ROI X-ray scans currently require 0° incidence; full-specimen scans retain the existing tilt control. Explicit TSVs and true microbump arrays remain future work.
+
+The supplied reference has a provisional user estimate of approximately 4.6 µm/pixel, with unconfirmed instrument calibration and resizing history. The app only shows the local image when its SHA-256 matches the imported twin's reference. Clones without that image retain all editing and simulation features.
 
 ## Numerical exports and headless execution
 
@@ -103,6 +112,14 @@ Headless runs use a twin's `recommended_settings` when supplied; explicit comman
 uv run python -m tools.run_simulation examples/nvidia-h100-sxm.json artifacts/h100-run
 ```
 
+To scan the sixth HBM footprint at 1,024 depth samples:
+
+```powershell
+uv run python -m tools.run_simulation examples/nvidia-h100-sxm.json artifacts/hbm6-run --hbm-roi hbm-6 --no-noise
+```
+
+For a custom region, use `--roi X0 Y0 X1 Y1` in global millimetres and optionally `--depth-samples 128|256|512|1024`. ROI runs use normal incidence and center the probe in the selected field. Exported extents and coordinates remain global.
+
 ## Physics and verification
 
 See [docs/PHYSICS.md](docs/PHYSICS.md) for equations, sources, material assumptions, numerical sampling, and model limits. X-ray attenuation draws on NIST tables; polymers, solder alloy behavior, and acoustic material properties include documented approximations. Browser display windowing is separate from exported physical values.
@@ -113,7 +130,9 @@ uv run pytest -q
 
 Tests cover analytical forward-model cases and public API validation/reproducibility. Passing tests establish numerical behavior in those cases; measured phantom experiments, convergence studies, transducer characterization, and cross-modal calibration remain necessary before scientific accuracy claims.
 
-The executed checks and their scope are recorded in [docs/VERIFICATION.md](docs/VERIFICATION.md). Native browser checks are also available: with the server running, set `MICROSCOPY_CHROME_PATH` to a local Chrome/Chromium executable and run `npm.cmd run verify:exports` or `npm.cmd run verify:h100` from `web`. They verify downloads and provenance. The H100 check additionally exercises source references, component labels, generic imported presets and probe coordinates beyond 30 mm.
+The executed checks and their scope are recorded in [docs/VERIFICATION.md](docs/VERIFICATION.md). Native browser checks are also available: with the server running, set `MICROSCOPY_CHROME_PATH` to a local Chrome/Chromium executable and run `npm.cmd run verify:exports`, `npm.cmd run verify:h100` or `npm.cmd run verify:hbm` from `web`. They verify downloads, provenance and the HBM editing/region workflow.
+
+The next milestones are saved SAM RF volumes, multiangle X-ray acquisition and reconstruction, with richer independent instrument controls. See [EXPANSION_PLAN.md](docs/EXPANSION_PLAN.md) for the proposed sequence and acceptance gates. Version 0.2 still returns single-projection and A/B/C preview data rather than saved volumetric acquisitions.
 
 The implementation is separated into `virtual_microscopy/physics.py` and `materials.py`, strict schemas and local API, `web/` UI, reproducible example geometry, and tests. This leaves room for higher-fidelity solvers and CAD/voxel import while keeping the current demo runnable.
 

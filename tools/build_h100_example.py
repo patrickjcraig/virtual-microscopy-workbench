@@ -9,6 +9,13 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+import sys
+
+# Keep direct script execution (including no-overwrite generation) available.
+if __package__ in (None, ""):
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from virtual_microscopy.hbm import compile_hbm_stack
 
 
 def _part(identifier, name, material, center, size, shape="box", role="structure", label=None):
@@ -38,24 +45,23 @@ def h100():
               [30, 30, 1.92], [57, 57, 0.06]),
     ]
 
-    # Five functional blocks communicate the documented SXM 80 GB configuration.
-    # Placement and dimensions are assumptions; the physical sixth-site occupancy
-    # cannot be inferred from the enabled memory count and is not drawn here.
-    hbm_sites = [(10.5, 20), (10.5, 30), (10.5, 40), (49.5, 20), (49.5, 30)]
+    # Six physical positions are independent of the five enabled SXM stacks.
+    # The sixth body's detailed construction remains an explicit assumption.
+    assemblies = []
+    hbm_sites = [(10.5, 20), (10.5, 30), (10.5, 40), (49.5, 20), (49.5, 30), (49.5, 40)]
     for index, (x, y) in enumerate(hbm_sites, 1):
-        objects.extend([
-            _part(f"hbm-underfill-{index}", f"HBM3 block {index} assumed underfill", "epoxy",
-                  [x, y, 0.91], [8, 9, 0.18]),
-            _part(f"hbm-{index}", f"HBM3 functional stack {index} / homogeneous silicon aggregate",
-                  "silicon", [x, y, 0.51], [8, 9, 0.62], label=f"HBM3 {index}"),
-        ])
-        # Large aggregate contacts stand in for unresolved real bump arrays.
-        # They are deliberately not claimed to be actual H100 bump geometry.
-        for contact, delta in enumerate([-2.5, 0, 2.5], 1):
-            objects.append(_part(
-                f"hbm-contact-{index}-{contact}",
-                f"HBM3 {index} aggregate solder contact {contact} (assumed)",
-                "solder", [x, y + delta, 0.91], [2.2, 2.2, 0.18], "cylinder"))
+        stack = {
+            "id": f"hbm-{index}", "name": f"HBM3 {index}",
+            "center_xy_mm": [x, y], "footprint_mm": [8, 9], "bottom_z_mm": 0.82,
+            "die_count": 8, "die_thickness_um": 50, "gap_um": 15,
+            "base_thickness_um": 70, "cap_thickness_um": 30,
+            "functional_state": "enabled" if index <= 5 else "unknown",
+            "physical_present": True,
+            "evidence": "Assumed silicon/epoxy layer template; current layer count, dimensions and functional state are recorded in this assembly's parameters. Internal construction is unverified for this H100 specimen."
+                        + (" References do not establish the sixth physical body's internal population or vendor-enabled state." if index == 6 else ""),
+        }
+        assemblies.append(stack)
+        objects.extend(compile_hbm_stack(stack))
         direction = 1 if x < 30 else -1
         for lane, delta in enumerate([-3, -1.5, 0, 1.5, 3], 1):
             objects.append(_part(
@@ -115,9 +121,17 @@ def h100():
     return {
         "schema_version": 1,
         "name": "NVIDIA H100 SXM / reference model",
-        "description": "Public-reference H100 SXM 80 GB teaching model: GH100 die and five functional HBM3 blocks, with an assumed interposer, package substrate and coarse interconnects. NVIDIA documents the 814 mm2 die area and five-stack HBM3 configuration; package dimensions, internal geometry and seeded defects are illustrative, not NVIDIA CAD or measured hardware.",
+        "description": "Public-reference H100 SXM 80 GB teaching model with editable HBM assemblies. The initial fixture has six physical sites: five marked enabled and the sixth with unknown functional state and assumed construction. Current construction and state are recorded in hbm_assemblies. NVIDIA documents the 814 mm2 die area and five enabled HBM3 stacks. Package dimensions, layer parameters, coarse interconnects and seeded defects are illustrative, not NVIDIA CAD or measured hardware.",
         "size_mm": [60, 60, 2.65],
         "objects": objects,
+        "hbm_assemblies": assemblies,
+        "image_reference": {
+            "sha256": "e2b1274b5593236fff9c9a3183cd6f73808f890ab2acca32e267c057ec8d12d9",
+            "width_px": 693, "height_px": 502, "pixel_size_um": 4.6,
+            "scale_status": "user_estimate",
+            "title": "User-supplied HBM cross-section reference",
+            "source_note": "User estimates approximately 4.6 um/pixel for the supplied raster; resizing history, instrument, H100 variant, source, orientation and feature identities remain unverified. Used for structural guidance, not fitted layer dimensions or validation. Original image is local and is not included in this public specimen.",
+        },
         "recommended_settings": {
             "resolution": 128, "energy_kev": 80, "angle_deg": 0, "photons": 100000,
             "noise": False, "frequency_mhz": 50, "gate_start_us": 0.34, "gate_end_us": 0.45,
@@ -126,7 +140,7 @@ def h100():
         },
         "reference": {
             "product": "NVIDIA H100 SXM (80 GB HBM3)",
-            "summary": "Reference-informed package surrogate, not vendor CAD. Published die area and functional memory configuration are retained; all other geometry is assumed. Synthetic defects demonstrate the existing reduced-order imaging models.",
+            "summary": "Reference-informed package surrogate, not vendor CAD. The initial fixture has six physical HBM sites independently of the five enabled stacks in the published SXM memory configuration. Current edited construction and state are recorded in hbm_assemblies. Internal layers and other package geometry are assumed. Synthetic defects demonstrate reduced-order imaging models.",
             "sources": [
                 {"id": "h100-whitepaper", "title": "NVIDIA H100 Tensor Core GPU Architecture v1.04, pages 17–18 and 36",
                  "url": "https://resources.nvidia.com/en-us-hopper-architecture/nvidia-h100-tensor-c"},
@@ -134,18 +148,24 @@ def h100():
                  "url": "https://developer.nvidia.com/blog/nvidia-hopper-architecture-in-depth/"},
                 {"id": "h100-product", "title": "NVIDIA H100 product specifications (accessed 4 September 2026)",
                  "url": "https://www.nvidia.com/en-us/data-center/h100/"},
+                {"id": "hbm3-stacks", "title": "SK hynix: eight-layer 16 GB and twelve-layer 24 GB HBM3 constructions",
+                 "url": "https://news.skhynix.com/en/meet-the-sk-hynix-team-behind-the-worlds-first-12-layer-hbm3/"},
             ],
             "published_facts": [
                 {"label": "GH100 die area", "value": "814 mm²", "source_ids": ["h100-whitepaper", "hopper-architecture"]},
                 {"label": "GH100 fabrication", "value": "80 billion transistors; TSMC 4N customized for NVIDIA", "source_ids": ["h100-whitepaper", "hopper-architecture"]},
                 {"label": "H100 SXM memory", "value": "80 GB HBM3; five functional HBM3 stacks", "source_ids": ["h100-whitepaper", "hopper-architecture", "h100-product"]},
                 {"label": "Full GH100 architecture", "value": "Six HBM stack interfaces; distinct from the five-stack H100 SXM configuration", "source_ids": ["h100-whitepaper", "hopper-architecture"]},
+                {"label": "Package reference rendering", "value": "NVIDIA's Hopper package rendering depicts six peripheral bodies; their individual enabled state and complete internal construction are not established by the rendering.", "source_ids": ["hopper-architecture"]},
+                {"label": "Available HBM3 stack templates", "value": "SK hynix describes eight-layer 16 GB and twelve-layer 24 GB HBM3; this does not identify the construction in the user-supplied image.", "source_ids": ["hbm3-stacks"]},
             ],
             "assumptions": [
                 "60 × 60 × 2.65 mm is a chosen simulation envelope, not a published H100 package or SXM module dimension.",
                 "The die is 26.7 × (814 / 26.7) mm with a chosen 0.67 mm thickness: area is published; rectangular aspect ratio and thickness are assumed.",
-                "Five homogeneous silicon HBM blocks represent the functional memory configuration. Their 8 × 9 × 0.62 mm dimensions, placement and material simplification are assumed; internal DRAM dies, TSVs and microbumps are unresolved.",
-                "Five functional blocks do not establish the real physical population of six possible sites. The sixth site's occupancy is unknown here and is omitted from this simplified geometry.",
+                "The initial fixture has six 8 × 9 mm HBM sites using assumed eight-high templates: 70 µm silicon base, eight 50 µm silicon DRAM dies, eight 15 µm epoxy interfaces and a 30 µm epoxy cap; total 620 µm. Current dimensions are recorded in hbm_assemblies. These dimensions and materials are not measured H100 construction. TSVs and microbumps remain unresolved; aggregate attachment contacts are illustrative.",
+                "The initial fixture marks five sites functionally enabled and the sixth's state unknown. The sixth physical body's vendor internal population and enabled state are unverified; the fixture uses the same assumed template there. Current chosen state and physical presence are recorded in hbm_assemblies. Changing functional state never removes material; physical presence is a separate explicit parameter.",
+                "The alternate twelve-high template uses 34 µm dies and 8 µm gaps (604 µm total with the same base and cap). Template availability is documented, but neither template's dimensions or assignment to this specimen are established by NVIDIA or the image.",
+                "The user-supplied 693 × 502 pixel cross-section has an estimated 4.6 µm/pixel scale, corresponding to approximately 3.19 × 2.31 mm if it applies to this exact raster. Scale and interpretation are provisional; model parameters were not fitted to this image.",
                 "Interposer, underfill, substrate, copper lanes, coarse contacts, terminals and passive blocks are illustrative. The terminal field is not an SXM connector or actual H100 pinout.",
                 "The organic substrate uses the existing FR-4 composite proxy, underfill uses the epoxy proxy, and solder uses pure tin; none is a verified H100 material composition.",
                 "Air-filled delaminations and voids are intentionally seeded synthetic defects, not claims of NVIDIA product defects. Air cavities remain sealed in the model.",

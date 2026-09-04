@@ -22,6 +22,8 @@ class Primitive(StrictModel):
     size_mm: tuple[Positive, Positive, Positive]
     role: Literal["structure", "defect"] = "structure"
     display_label: str | None = Field(default=None, max_length=48)
+    assembly_id: str | None = Field(default=None, min_length=1, max_length=64)
+    layer_role: Literal["base_die", "dram_die", "interdie_gap", "cap", "underfill", "contact"] | None = None
 
     @model_validator(mode="after")
     def check_shape(self):
@@ -35,6 +37,8 @@ class Primitive(StrictModel):
 
 class Settings(StrictModel):
     resolution: Literal[64, 128, 192] = 128
+    depth_samples: Literal[128, 256, 512, 1024] | None = None
+    roi_mm: tuple[Coordinate, Coordinate, Coordinate, Coordinate] | None = None
     energy_kev: float = Field(default=80, ge=40, le=150)
     angle_deg: float = Field(default=0, ge=-45, le=45)
     photons: int = Field(default=50000, ge=1000, le=1000000)
@@ -52,6 +56,14 @@ class Settings(StrictModel):
     def check_gate(self):
         if self.gate_end_us <= self.gate_start_us:
             raise ValueError("Gate end must be greater than gate start.")
+        if self.roi_mm is not None:
+            x0, y0, x1, y1 = self.roi_mm
+            if x1 - x0 < 0.05 or y1 - y0 < 0.05:
+                raise ValueError("ROI width and height must be at least 0.05 mm.")
+            if self.angle_deg != 0:
+                raise ValueError("ROI X-ray scans currently require 0° incidence; use the full specimen for tilted scans.")
+            if not (x0 <= self.probe_x_mm <= x1 and y0 <= self.probe_y_mm <= y1):
+                raise ValueError("Probe coordinates must lie inside the selected ROI.")
         return self
 
 
@@ -85,6 +97,64 @@ class SpecimenReference(StrictModel):
         return self
 
 
+class HBMParameters(StrictModel):
+    """Assumed layered geometry; z increases downwards from the exposed surface."""
+
+    center_xy_mm: tuple[Coordinate, Coordinate]
+    footprint_mm: tuple[Positive, Positive] = (8, 9)
+    bottom_z_mm: float = Field(default=0.82, gt=0, le=6)
+    die_count: Literal[8, 12] = 8
+    die_thickness_um: float = Field(default=50, ge=5, le=200)
+    gap_um: float = Field(default=15, ge=1, le=100)
+    base_thickness_um: float = Field(default=70, ge=5, le=300)
+    cap_thickness_um: float = Field(default=30, ge=1, le=300)
+    functional_state: Literal["enabled", "disabled", "unknown"] = "unknown"
+    physical_present: bool = True
+    evidence: str = Field(default="Assumed layered construction; not specimen-specific measured geometry.", min_length=1, max_length=1000)
+
+    @model_validator(mode="after")
+    def check_stack_height(self):
+        height = (self.base_thickness_um + self.die_count * (self.die_thickness_um + self.gap_um) + self.cap_thickness_um) / 1000
+        if height > self.bottom_z_mm + 1e-8:
+            raise ValueError("HBM stack height extends above the specimen surface.")
+        return self
+
+
+class HBMStack(HBMParameters):
+    id: str = Field(pattern=r"^hbm-[1-9][0-9]*$", max_length=64)
+    name: str = Field(min_length=1, max_length=120)
+
+
+class HBMParameterUpdate(StrictModel):
+    center_xy_mm: tuple[Coordinate, Coordinate] | None = None
+    footprint_mm: tuple[Positive, Positive] | None = None
+    bottom_z_mm: float | None = Field(default=None, gt=0, le=6)
+    die_count: Literal[8, 12] | None = None
+    die_thickness_um: float | None = Field(default=None, ge=5, le=200)
+    gap_um: float | None = Field(default=None, ge=1, le=100)
+    base_thickness_um: float | None = Field(default=None, ge=5, le=300)
+    cap_thickness_um: float | None = Field(default=None, ge=1, le=300)
+    functional_state: Literal["enabled", "disabled", "unknown"] | None = None
+    physical_present: bool | None = None
+    evidence: str | None = Field(default=None, min_length=1, max_length=1000)
+
+    @model_validator(mode="after")
+    def check_no_explicit_nulls(self):
+        if any(getattr(self, field) is None for field in self.model_fields_set):
+            raise ValueError("HBM parameter patches cannot contain null values.")
+        return self
+
+
+class ImageReference(StrictModel):
+    sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
+    width_px: int = Field(gt=0, le=100000)
+    height_px: int = Field(gt=0, le=100000)
+    pixel_size_um: float = Field(gt=0, le=100000)
+    scale_status: Literal["user_estimate", "calibrated"] = "user_estimate"
+    title: str = Field(min_length=1, max_length=240)
+    source_note: str = Field(min_length=1, max_length=2000)
+
+
 class Twin(StrictModel):
     schema_version: Literal[1] = 1
     name: str = Field(min_length=1, max_length=160)
@@ -93,6 +163,8 @@ class Twin(StrictModel):
     objects: list[Primitive] = Field(min_length=1, max_length=600)
     reference: SpecimenReference | None = None
     recommended_settings: Settings | None = None
+    hbm_assemblies: list[HBMStack] | None = Field(default=None, max_length=12)
+    image_reference: ImageReference | None = None
 
     @model_validator(mode="after")
     def check_geometry(self):
@@ -111,7 +183,19 @@ class Twin(StrictModel):
         preset = self.recommended_settings
         if preset is not None and (preset.probe_x_mm > sx or preset.probe_y_mm > sy or preset.focus_mm > sz):
             raise ValueError("Recommended probe and focus must be inside the specimen extent.")
+        if preset is not None and preset.roi_mm is not None and (preset.roi_mm[2] > sx or preset.roi_mm[3] > sy):
+            raise ValueError("Recommended ROI must be inside the specimen extent.")
+        # The import boundary checks that editable assembly metadata and the
+        # actual material objects describe the same physical construction.
+        from .hbm import validate_hbm_geometry
+        validate_hbm_geometry(self)
         return self
+
+
+class HBMUpdateRequest(StrictModel):
+    twin: Twin
+    assembly_id: str = Field(min_length=1, max_length=64)
+    parameters: HBMParameterUpdate
 
 
 class SimulationRequest(StrictModel):
@@ -125,4 +209,6 @@ class SimulationRequest(StrictModel):
             raise ValueError("Probe coordinates must be inside the specimen x/y extent.")
         if self.settings.focus_mm > sz:
             raise ValueError("Acoustic focus must lie inside the specimen depth extent.")
+        if self.settings.roi_mm is not None and (self.settings.roi_mm[2] > sx or self.settings.roi_mm[3] > sy):
+            raise ValueError("ROI bounds must lie inside the specimen.")
         return self

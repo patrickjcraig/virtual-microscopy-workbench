@@ -6,7 +6,7 @@ This is not a full-wave solver, a CT reconstruction, or validated defect NDE.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from time import perf_counter
 
 import numpy as np
@@ -31,6 +31,20 @@ class MaterialGrid:
     size_mm: np.ndarray
     pitch_mm: np.ndarray  # x, y, z order
     warnings: list[str]
+    origin_mm: np.ndarray = field(default_factory=lambda: np.zeros(3))
+    scan_slices: tuple[slice, slice] | None = None
+
+    @property
+    def image_slices(self):
+        return self.scan_slices or (slice(0, self.labels.shape[0]), slice(0, self.labels.shape[1]))
+
+    @property
+    def image_extent_mm(self):
+        ys, xs = self.image_slices
+        return [float(self.origin_mm[0] + xs.start * self.pitch_mm[0]),
+                float(self.origin_mm[0] + xs.stop * self.pitch_mm[0]),
+                float(self.origin_mm[1] + ys.start * self.pitch_mm[1]),
+                float(self.origin_mm[1] + ys.stop * self.pitch_mm[1])]
 
 
 @dataclass
@@ -47,15 +61,31 @@ def reflection_coefficient(z1, z2):
     return (np.asarray(z2) - np.asarray(z1)) / (np.asarray(z2) + np.asarray(z1))
 
 
-def voxelize(twin: dict, resolution: int, include_defects: bool = True) -> MaterialGrid:
+def voxelize(twin: dict, resolution: int, include_defects: bool = True,
+             roi_mm=None, depth_samples=None, halo_pixels=(0, 0)) -> MaterialGrid:
     """Sample ordered CSG primitives; zero means ambient, never an explicit void."""
-    size = np.asarray(twin["size_mm"], dtype=float)
-    nx = ny = int(resolution)
-    nz = 2 * int(resolution)
-    pitch = size / np.array([nx, ny, nz])
+    specimen = np.asarray(twin["size_mm"], dtype=float)
+    n = int(resolution)
+    nz = int(depth_samples or 2 * n)
+    bounds = np.asarray(roi_mm if roi_mm is not None else [0, 0, *specimen[:2]], dtype=float)
+    if (bounds.shape != (4,) or not np.isfinite(bounds).all() or
+            np.any(bounds[:2] < 0) or np.any(bounds[2:] > specimen[:2]) or
+            np.any(bounds[2:] <= bounds[:2])):
+        raise ValueError("ROI bounds must be finite, ordered and inside the specimen.")
+    pitch = np.r_[(bounds[2:] - bounds[:2]) / n, specimen[2] / nz]
+    padding = np.asarray(halo_pixels, dtype=int)
+    before = np.minimum(padding, np.floor(bounds[:2] / pitch[:2] + 1e-9).astype(int))
+    after = np.minimum(padding, np.floor((specimen[:2] - bounds[2:]) / pitch[:2] + 1e-9).astype(int))
+    nx, ny = (n + before + after).tolist()
+    if nx * ny * nz > 64_000_000:
+        raise ValueError("This geometry grid exceeds 64 million cells. Reduce depth samples or raster size, "
+                         "or enlarge a very small ROI to reduce acoustic halo overhead.")
+    origin = np.r_[bounds[:2] - before * pitch[:2], 0.0]
+    size = pitch * [nx, ny, nz]
+    scan = (slice(int(before[1]), int(before[1]) + n), slice(int(before[0]), int(before[0]) + n))
     labels = np.zeros((ny, nx, nz), dtype=np.uint8)
-    x = (np.arange(nx) + 0.5) * pitch[0]
-    y = (np.arange(ny) + 0.5) * pitch[1]
+    x = origin[0] + (np.arange(nx) + 0.5) * pitch[0]
+    y = origin[1] + (np.arange(ny) + 0.5) * pitch[1]
     z = (np.arange(nz) + 0.5) * pitch[2]
     warnings = []
     for obj in twin["objects"]:
@@ -64,6 +94,8 @@ def voxelize(twin: dict, resolution: int, include_defects: bool = True) -> Mater
         center = np.asarray(obj["center_mm"], dtype=float)
         extent = np.asarray(obj["size_mm"], dtype=float)
         lo, hi = center - extent / 2, center + extent / 2
+        if np.any(hi <= origin) or np.any(lo >= origin + size):
+            continue
         ix = np.flatnonzero((x >= lo[0]) & (x <= hi[0]))
         iy = np.flatnonzero((y >= lo[1]) & (y <= hi[1]))
         iz = np.flatnonzero((z >= lo[2]) & (z <= hi[2]))
@@ -89,7 +121,22 @@ def voxelize(twin: dict, resolution: int, include_defects: bool = True) -> Mater
             region = labels[sl]
             region[mask] = LABELS[obj["material"]]
             labels[sl] = region
-    return MaterialGrid(labels, size, pitch, warnings)
+    return MaterialGrid(labels, size, pitch, warnings, origin, scan)
+
+
+def acquisition_grid(twin: dict, settings: dict) -> MaterialGrid:
+    """Sample a full-depth ROI with numerical context for both Gaussian PSFs."""
+    roi = settings.get("roi_mm")
+    halo = (0, 0)
+    if roi is not None:
+        if settings.get("angle_deg", 0) != 0:
+            raise ValueError("ROI X-ray scans currently require 0° incidence. Use the full specimen for tilted scans.")
+        dx, dy = (np.asarray(roi[2:]) - np.asarray(roi[:2])) / settings["resolution"]
+        acoustic_fwhm = 1.02 * SAM_F_NUMBER * (WATER_SOUND_SPEED_M_S / 1000) / settings["frequency_mhz"]
+        sigma_mm = max(DETECTOR_FWHM_MM, acoustic_fwhm) / np.sqrt(8 * np.log(2))
+        halo = tuple(int(4 * sigma_mm / d + 0.5) for d in (dx, dy))
+    return voxelize(twin, settings["resolution"], settings["include_defects"],
+                    roi_mm=roi, depth_samples=settings.get("depth_samples"), halo_pixels=halo)
 
 
 def project_xray(grid: MaterialGrid, energy_kev: float, angle_deg: float = 0.0,
@@ -185,7 +232,8 @@ def acoustic_echoes(grid: MaterialGrid, frequency_mhz: float, focus_mm: float,
                   np.concatenate(amplitudes), max_time)
 
 
-def _bscan_summary(envelope: np.ndarray, time: np.ndarray, size_x: float, y_mm: float) -> dict:
+def _bscan_summary(envelope: np.ndarray, time: np.ndarray, size_x: float, y_mm: float,
+                   x_origin_mm: float = 0.0) -> dict:
     """Max-pool envelope time bins; signed RF is never decimated into an image."""
     nt = len(time)
     stride = max(1, int(np.ceil(nt / 512)))
@@ -196,7 +244,7 @@ def _bscan_summary(envelope: np.ndarray, time: np.ndarray, size_x: float, y_mm: 
     edges = np.r_[time[0], (starts[1:] - 0.5) * (time[1] - time[0]), time[-1]]
     return {
         "image": image.astype(float).tolist(),
-        "extent": [0.0, float(size_x), 0.0, float(time[-1])],
+        "extent": [float(x_origin_mm), float(x_origin_mm + size_x), 0.0, float(time[-1])],
         "unit": "relative echo amplitude",
         "y_mm": float(y_mm),
         "time_reduction": "maximum analytic envelope per time bin",
@@ -225,8 +273,9 @@ def _sam_signals(grid: MaterialGrid, settings: dict, full_image: bool) -> dict:
     sigma_y = lateral_fwhm / np.sqrt(8 * np.log(2)) / dy
     # scipy truncates its Gaussian at 4 sigma; exact halo avoids tile seams.
     halo = int(4 * sigma_y + 0.5)
-    px = min(nx - 1, int(settings["probe_x_mm"] / dx))
-    py = min(ny - 1, int(settings["probe_y_mm"] / dy))
+    scan_y, scan_x = grid.image_slices
+    px = min(scan_x.stop - 1, max(scan_x.start, int((settings["probe_x_mm"] - grid.origin_mm[0]) / dx)))
+    py = min(scan_y.stop - 1, max(scan_y.start, int((settings["probe_y_mm"] - grid.origin_mm[1]) / dy)))
     cscan = np.zeros((ny, nx), dtype=np.float32) if full_image else None
     gate = (time >= settings["gate_start_us"]) & (time <= settings["gate_end_us"])
     if not np.any(gate):
@@ -283,9 +332,12 @@ def _sam_signals(grid: MaterialGrid, settings: dict, full_image: bool) -> dict:
                 "amplitude": line[px].real.astype(float).tolist(),
                 "envelope": line_envelope[px].astype(float).tolist(),
                 "probe_mm": [settings["probe_x_mm"], settings["probe_y_mm"]],
-                "sampled_probe_mm": [float((px + 0.5) * dx), float((py + 0.5) * dy)],
+                "sampled_probe_mm": [float(grid.origin_mm[0] + (px + 0.5) * dx),
+                                     float(grid.origin_mm[1] + (py + 0.5) * dy)],
             }
-            bscan = _bscan_summary(line_envelope, time, grid.size_mm[0], (py + 0.5) * dy)
+            extent = grid.image_extent_mm
+            bscan = _bscan_summary(line_envelope[scan_x], time, extent[1] - extent[0],
+                                  grid.origin_mm[1] + (py + 0.5) * dy, extent[0])
     warnings = []
     if echoes.max_time_us > MAX_ACQUISITION_US:
         warnings.append("Echoes later than 12 us are outside the finite acquisition window.")
@@ -297,41 +349,47 @@ def _sam_signals(grid: MaterialGrid, settings: dict, full_image: bool) -> dict:
             "rf_sample_interval_us": dt, "acoustic_lateral_fwhm_mm": lateral_fwhm}
 
 
-def _image_result(image: np.ndarray, unit: str, size: np.ndarray) -> dict:
+def _image_result(image: np.ndarray, unit: str, extent) -> dict:
     return {"image": image.astype(float).tolist(), "unit": unit,
-            "extent_mm": [0.0, float(size[0]), 0.0, float(size[1])],
+            "extent_mm": list(extent),
             "min": float(image.min()), "max": float(image.max())}
 
 
 def simulate(twin: dict, settings: dict) -> dict:
     """Compute both registered modalities from a validated twin and settings."""
     start = perf_counter()
-    grid = voxelize(twin, settings["resolution"], settings["include_defects"])
+    grid = acquisition_grid(twin, settings)
     xray = project_xray(grid, settings["energy_kev"], settings["angle_deg"],
                        settings["photons"], settings["noise"], settings["seed"])
     sam = _sam_signals(grid, settings, full_image=True)
+    xray = xray[grid.image_slices]
+    sam["image"] = sam["image"][grid.image_slices]
     warnings = grid.warnings + sam["warnings"]
     if settings["angle_deg"]:
         warnings.append("Tilted X-ray pixels are detector projection coordinates; they are not exactly co-registered "
                         "with the specimen x/y acoustic scan. The fixed detector extent can crop the projection.")
-    xray_result = _image_result(xray, "I / I0", grid.size_mm)
+    xray_result = _image_result(xray, "I / I0", grid.image_extent_mm)
     xray_result["mean_transmission"] = float(xray.mean())
-    sam_result = _image_result(sam["image"], "relative echo amplitude", grid.size_mm)
+    sam_result = _image_result(sam["image"], "relative echo amplitude", grid.image_extent_mm)
     sam_result["peak_amplitude"] = float(sam["image"].max())
     return {
         "xray": xray_result, "sam": sam_result, "ascan": sam["ascan"], "bscan": sam["bscan"],
         "metadata": {
             "runtime_ms": round((perf_counter() - start) * 1000, 1),
             "grid_shape": list(grid.labels.shape),
+            "grid_origin_mm": grid.origin_mm.tolist(),
+            "acquisition_shape": list(xray.shape),
+            "roi_mm": settings.get("roi_mm"),
             "pixel_pitch_um": (grid.pitch_mm[:2] * 1000).tolist(),
             "voxel_depth_um": float(grid.pitch_mm[2] * 1000),
-            "seed": settings["seed"], "model_version": "0.1.0", "warnings": warnings,
+            "seed": settings["seed"], "model_version": "0.2.0", "warnings": warnings,
             "rf_sample_interval_us": sam["rf_sample_interval_us"],
             "acoustic_lateral_fwhm_mm": sam["acoustic_lateral_fwhm_mm"],
             "xray_detector_fwhm_mm": DETECTOR_FWHM_MM,
             "assumptions": [
                 "Synthetic reduced-order forward simulation; no experimental validation or calibration.",
                 "Shared voxel-center sampled geometry: later primitives overwrite earlier; pixel pitch is not physical resolution.",
+                "ROI scans retain the complete specimen depth and a lateral Gaussian PSF halo; ROI X-ray incidence is restricted to 0 degrees. Geometry depth samples can be set independently from the lateral raster.",
                 "X-ray: monochromatic parallel beams, NIST mass attenuation, Beer-Lambert line integral; no scatter, beam hardening or CT reconstruction.",
                 "X-ray detector: illustrative 20 um FWHM Gaussian PSF and optional seeded Poisson photon counts; values are not clipped or normalized per image.",
                 "Solder uses pure tin; epoxy uses PMMA attenuation; FR-4 uses an illustrative 60 wt% silica/40 wt% PMMA mixture.",
@@ -349,6 +407,6 @@ def simulate(twin: dict, settings: dict) -> dict:
 
 def probe(twin: dict, settings: dict) -> dict:
     """Synthesize a local RF strip for linked A/B inspection without a full Cscan."""
-    grid = voxelize(twin, settings["resolution"], settings["include_defects"])
+    grid = acquisition_grid(twin, settings)
     sam = _sam_signals(grid, settings, full_image=False)
     return {"ascan": sam["ascan"], "bscan": sam["bscan"]}

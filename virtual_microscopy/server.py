@@ -9,11 +9,12 @@ from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from . import __version__
-from .schemas import Twin, SimulationRequest
+from .schemas import Twin, SimulationRequest, HBMUpdateRequest
+from .inspection import HBMSectionRequest, material_section
 
 ROOT = Path(__file__).resolve().parents[1]
 _compute_lock = threading.Lock()
@@ -70,13 +71,44 @@ def validate(twin: Twin):
     return {"valid": True, "twin": twin.model_dump(mode="json", exclude_none=True), "warnings": warnings}
 
 
+@app.post("/api/hbm/compose")
+def hbm_compose(request: HBMUpdateRequest):
+    from .hbm import compose_hbm
+    try:
+        twin = compose_hbm(request.twin.model_dump(mode="json", exclude_none=True), request.assembly_id,
+                           request.parameters.model_dump(mode="json", exclude_unset=True))
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    return {"twin": twin, "warnings": ["HBM dimensions and layer construction are modeling assumptions."]}
+
+
+@app.post("/api/hbm/section")
+def hbm_section(request: HBMSectionRequest):
+    try:
+        return material_section(request)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+
+
+@app.get("/api/reference-image")
+def reference_image():
+    # This single user-supplied image remains local and ignored by Git. A fresh
+    # clone receives a normal unavailable response; no external fetch is made.
+    expected = "e2b1274b5593236fff9c9a3183cd6f73808f890ab2acca32e267c057ec8d12d9"
+    path = ROOT / "artifacts" / "reference-inputs" / f"h100-cross-section-{expected[:12]}.png"
+    if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != expected:
+        raise HTTPException(404, "The original reference image is not installed in this local workspace.")
+    return FileResponse(path, media_type="image/png", headers={"Cache-Control": "private, no-store",
+                                                             "X-Reference-SHA256": expected})
+
+
 def run(request: SimulationRequest, probe_only=False):
     from .physics import simulate, probe
     if not _compute_lock.acquire(blocking=False):
         raise HTTPException(409, "A simulation is already running. Wait for completion and retry.")
     try:
         twin = request.twin.model_dump(mode="json", exclude_none=True)
-        settings = request.settings.model_dump(mode="json")
+        settings = request.settings.model_dump(mode="json", exclude_none=True)
         try:
             result = (probe if probe_only else simulate)(twin, settings)
         except ValueError as exc:
