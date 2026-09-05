@@ -500,3 +500,31 @@ Source limits are 16 MiB serialized/64 MiB expanded, reports 64/192 MiB, with
 512 MiB owned-workspace admission and at most three million complex positions.
 Publication is exclusive and atomic. Existing source-free observation certificate
 limitations are retained. See [OBSERVATION_COMPARISONS.md](docs/OBSERVATION_COMPARISONS.md).
+
+## Standalone scalar SLS material response (0.17)
+
+The separate `sls_layered_analysis` report kind uses `/api/v2/sls-acoustics`:
+POST `/estimate`, POST `/reports` (201), paginated GET `/reports`, GET
+`/reports/{id}` and GET `/reports/{id}/export?format=json|csv`. Reports are
+exclusive immutable JSON documents in `sls-reports`. No acquisition job is made.
+
+Requests contain `name`, `stack`, `spectrum` and optional `causal_pulse`. The
+manual stack has real lossless incident/terminal media and at most eight layers;
+each layer specifies `name`, `thickness_mm`, `density_kg_m3`,
+`relaxed_modulus_gpa`, `unrelaxed_modulus_gpa`, and `relaxation_time_us`.
+The unrelaxed modulus cannot be smaller than the relaxed modulus. Redundant
+finite-layer speed/impedance and old/source-column fields are rejected.
+Displayed-unit values are exact represented inputs; SI conversions are enclosed
+inside the numerical kernel. Terminal speed is retained metadata and does not
+affect scattering at a fixed terminal impedance; incident speed sets standoff
+delay when standoff is nonzero.
+
+Spectra retain frequency, complex pressure R/T and phase, exterior energy
+diagnostics and each authored material's attenuation/phase-speed/impedance curves.
+Optional RF retains actual `time_us`, signed `rf`, `imaginary`, `envelope` and
+its reflected-only gamma diagnostics. The numerical total is an outward sum of
+the published alias, cutoff, complex arithmetic and magnitude arithmetic bounds.
+It does not cover transmission, calibrated material uncertainty or physical
+resolution. Historical reads/exports use saved structural contracts without
+current material kernels. Limits, proof and workflow are documented in
+[SLS_ACOUSTICS.md](docs/SLS_ACOUSTICS.md).

@@ -2,6 +2,102 @@
 
 This record concerns the first local implementation in `E:\git\Dissertation`. It establishes software and analytical-model behavior, not experimental imaging accuracy.
 
+## Version 0.17 — standalone scalar SLS materials
+
+The complete Windows suite passed **1,614 tests in 449.73 seconds**, with the
+same two third-party deprecation warnings. The 154 new cases comprise 60
+constitutive/scattering/time tests, 10 independent inverse checks and 84
+analysis/store/API tests. Evidence is `artifacts/v017-final-pytest.log`. The
+locked environment adds `mpmath==1.3.0` only to developer dependencies for the
+independent time oracle; production continues to use the pinned Arb runtime.
+
+The [new proof](SLS_MATERIAL_PROOF.md) derives the analytic material branch,
+positive-real compliance coefficient, exterior pressure/velocity flux,
+homogeneous uniqueness, analytic contractive reflection, causal gamma response,
+exact carrier-centered periodization and discrete frequency-tail omission.
+It explicitly separates a reflected numerical enclosure from transmitted
+pressure and physical validation. Tests exercise exact represented SI
+conversion, zero relaxation and inactive tau, zero thickness, conjugacy,
+asymptotic attenuation, independently evaluated ODE transfer, layer splitting,
+phase/sign, real-port energy, finite causal elastic echoes, pre-standoff response,
+recording/precision/tolerance changes, conditioning and resource failures.
+
+The independent developer oracle uses a square-root-free pressure/velocity
+matrix exponential and mpmath's accelerated de Hoog inverse. It inverts the
+real and quadrature transforms separately and imports no production material,
+pulse, scattering, planner or inverse helpers. Two manufactured dispersive
+fixtures at 10 MHz agree between degrees 48 and 72 to **2.64e-25** and
+**1.48e-24** at the selected centers. Production differences are below
+**9.65e-11**, inside their approximately **4.94e-9** published model bounds.
+This is independent numerical agreement and degree convergence, not a separate
+certified oracle remainder. The exact represented input and complete output
+evidence is `artifacts/v017-independent-time-agreement.json`.
+
+Service tests exercise immutable frequency-only and reflected-RF reports,
+retained zero-thickness material curves, a large admitted 6,001-frequency
+report, malformed passive inputs and provenance, resealed/zero/understated
+certificates, exact saved centers, allocation/encoding/disk limits, publication
+collisions/failures, shared API locking, restarts and historical JSON/CSV with
+current kernels/schema imports disabled. The large-report test caught an
+underestimated expanded-JSON reserve; the per-cell allowance was increased to
+512 bytes before freezing the implementation. Earlier numerical/schema and
+resume-fingerprint source files remain byte-identical to version 0.16.
+
+The delivery server uses port **8769** and its own `artifacts/volumes-v017`
+directory. **10,768 pre-existing dataset/report files, totaling 535,521,134 bytes**,
+were copied and SHA-256 verified; the idle SQLite catalog used online backup.
+The older instances and roots remain intact. The existing manager's startup
+reconciliation refreshed only the `updated_at` timestamps of 82 acquisition
+catalog entries and three observation entries; IDs, state, progress, requests
+and every other table field remained unchanged. These timestamp changes are
+recorded explicitly, then the complete post-startup catalog is required to
+remain unchanged during delivery. Copy and delivery receipts are
+`artifacts/v017-isolated-instance-copy.json` and `artifacts/v017-sls-delivery.json`.
+
+Native controls created exactly three manually assumed standalone reports in
+**27.795 seconds**, with no volume/observation jobs and no browser errors:
+
+| Report | ID | Saved samples |
+| --- | --- | --- |
+| Two-layer frequency diagnostics | `ccb4ccd3-4c2c-4d7d-848c-e56047624291` | 129 frequencies |
+| Dispersive slab, reflected gamma | `8379aa34-584e-4178-9a1b-a2fa2e38a057` | 129 frequencies; 161 times |
+| Elastic slab control, reflected gamma | `03503f9f-2312-4cd0-8e77-f7c1d2d071fb` | 129 frequencies; 161 times |
+
+The native run exercises layer add/remove/reordering, exact input units, inactive
+elastic relaxation, derived material/frequency selection, invalid modulus/rate/
+record requests without substitution, signed RF/quadrature and shared windows,
+saved-time keyboard/cursor controls, exports, stale estimates, cold history and
+390 px layouts. Evidence is
+`web/test-artifacts/sls-acoustics-1788646300547/verification.json`.
+
+The final frontend build passed in **1.15 seconds**, with the existing main-chunk
+size advisory. A save-specific history-picker mismatch was corrected: the picker
+now selects the report just saved, matching its displayed arrays and title.
+Final reopening/export/390 px checks passed in **4.037 seconds** using the same
+three reports. The save-specific UI regression used explicitly intercepted
+browser responses from an existing frozen record; no additional report request
+reached the server. The documentation screenshot followed a real GET reopening.
+Final evidence is `web/test-artifacts/sls-readonly-1788646561415/verification.json`
+and `web/test-artifacts/v017-production-build.log`; report/catalog hashes remain
+unchanged, with zero page errors.
+
+The read-only delivery check passed in **25.822 seconds**, reusing those same
+three reports. JSON and CSV round-trip every field, source/proof fingerprints
+match the delivered implementation, and all 10,768 older files and the complete
+post-startup catalog remain unchanged. The 50 MHz delivered gamma fixtures
+require more oracle terms than the shorter 10 MHz unit controls: degree 64
+failed the convergence criterion. Degrees **96 and 128** agree to **2.98e-17**
+(dispersive) and **1.67e-17** (elastic) at four actual centers each. Maximum
+selected complex differences from the delivered response are respectively
+**1.63e-11** and **7.56e-13**, inside the approximately **4.92e-8** published
+bounds. The lower-degree disagreement is retained in
+`artifacts/v017-delivery-oracle-degree-study.json`; the production calculation
+was not changed to fit the oracle. Elastic attenuation remains exactly zero.
+
+Release finalization also requires exact Windows/Linux CI. Its linked receipt and
+verified commit are retained in `artifacts/ACTIVE_INSTANCE.json`; a pending
+release does not replace the prior verified release marker.
+
 ## Version 0.16 — saved coherent observation comparisons
 
 The complete Windows suite passed **1,460 tests in 425.72 seconds**, with the

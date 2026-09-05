@@ -105,15 +105,23 @@ source bounds propagate into six residual-bound maps. Immutable reports preserve
 ordinary gate statistics, linked initial views and complete deduplicated source
 snapshots. The existing independent-column comparison retains its original guards.
 
-The next bounded increment is an explicit causal material-loss law, starting in
-the standalone layered instrument with independent analytic, passivity and
-time-domain checks before introducing controls into saved acquisitions. Define
-the constitutive model, admissible parameters, causal frequency continuation and
-applicable inversion bounds before using it in the existing certified response.
-An empirical attenuation curve alone is not a causal transfer model. Preserve
-lossless/zero-loss controls and existing saved identities; label assumed material
-parameters separately from measured data. Frequency-dependent X-ray spectra and
-calibrated source/detector effects remain separate physics work.
+Version 0.17 introduces a separate [scalar SLS material instrument](SLS_ACOUSTICS.md)
+with up to eight manually authored layers, explicit density/moduli/relaxation,
+coupled attenuation and dispersion, discrete-frequency material/scattering
+diagnostics and reflected causal gamma RF with a separately identified numerical
+certificate. Its [proof](SLS_MATERIAL_PROOF.md) and independent transfer/time
+checks establish the computational contract; the assumed material values are
+not measured HBM data. Earlier schemas, acquisition kernels and resume identities
+remain unchanged. The existing constant-loss-plus-delay model is itself causal.
+
+Next add bounded, compatible parameter comparisons of these standalone saved
+reports, with explicit changed material parameters, shared frequency/time axes,
+and separate propagation of reflected-RF bounds. This will support studying the
+new controls before extending material assignments and saved propagation.
+Any material-to-HBM mapping needs an explicit provenance-aware assignment and
+resource contract; do not infer a calibrated relaxation law from one attenuation
+value. Frequency-dependent X-ray spectra and calibrated source/detector effects
+remain separate physics work.
 
 ## 1. Correct the specimen and preserve the image evidence
 
@@ -313,8 +321,9 @@ comparisons of compatible saved causal data with separate source and subtraction
 bounds. Versions 0.15–0.16 add the separately defined finite coherent lateral
 observation and its compatible saved comparisons. Their complete support,
 explicit weights/phase, complex mixing and distinct pressure/magnitude bounds
-are documented above. Continue with the causal material-loss model and its
-independent controls before expanding saved propagation. Preserve historical
+are documented above. Version 0.17 adds a standalone SLS material law and its
+independent controls. Continue with bounded compatible SLS report comparisons,
+then explicit material assignments before expanding saved propagation. Preserve historical
 data and numerical identities, distinguish excitation/observation changes, and
 keep ordinary unique-depth mapping unavailable for repeated returns.
 

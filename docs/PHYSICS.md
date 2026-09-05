@@ -226,6 +226,18 @@ The six maps bound samplewise numerical residuals under the declared discrete
 model. Gate products, aggregate metrics and synthetic locality findings remain
 ordinary diagnostics. No propagation or original observation calculation occurs.
 
+Version 0.17 introduces a separate [scalar SLS instrument](SLS_ACOUSTICS.md).
+Each manually authored finite layer uses density, relaxed/unrelaxed longitudinal
+modulus and one relaxation time, with a common causal constitutive law driving
+attenuation, phase speed and impedance. Real exterior-port flux establishes the
+global reflection bound used by the separately identified gamma inverse. Material
+conversions, complex roots, propagation and inversion are Arb-enclosed for the
+reflected time certificate; discrete frequency curves and energy fractions remain
+ordinary diagnostics. Pressure transmission is not constrained to unit magnitude
+and has no time-response certificate. The [proof](SLS_MATERIAL_PROOF.md) states
+the scalar normal-incidence assumptions. No material calibration, shear coupling,
+focused beam or saved SLS raster is introduced; old material laws remain intact.
+
 Version 0.9 adds controlled acquisition cases and comparisons of saved signals,
 without changing the forward propagation equations. Its B−A metrics, inclusive
 gates and exact coordinate requirements are documented in
