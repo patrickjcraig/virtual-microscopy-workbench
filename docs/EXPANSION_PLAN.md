@@ -40,6 +40,12 @@ and frozen reports. See [ACQUISITION_COMPARISONS.md](ACQUISITION_COMPARISONS.md)
 This implements the acquisition-comparison part of M6; the acoustic propagation
 model itself is unchanged.
 
+Version 0.10 adds the corresponding X-ray recipe/batch workflow and saved counts,
+transmission and logarithm comparisons. Exact detector/angle/pose compatibility,
+explicit photon/observation policies and common logarithm support protect the
+interpretation of residuals. See [XRAY_COMPARISONS.md](XRAY_COMPARISONS.md).
+The X-ray forward model and saved product schema are unchanged.
+
 Implementation loops now continue without waiting for another user prompt.
 Each loop must finish a bounded working increment, exercise its numerical and
 browser behavior, update these records, and publish verified code to the existing
@@ -222,7 +228,7 @@ Never silently lower the requested sampling. Offer a smaller ROI, fewer views, s
 | M4 — X-ray projection volume (delivered in 0.4) | Full-angle CPU parallel projector, independent detector/material sampling, source/detector/rotation controls, saved poses and counts/transmission/log/mask arrays, view/sinogram browser | Analytical lengths at 0°, 90° and oblique views; no angle singularities; asymmetric orientation tests; seeded noise statistics, byte-identical resume and preserved legacy SAM datasets |
 | M5 — Reconstruction (CPU baseline delivered in 0.5) | CPU parallel FBP from saved projections, linked spatial slices, filter/bounds controls, coverage masks and source provenance; GPU cone CT and iterative laminography remain future | Independent analytical ellipse scale/orientation, detector-sampling convergence, held-out projection residuals, 180°/360° weighting, invalid/truncated/limited-angle handling, byte-preserving resume and source independence after completion |
 | SAM depth extension (delivered in 0.6) | Declared homogeneous/layered velocity, source-water or explicit surface time, independent RF/envelope mapping, spatial slices, support masks and frozen source provenance | Known reflector depths, velocity/reference sensitivity, layered travel times, nonzero recordings, preserved signed RF/X/Y, out-of-model/record masks, resumable byte-identical data and read-only reopened views |
-| M6 — HBM microstructure (patch 0.7; continuous columns 0.8; SAM comparisons 0.9) | Explicit bumps/TSVs/local defects, inspection, continuous material paths and saved-SAM parameter comparisons delivered; X-ray comparisons, layered acoustic echoes and spectrum/detector response follow | Feature/path and sampling sensitivity; surrounding-package contributions preserved; independent analytical comparisons; defect observability reported per instrument/configuration |
+| M6 — HBM microstructure (patch 0.7; continuous columns 0.8; SAM comparisons 0.9; X-ray comparisons 0.10) | Explicit bumps/TSVs/local defects, inspection, continuous material paths and saved SAM/X-ray parameter comparisons delivered; layered acoustic echoes and spectrum/detector response follow | Feature/path and sampling sensitivity; surrounding-package contributions preserved; independent analytical comparisons; defect observability reported per instrument/configuration |
 | M7 — Wave physics and calibration | Bounded elastic ROI, measured instrument responses, measured-data import/comparison | Time/grid/domain convergence, interface/transmission/mode checks, matched acquisition geometry, held-out measurement agreement and uncertainty |
 | M8 — Coupled multiphysics | Temperature/deformation/stress fields driving material and geometry updates between acquisitions | First validate one-way coupling and unit/coordinate transfer, then introduce validated feedback loops if the research requires them |
 
@@ -233,14 +239,12 @@ Keep the existing regression suite, then add tests that measure the new scientif
 ## Recommended next release
 
 The first M1–M5 increments, SAM depth extension, bounded M6 bump/TSV patch,
-continuous-column numerical method and saved-SAM recipes/batches/comparisons are
-delivered. The next proposed loop is
-[X-ray recipes and saved projection comparisons](XRAY_COMPARISONS_SPEC.md):
-generalize kind dispatch while preserving the existing transaction and historical
-SAM records, then compare retained projection products under explicit photon,
-noise and common-valid-support policies. Exact detector/angle/pose compatibility
-and read-only source provenance remain required. That specification is planned,
-not implemented in 0.9.
+continuous-column numerical method and both SAM/X-ray recipes, batches and saved
+comparisons are delivered. The next proposed loop is
+[bounded layered acoustic reverberation](LAYERED_ACOUSTICS_SPEC.md): introduce an
+explicit opt-in normal-incidence layered response with independent analytical
+echo/phase checks while preserving the current primary-echo solver and historical
+recordings. This next response model is planned, not implemented in 0.10.
 
 Then extend richer propagation and acquisition response.
 Extend material data before spectrum controls. Optional GPU/cone/laminography

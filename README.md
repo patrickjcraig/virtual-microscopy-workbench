@@ -6,6 +6,8 @@ A local research prototype that loads a material-aware digital twin of a microel
 
 **Evidence status:** synthetic, reduced-order forward models. This version provides two imaging physics models sharing one specimen. It has no experimental calibration and does not claim a coupled elastic/electromagnetic solver or measured instrument accuracy.
 
+Version **0.10** adds [X-ray recipes, reviewed parameter batches and saved projection comparisons](docs/XRAY_COMPARISONS.md). Sweep energy, photons, detector blur, material sampling or a selected authored defect; compare saved counts, transmission and logarithms with explicit photon/noise policies, exact detector poses, shared projection/profile/sinogram scales and immutable JSON/CSV reports. Existing [SAM recipes and comparisons](docs/ACQUISITION_COMPARISONS.md) remain available.
+
 ![H100 reference specimen in the virtual microscopy workbench, with X-ray transmission, acoustic C-scan and pulse-echo inspection](docs/images/h100-workbench.png)
 
 ## Start on Windows
@@ -128,6 +130,14 @@ ROI when the compact patch exceeds resource limits. See
 ![Continuous normal-incidence HBM6 acquisition with explicit method and displayed signal scales](docs/images/continuous-hbm-workspace.png)
 
 ## Numerical exports and headless execution
+
+**New in 0.10: X-ray recipes, batches and comparisons.** Open **X-ray recipes**
+to freeze a complete projection acquisition, review a parameter sweep and compare
+retained products with shared maps, profiles and sinograms. The
+[X-ray comparison guide](docs/XRAY_COMPARISONS.md) explains unequal photon settings,
+observed/expected policies, exact poses and masked logarithms.
+
+![Saved six-site H100 energy comparison with shared transmission projections, sinograms and detector-row profiles](docs/images/xray-acquisition-comparison.png)
 
 **New in 0.9: SAM recipes, batches and comparisons.** Open **Recipes & comparisons**
 to save/load/revise complete acquisition recipes, review two to four explicit
@@ -261,12 +271,15 @@ Run `npm.cmd run verify:comparisons` for recipe round trips, reviewed cases,
 batch execution/cancellation/resume and saved RF/envelope comparisons. It creates
 synthetic records and datasets; display changes never reacquire the sources.
 
-The local bump/TSV patch, continuous material paths and saved-SAM recipes/batches/
-comparisons are delivered. The next work extends these workflows to saved X-ray
-projections before richer propagation models.
+Run `npm.cmd run verify:xray-comparisons` for the corresponding X-ray recipe,
+batch, normalization, mask, linked-view, download and reopening workflow.
+
+The local bump/TSV patch, continuous material paths and both SAM/X-ray recipes,
+batches and saved comparisons are delivered. The next work adds a bounded
+layered acoustic response with independently checked repeated echoes.
 GPU cone CT and iterative laminography remain separate future extensions. See
 [EXPANSION_PLAN.md](docs/EXPANSION_PLAN.md) for the sequence and acceptance gates.
-Version 0.9 retains raw SAM RF and X-ray projections alongside derived CT and
+Version 0.10 retains raw SAM RF and X-ray projections alongside derived CT and
 SAM depth volumes.
 
 The implementation is separated into `virtual_microscopy/physics.py` and `materials.py`, strict schemas and local API, `web/` UI, reproducible example geometry, and tests. This leaves room for higher-fidelity solvers and CAD/voxel import while keeping the current demo runnable.

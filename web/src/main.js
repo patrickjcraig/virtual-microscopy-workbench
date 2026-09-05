@@ -26,7 +26,7 @@ const app = $('#app');
 app.innerHTML = `
   <header class="topbar">
     <div class="brand"><div class="brand-mark">${icon('cube')}</div><div><h1>Virtual microscopy</h1><p>Microelectronics simulation workbench</p></div></div>
-    <div class="top-actions"><span class="mode-label"><i></i>Synthetic forward model</span><button id="volumes-btn" title="Saved acoustic RF volumes">${icon('layers')}Saved volumes</button><button id="recipes-btn">${icon('sliders')}Recipes & comparisons</button><button id="xray-volumes-btn">${icon('xray')}X-ray volumes</button><button id="reconstruction-btn">${icon('layers')}CT reconstruction</button><button id="sam-depth-btn">${icon('acoustic')}SAM depth</button><button id="assumptions-btn">${icon('info')}Model & assumptions</button><button id="export-results" disabled>${icon('download')}Export acquisition</button></div>
+    <div class="top-actions"><span class="mode-label"><i></i>Synthetic forward model</span><button id="volumes-btn" title="Saved acoustic RF volumes">${icon('layers')}Saved volumes</button><button id="recipes-btn">${icon('sliders')}Recipes & comparisons</button><button id="xray-recipes-btn">${icon('sliders')}X-ray recipes</button><button id="xray-volumes-btn">${icon('xray')}X-ray volumes</button><button id="reconstruction-btn">${icon('layers')}CT reconstruction</button><button id="sam-depth-btn">${icon('acoustic')}SAM depth</button><button id="assumptions-btn">${icon('info')}Model & assumptions</button><button id="export-results" disabled>${icon('download')}Export acquisition</button></div>
   </header>
   <main class="workspace">
     <aside class="sidebar" aria-label="Specimen and acquisition controls">
@@ -353,9 +353,13 @@ const volumeWorkspace=new VolumeWorkspace({request,getSnapshot:()=>({twin:state.
 let acquisitionComparisonsPromise;
 async function openAcquisitionComparisons(options){try{acquisitionComparisonsPromise ||= import('./acquisition-comparisons.js').then(({AcquisitionComparisons})=>new AcquisitionComparisons({request,getSnapshot:()=>({twin:state.twin,settings:settingsFromControls()})}));await (await acquisitionComparisonsPromise).open(options);}catch(error){acquisitionComparisonsPromise=null;notify(`Unable to open recipes and comparisons: ${error.message}`,true);}}
 $('#recipes-btn').addEventListener('click',()=>openAcquisitionComparisons());
+let xrayComparisonsPromise;
+async function openXrayComparisons(options){try{xrayComparisonsPromise ||= import('./xray-acquisition-comparisons.js').then(({XrayAcquisitionComparisons})=>new XrayAcquisitionComparisons({request,getSnapshot:()=>({twin:state.twin,settings:settingsFromControls()})}));await (await xrayComparisonsPromise).open(options);}catch(error){xrayComparisonsPromise=null;notify(`Unable to open X-ray recipes: ${error.message}`,true);}}
+$('#xray-recipes-btn').addEventListener('click',()=>openXrayComparisons());
+
 $('#volumes-btn').addEventListener('click',()=>volumeWorkspace.open());
 let xrayWorkspacePromise;
-$('#xray-volumes-btn').addEventListener('click',async()=>{try{xrayWorkspacePromise ||= import('./xray.js').then(({XrayWorkspace})=>new XrayWorkspace({request,getSnapshot:()=>({twin:state.twin,settings:settingsFromControls()})}));(await xrayWorkspacePromise).open();}catch(error){xrayWorkspacePromise=null;notify(`Unable to open the X-ray workspace: ${error.message}`,true);}});
+$('#xray-volumes-btn').addEventListener('click',async()=>{try{xrayWorkspacePromise ||= import('./xray.js').then(({XrayWorkspace})=>new XrayWorkspace({request,onRecipes:options=>openXrayComparisons(options),getSnapshot:()=>({twin:state.twin,settings:settingsFromControls()})}));(await xrayWorkspacePromise).open();}catch(error){xrayWorkspacePromise=null;notify(`Unable to open the X-ray workspace: ${error.message}`,true);}});
 let reconstructionWorkspacePromise;
 $('#reconstruction-btn').addEventListener('click',async()=>{try{reconstructionWorkspacePromise ||= import('./reconstruction.js').then(({ReconstructionWorkspace})=>new ReconstructionWorkspace({request}));(await reconstructionWorkspacePromise).open();}catch(error){reconstructionWorkspacePromise=null;notify(`Unable to open CT reconstruction: ${error.message}`,true);}});
 let depthWorkspacePromise;
@@ -386,7 +390,7 @@ function downloadJSON(value,filename) {
 }
 const safeName=name=>String(name).replace(/[^a-z0-9_-]+/gi,'-').replace(/^-|-$/g,'').slice(0,75)||'specimen';
 $('#export-twin').addEventListener('click',()=>{if(state.twin)downloadJSON(state.twin,`${safeName(state.twin.name)}.json`);});
-$('#export-results').addEventListener('click',()=>{if(state.result)downloadJSON({...state.result,export_metadata:{application:'Virtual microscopy workbench',version:'0.9.0',exported_at:new Date().toISOString(),display_windows:{xray:[0,1],sam:[0,state.samCeiling],bscan:[0,1]},settings_changed_since_acquisition:state.stale}},`${safeName(state.result.twin.name)}-acquisition-${safeName(state.result.run_id || new Date().toISOString())}.json`);});
+$('#export-results').addEventListener('click',()=>{if(state.result)downloadJSON({...state.result,export_metadata:{application:'Virtual microscopy workbench',version:'0.10.0',exported_at:new Date().toISOString(),display_windows:{xray:[0,1],sam:[0,state.samCeiling],bscan:[0,1]},settings_changed_since_acquisition:state.stale}},`${safeName(state.result.twin.name)}-acquisition-${safeName(state.result.run_id || new Date().toISOString())}.json`);});
 $('#assumptions-btn').addEventListener('click',()=>$('#assumptions-dialog').showModal());
 $('#specimen-reference-btn').addEventListener('click',()=>$('#specimen-reference-dialog').showModal());
 $('#close-specimen-reference').addEventListener('click',()=>$('#specimen-reference-dialog').close());

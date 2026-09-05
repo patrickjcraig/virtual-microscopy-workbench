@@ -131,8 +131,9 @@ def _source(root, identifier, retained_manifest_bytes=0):
             raise ValueError(f"Missing or invalid frozen {name} array registry/units.")
     coordinates = {}
     for name, length in (("x_mm", nx), ("y_mm", ny), ("time_us", nt)):
-        if name not in group or group[name].shape != (length,) or group[name].dtype != np.dtype("float64"):
-            raise ValueError(f"Invalid comparison source {name} coordinate vector.")
+        if (name not in group or group[name].shape != (length,) or group[name].dtype != np.dtype("float64") or
+                group[name].chunks != (length,)):
+            raise ValueError(f"Invalid comparison source {name} coordinate vector or canonical chunk layout.")
         values = np.asarray(group[name][:], dtype=np.float64)
         if coordinate_sha256(values) != manifest.get("coordinates_sha256", {}).get(name):
             raise ValueError(f"Coordinate checksum mismatch: {name}.")

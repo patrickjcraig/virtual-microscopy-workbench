@@ -71,6 +71,25 @@ def pair(tmp_path):
     return tmp_path, a, b, rf, env, candidate_rf, candidate_env
 
 
+@pytest.mark.parametrize("name", ["x_mm", "y_mm", "time_us"])
+def test_oversized_coordinate_chunks_rejected_before_decoding(pair, monkeypatch, name):
+    root, aid, bid, *_ = pair
+    group = zarr.open_group(str(root/aid/"data.zarr"), mode="a")
+    values = group[name][:]
+    del group[name]
+    group.create_array(name, data=values, chunks=(1_000_000,))
+    before = file_hashes(root/aid)
+    original = zarr.Array.__getitem__
+    def guarded(array, key):
+        if array.path == name:
+            pytest.fail("Oversized SAM coordinate chunks must fail before decoding")
+        return original(array, key)
+    monkeypatch.setattr(zarr.Array, "__getitem__", guarded)
+    with pytest.raises(ValueError, match="canonical chunk layout"):
+        compute_comparison(root, config(aid, bid))
+    assert file_hashes(root/aid) == before
+
+
 def expected_metrics(a, b):
     a, b = a.astype(float), b.astype(float)
     d = b-a

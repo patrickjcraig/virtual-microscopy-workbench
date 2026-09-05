@@ -8,10 +8,20 @@ from .datasets import DatasetStore, canonical_json, checked_id, json_sha256, now
 from .hbm import compose_hbm
 from .recipe_schemas import CaseProposal, RecipeCreate, RecipeFromDataset, RecipeRecord
 from .sam_volume import estimate_sam
-from .volume_jobs import _connection
+from .volume_jobs import _connection, store_for_manifest
 from .volume_schemas import SamVolumeRequest
+from .xray_schemas import XrayVolumeRequest
+from .xray_volume import estimate_xray
 
 MAX_RECIPE_BYTES = 8 * 1024 * 1024
+SAM_RECIPE = "sam_acquisition_recipe"
+XRAY_RECIPE = "xray_acquisition_recipe"
+SAM_SWEEPS = {"frequency_mhz", "focus_mm", "fractional_bandwidth", "path_model", "depth_samples", "defect", "include_defects"}
+XRAY_SWEEPS = {"energy_kev", "photons", "detector_fwhm_mm", "geometry_nx", "geometry_ny", "geometry_nz", "noise", "seed", "defect", "include_defects"}
+
+
+def _request_model(recipe_kind):
+    return XrayVolumeRequest if recipe_kind == XRAY_RECIPE else SamVolumeRequest
 
 
 def _check_record(record: dict) -> dict:
@@ -28,8 +38,12 @@ def _check_record(record: dict) -> dict:
     if json_sha256({key: value for key, value in record.items() if key != "recipe_sha256"}) != record["recipe_sha256"]:
         raise ValueError("Recipe record checksum mismatch.")
     request = record["request"]
-    if set(request) != {"twin", "acquisition"} or not isinstance(request["twin"], dict) or not isinstance(request["acquisition"], dict):
-        raise ValueError("Recipe must contain a frozen SAM twin and acquisition object.")
+    xray = record["kind"] == XRAY_RECIPE
+    expected = {"kind", "twin", "acquisition"} if xray else {"twin", "acquisition"}
+    if set(request) != expected or not isinstance(request["twin"], dict) or not isinstance(request["acquisition"], dict):
+        raise ValueError("Recipe must contain a frozen twin/acquisition with the matching explicit X-ray kind or legacy SAM shape.")
+    if xray and (request["kind"] != "xray_projection_volume" or record["default_gate"] is not None):
+        raise ValueError("X-ray recipes require an explicit X-ray request and no acoustic time gate.")
     objects = request["twin"].get("objects")
     if not isinstance(objects, list) or len(objects) > 600:
         raise ValueError("A recipe twin must contain at most 600 primitives.")
@@ -39,15 +53,18 @@ def _check_record(record: dict) -> dict:
         if (json_sha256(source) != provenance["source_manifest_sha256"] or
                 source.get("dataset_id") != provenance["source_dataset_id"] or
                 source.get("input_sha256") != provenance["source_input_sha256"] or
-                source.get("request") != request or source.get("kind", "sam_rf_volume") != "sam_rf_volume" or
+                source.get("request") != request or
+                source.get("kind", "sam_rf_volume") != ("xray_projection_volume" if xray else "sam_rf_volume") or
                 source.get("complete") is not True or source.get("state") != "completed"):
-            raise ValueError("Recipe source provenance mismatch or incomplete SAM source.")
+            raise ValueError("Recipe source provenance mismatch or incomplete acquisition source.")
     return record
 
 
 def _check_gate(gate, request):
     if gate is None:
         return
+    if request.get("kind") == "xray_projection_volume":
+        raise ValueError("X-ray recipes do not have an acoustic time gate.")
     from .sam_volume import _layout
     acquisition = request["acquisition"]
     # Use the same final saved sample and inclusive tolerance as saved gate processing.
@@ -84,7 +101,7 @@ class RecipeStore:
         summaries = []
         for row in rows:
             record = _check_record(json.loads(row["record_json"]))
-            summaries.append({key: record[key] for key in ("recipe_id", "name", "created_at", "parent_recipe_id", "request_sha256")} |
+            summaries.append({key: record[key] for key in ("recipe_id", "kind", "name", "created_at", "parent_recipe_id", "request_sha256")} |
                              {"source_dataset_id": (record["provenance"] or {}).get("source_dataset_id")})
         return sorted(summaries, key=lambda item: (item["created_at"], item["recipe_id"]), reverse=True)
 
@@ -101,14 +118,15 @@ class RecipeStore:
                 # and bounds. Keep already-saved and source-provenanced records
                 # readable even if their geometry predates the current schema.
                 if record["provenance"] is None:
-                    SamVolumeRequest.model_validate(record["request"])
+                    _request_model(record["kind"]).model_validate(record["request"])
                     _check_gate(record["default_gate"], record["request"])
                 connection.execute("INSERT INTO recipes VALUES (?,?)", (record["recipe_id"], canonical_json(record).decode("utf-8")))
             connection.commit()
         return deepcopy(record)
 
     def _save(self, name, request, default_gate=None, parent_recipe_id=None, provenance=None):
-        record = {"kind": "sam_acquisition_recipe", "schema_version": 1, "recipe_id": str(uuid4()),
+        recipe_kind = XRAY_RECIPE if request.get("kind") == "xray_projection_volume" else SAM_RECIPE
+        record = {"kind": recipe_kind, "schema_version": 1, "recipe_id": str(uuid4()),
                   "parent_recipe_id": parent_recipe_id, "name": name, "created_at": now_iso(), "request": request,
                   "default_gate": default_gate, "provenance": provenance, "request_sha256": json_sha256(request)}
         record["recipe_sha256"] = json_sha256(record)
@@ -117,7 +135,10 @@ class RecipeStore:
     def create(self, body: RecipeCreate | dict):
         body = body if isinstance(body, RecipeCreate) else RecipeCreate.model_validate(body)
         if body.parent_recipe_id:
-            self.get(body.parent_recipe_id)
+            parent = self.get(body.parent_recipe_id)
+            current_kind = XRAY_RECIPE if isinstance(body.request, XrayVolumeRequest) else SAM_RECIPE
+            if parent["kind"] != current_kind:
+                raise ValueError("A recipe revision must retain its parent's acquisition kind; create a separate recipe.")
         request = body.request.model_dump(mode="json", exclude_none=True)
         gate = body.default_gate.model_dump() if body.default_gate else None
         _check_gate(gate, request)
@@ -130,11 +151,24 @@ class RecipeStore:
         if not path.is_dir():
             raise KeyError(body.dataset_id)
         validate_dataset_paths(path, body.dataset_id, include_arrays=False)
-        initial = store.manifest(body.dataset_id)
-        if initial.get("kind", "sam_rf_volume") != "sam_rf_volume" or not initial.get("complete") or initial.get("state") != "completed":
-            raise ValueError("A source recipe requires a completed SAM RF dataset.")
-        validate_dataset_paths(path, body.dataset_id)
-        manifest = store.verify_complete(body.dataset_id)
+        from .comparisons import _bounded_json, MAX_SOURCE_MANIFEST_BYTES, MAX_SOURCE_EXPANDED_BYTES
+        initial, initial_workspace_bytes = _bounded_json(path / "manifest.json", MAX_SOURCE_MANIFEST_BYTES,
+                                                        MAX_SOURCE_EXPANDED_BYTES, "Acquisition recipe source provenance")
+        kind = initial.get("kind", "sam_rf_volume")
+        if kind not in {"sam_rf_volume", "xray_projection_volume"} or not initial.get("complete") or initial.get("state") != "completed":
+            raise ValueError("A source recipe requires a completed SAM RF or X-ray projection dataset.")
+        if kind == "xray_projection_volume" and body.default_gate is not None:
+            raise ValueError("X-ray recipes do not have an acoustic time gate.")
+        if kind == "xray_projection_volume":
+            # Share the historical read-only source bounds with comparisons:
+            # logical dimensions alone do not bound a decoded Zarr chunk.
+            from .xray_comparisons import _load_source
+            manifest = _load_source(self.root, body.dataset_id,
+                                    retained_bytes=initial_workspace_bytes).manifest
+        else:
+            store = store_for_manifest(self.root, initial)
+            validate_dataset_paths(path, body.dataset_id)
+            manifest = store.verify_complete(body.dataset_id)
         gate = body.default_gate.model_dump() if body.default_gate else None
         if gate:
             # Historical coordinates are authoritative. No current constructor.
@@ -177,8 +211,13 @@ def case_differences(reference: dict, candidate: dict) -> dict:
 def build_case_plan(root: Path, body: CaseProposal | dict) -> dict:
     proposal = body if isinstance(body, CaseProposal) else CaseProposal.model_validate(body)
     recipe = RecipeStore(root).get(proposal.recipe_id)
+    xray = recipe["kind"] == XRAY_RECIPE
+    if proposal.field not in (XRAY_SWEEPS if xray else SAM_SWEEPS):
+        raise ValueError(f"Parameter '{proposal.field}' is not an active supported case variable for this {'X-ray' if xray else 'SAM'} recipe.")
+    Request = _request_model(recipe["kind"])
+    estimator = estimate_xray if xray else estimate_sam
     try:
-        base = SamVolumeRequest.model_validate(recipe["request"]).model_dump(mode="json", exclude_none=True)
+        base = Request.model_validate(recipe["request"]).model_dump(mode="json", exclude_none=True)
     except ValueError as exc:
         raise ValueError(f"This recipe remains readable, but current acquisition validation rejected it: {exc}") from exc
     if proposal.field == "depth_samples" and base["acquisition"]["path_model"] == "continuous_columns_v1":
@@ -211,8 +250,8 @@ def build_case_plan(root: Path, body: CaseProposal | dict) -> dict:
                 request["acquisition"][proposal.field] = value
                 if proposal.field == "include_defects":
                     label = f"All authored defects / {'included' if value else 'excluded'}"
-            validated = SamVolumeRequest.model_validate(request)
-            estimate = estimate_sam(validated)
+            validated = Request.model_validate(request)
+            estimate = estimator(validated)
             normalized = validated.model_dump(mode="json", exclude_none=True)
             cases.append({"label": label, "overrides": overrides, "request": normalized, "estimate": estimate,
                           "request_sha256": json_sha256(normalized), "geometry_sha256": json_sha256(normalized["twin"])})

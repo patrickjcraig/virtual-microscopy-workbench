@@ -1,4 +1,4 @@
-"""SAM recipe staging and reviewed batch admission on the existing local worker."""
+"""Acquisition recipe staging and reviewed batches on the existing local worker."""
 from fastapi import APIRouter, Request
 from fastapi.responses import Response
 
@@ -7,7 +7,7 @@ from .recipe_schemas import BatchSubmission, CaseProposal, RecipeCreate, RecipeF
 from .recipes import RecipeStore, build_case_plan
 from .volume_api import _processing_lock, invoke, manager
 
-router = APIRouter(prefix="/api/v2", tags=["SAM recipes and batches"])
+router = APIRouter(prefix="/api/v2", tags=["Acquisition recipes and batches"])
 
 
 def _store(request):
@@ -43,8 +43,9 @@ def get_recipe(recipe_id: str, request: Request):
 @router.get("/recipes/{recipe_id}/export")
 def export_recipe(recipe_id: str, request: Request):
     record = invoke(_store(request).get, recipe_id)
+    instrument = "xray" if record["kind"] == "xray_acquisition_recipe" else "sam"
     return Response(canonical_json(record), media_type="application/json",
-                    headers={"Content-Disposition": f'attachment; filename="sam-recipe-{record["recipe_id"]}.json"'})
+                    headers={"Content-Disposition": f'attachment; filename="{instrument}-recipe-{record["recipe_id"]}.json"'})
 
 
 @router.post("/cases/preview")

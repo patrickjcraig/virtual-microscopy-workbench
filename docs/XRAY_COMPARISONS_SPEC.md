@@ -1,6 +1,6 @@
-# Proposed next loop: X-ray recipes and projection comparisons
+# X-ray recipes and projection comparisons specification
 
-**Status: proposed and unimplemented.** Prepared against v0.9 on 4 September 2026. This is a bounded extension of saved acquisition workflows, not a new X-ray solver or an experimental validation claim.
+**Status: implemented in v0.10; verification is recorded in [VERIFICATION.md](VERIFICATION.md).** Prepared against v0.9 on 4 September 2026 and delivered on 5 September 2026. This specification retains its original acceptance scope. See [the usage guide](XRAY_COMPARISONS.md). This is a bounded extension of saved acquisition workflows, not a new X-ray solver or an experimental validation claim.
 
 ## Scope and existing foundation
 

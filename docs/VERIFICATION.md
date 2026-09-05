@@ -1,6 +1,113 @@
-# Verification record — 4 September 2026
+# Verification record — 5 September 2026
 
 This record concerns the first local implementation in `E:\git\Dissertation`. It establishes software and analytical-model behavior, not experimental imaging accuracy.
+
+## Version 0.10 — X-ray recipes, batches and saved comparisons
+
+The complete Windows suite passed **699 tests in 171.94 seconds**, with two
+existing third-party deprecation warnings. Locked environment synchronization
+and lock verification passed. The 108 added cases comprise 24 X-ray recipe
+checks, 23 X-ray batch checks, 56 X-ray comparison checks, two real worker/API
+checks and three SAM coordinate-chunk regression cases. The X-ray forward model
+and saved product schema are unchanged.
+
+Recipe tests cover complete frozen settings, immutable revisions, explicit kind
+dispatch, mixed catalogs, strict integers/booleans, unsupported instrument fields,
+rejected acoustic gates and single-defect isolation retaining all six HBM sites
+and every unrelated primitive. Historical source recipes remain readable without
+the current twin constructor or projector. Existing SAM requests still omit kind;
+stored records, plans, payloads, hashes and staging journal meanings are retained.
+
+Batch tests exercise real spawned workers, all-case admission, mixed-kind
+rejection, ordered claims, SQL/staging failures, post-commit response replay,
+disk reservation/rechecks, cancellation and exact seeded resume. A damaged
+partial X-ray view is regenerated while healthy chunks and the completed first
+case retain their bytes. Actual geometry/work/output caps remain enforced.
+
+Independent comparison fixtures verify every global/per-view metric and support
+denominator. Counts/transmission include zeros; logarithms exclude half-count
+placeholders using common positive support. Negative logs and transmission above
+one survive processing. Empty support and zero-reference L2 return nulls with
+reasons. Tests reject nonfinite values even outside common support, broken saved
+product relationships, corrupted hashes, incompatible units/semantics, shape and
+all seven coordinate/pose arrays including one-ULP discrepancies. Reports retain
+both manifests and processing fingerprints; JSON/CSV work without sources while
+new views require original sources. The real photon-sweep API rejects native
+unequal-I0 comparison and agrees with a direct float64 oracle after explicit
+normalization, preserving all source bytes and creating no jobs on reopening.
+
+Independent-seed Poisson checks use analytical mean and squared-RMSE sampling
+tolerances over two realizations. Exact zero from the same stored realization is
+a separate reproducibility check. Neither test is experimental accuracy evidence.
+
+Independent review found a decoded-chunk admission gap in coordinate/pose arrays:
+a small logical vector could declare a large compressed chunk. X-ray comparisons,
+source-derived X-ray recipes and SAM comparisons now require canonical whole
+coordinate chunks before decoding; guarded regressions verify rejection and byte
+preservation. X-ray source and Zarr JSON have serialized and structural expansion
+bounds before parsing; processing accounts for overlapping provenance, decoded
+views and report displays. The 512 MiB estimate is not total process RSS.
+
+Native Chrome `verify:xray-comparisons` passed full staged recipe transfer,
+save/import/export/revision/from-source, invalid-case rejection, reviewed photon
+batch and replay, unequal-I0 rejection then explicit normalization, independent
+observed/expected policy, zero counts, negative logs and mask support, exact
+linked differences, shared display scales, incompatible shape rejection, all
+downloads, reload, 390-pixel layout and a real 160-view batch cancellation/resume
+with stable dataset IDs. Batch-owned jobs route to **Manage batch** instead of
+offering invalid individual controls. The record is
+`web/test-artifacts/xray-comparisons-1788582830571/verification.json`.
+
+Existing native `verify:comparisons` and `verify:xray` passed at
+`web/test-artifacts/acquisition-comparisons-1788583032348/verification.json` and
+`web/test-artifacts/xray-1788583094261/verification.json`. All three reported no
+uncaught page errors. Screenshot inspection found a stale source-photon preview
+after opening a different report; the frontend was fixed and rebuilt. Read-only
+reopening and SAM **Manage batch** navigation then passed in
+`xray-comparisons-1788582830571/reopen-verification.json`.
+
+`tools/verify_xray_comparisons.py` delivered three two-case batches through the
+live API in **50.52 seconds**, saving six projection volumes, six comparison
+reports and six source ZIPs. The first attempt passed; no repair or reacquisition
+was needed. Evidence is in
+`artifacts/v010-xray-delivery/verification-report.json` (80 files, 13,161,753 bytes).
+All **408 source files** retained their bytes, and all ZIP CRCs and payloads
+matched their sources. JSON/CSV fields, exact coordinates, linked products/masks
+and no-forward view traps passed. Independent full-array float64 QA and streamed
+production metrics differed by at most **2.842170943040401e-14**, a reduction-order
+residual, not an imaging accuracy measure. Reusing the evidence directory failed
+before API access and preserved all 80 artifacts.
+
+| Saved case pair | Shape per source (view,v,u) | Transmission RMSE | Logarithm RMSE |
+| --- | --- | ---: | ---: |
+| Noiseless coupon, 1,000 / 8,000 incident photons | 12 × 48 × 64 | 0 | 0 |
+| Coupon detector FWHM, 0 / 0.35 mm | 12 × 48 × 64 | 0.0201189182 | 0.0262034802 |
+| Six-site H100, 60 / 120 keV | 12 × 48 × 64 | 0.1778344303 | 0.7639463741 |
+
+The photon example observed exact saved transmission/log equality after explicit
+per-source normalization; native unequal-I0 comparison was rejected. That exact
+equality is a result of this noiseless pair and is not generalized to noisy scans.
+The coupon material pitch is 62.5 × 62.5 × 25 µm. The H100 material grid is
+64 × 64 × 128 with pitch 937.5 × 937.5 × 20.703125 µm. Its six modeled HBM sites
+and 102 authored local bumps/TSVs are retained in the twin, but the coarse grid
+does not resolve the assumed 10 µm TSVs or 25 µm bumps. A nonzero energy residual
+does not establish their detectability.
+
+The H100 delivery batch is `bf86f53d-16e6-4acb-9dc5-07f1bd7544d3`; source IDs are
+`c6cab074-e284-4c24-8244-a9573cd6931a` and
+`2a7dc89a-6d1f-4b15-a990-c4639d565dbd`. Transmission report
+`2b8b67d1-e231-4a9f-afb2-ebed2a4fed65` and logarithm report
+`0986e1fb-4937-4d63-aaaa-8a8a99819c55` remain available in the local catalog.
+
+The final frontend build passed. Read-only reopening of the delivered H100 report
+passed in `xray-comparisons-1788582830571/delivery-reopen-verification.json`:
+source energies/grids stay visible, the setup can be reopened, and all three
+projection maps fit in a 1600 × 1100 desktop viewport without scrolling. Plots
+precede detailed metrics/support; model notes remain accessible. A 390-pixel
+layout has no horizontal overflow, and no acquisition requests or page errors
+occurred. The inspected [1600 × 1700 screenshot](images/xray-acquisition-comparison.png)
+shows view 0, detector row 32 and column 53 with shared projections, sinograms and
+profiles. It contains generated H100 data, not the private reference cross-section.
 
 ## Version 0.9 — SAM recipes, transactional batches and saved comparisons
 

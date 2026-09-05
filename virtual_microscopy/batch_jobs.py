@@ -1,4 +1,4 @@
-"""Transactional admission and durable coordination of bounded SAM batches.
+"""Transactional admission and durable coordination of bounded acquisition batches.
 
 Only catalog-published jobs can run. Unpublished staged manifests are retained
 with an owned journal after failures; recovery never deletes arbitrary paths.
@@ -15,6 +15,8 @@ from .datasets import (DatasetStore, atomic_json, canonical_json, checked_id,
 
 MAX_BATCH_CASES = 4
 MAX_BATCH_BYTES = 2 * 1024**3
+# Retain the original ownership marker so startup can reconcile v0.9 journals.
+# Acquisition kind is frozen in each request, not inferred from this marker.
 STAGING_PURPOSE = "virtual_microscopy_sam_batch_staging"
 ACTIVE_RESERVATIONS = ("queued", "running", "cancelling")
 
@@ -42,6 +44,37 @@ def init_tables(connection):
 def _jobs_module():
     from . import volume_jobs
     return volume_jobs
+
+
+def _request_kind(request):
+    # Do not insert the inferred SAM kind into an existing normalized request:
+    # historical recipe, plan and case hashes include the original omission.
+    if not isinstance(request, dict):
+        raise ValueError("Each batch case requires an acquisition request.")
+    kind = request.get("kind", "sam_rf_volume")
+    if not isinstance(kind, str) or kind not in {"sam_rf_volume", "xray_projection_volume"}:
+        raise ValueError("Batches support saved SAM or X-ray projection acquisitions only.")
+    return kind
+
+
+def _plan_kind(plan):
+    kinds = {_request_kind(case.get("request")) for case in plan["cases"]}
+    if len(kinds) != 1:
+        raise ValueError("All batch cases must have the same acquisition kind; mixed kinds are unsupported.")
+    return kinds.pop()
+
+
+def _store(manager, kind):
+    # Preserve the established SAM manager/store instance and its reader API.
+    return manager.store if kind == "sam_rf_volume" else _jobs_module().store_for_manifest(manager.root, {"kind": kind})
+
+
+def _summary(kind, estimates):
+    work_keys = (("projection_work_cells", "geometry_cells") if kind == "xray_projection_volume"
+                 else ("rf_work_cells", "path_candidate_tests", "path_event_work_units"))
+    return {"case_count": len(estimates), "total_bytes": sum(e["total_bytes"] for e in estimates),
+            "estimated_peak_bytes": max(e["estimated_peak_bytes"] for e in estimates),
+            **{key: sum(e.get(key, 0) for e in estimates) for key in work_keys}}
 
 
 def _safe_directory(parent: Path, name: str, *, create=False):
@@ -105,13 +138,12 @@ def check_reservations(root: Path, *, extra_estimates=(), replacing=None, connec
 
 
 def normalize_plan(plan):
-    from .volume_schemas import SamVolumeRequest
     if not isinstance(plan, dict) or not isinstance(plan.get("recipe"), dict):
         raise ValueError("A batch requires an immutable recipe record.")
     result = json.loads(canonical_json(plan))
     cases = result.get("cases")
     if not isinstance(cases, list) or not 2 <= len(cases) <= MAX_BATCH_CASES:
-        raise ValueError("A SAM batch requires two to four explicit cases.")
+        raise ValueError("An acquisition batch requires two to four explicit cases.")
     labels = set()
     for case in cases:
         if not isinstance(case, dict):
@@ -122,36 +154,36 @@ def normalize_plan(plan):
         labels.add(label)
         if not isinstance(case.get("overrides", {}), (dict, list)):
             raise ValueError("Batch overrides must be explicit structured data.")
-        request = SamVolumeRequest.model_validate(case.get("request"))
+        Request = _jobs_module()._backend(_request_kind(case.get("request")))[0]
+        request = Request.model_validate(case["request"])
         case["request"] = request.model_dump(mode="json", exclude_none=True)
         case.setdefault("overrides", {})
         if not isinstance(case.get("estimate"), dict):
             raise ValueError("Every batch case requires its reviewed acquisition estimate.")
+    _plan_kind(result)
     return result
 
 
 def _estimate_plan(plan):
-    from .sam_volume import estimate_sam
+    kind = _plan_kind(plan)
+    estimate_acquisition = _jobs_module()._backend(kind)[1]
     cases = []
     for index, case in enumerate(plan["cases"]):
-        estimate = estimate_sam(case["request"])
+        estimate = estimate_acquisition(case["request"])
         if estimate != case["estimate"]:
             raise ValueError(f"Case {index + 1} ({case['label']}) estimate changed; review a fresh plan.")
         cases.append(estimate)
     total = sum(case["total_bytes"] for case in cases)
     if total > MAX_BATCH_BYTES:
-        raise ValueError("SAM batch output exceeds the 2 GiB aggregate limit.")
-    return {"case_count": len(cases), "total_bytes": total,
-            "estimated_peak_bytes": max(case["estimated_peak_bytes"] for case in cases),
-            **{key: sum(case.get(key, 0) for case in cases)
-               for key in ("rf_work_cells", "path_candidate_tests", "path_event_work_units")}}
+        raise ValueError("Acquisition batch output exceeds the 2 GiB aggregate limit.")
+    return _summary(kind, cases)
 
 
 def estimate_batch(manager, plan):
     normalized = normalize_plan(plan)
     estimate = _estimate_plan(normalized)
     disk = check_reservations(manager.root, extra_estimates=[case["estimate"] for case in normalized["cases"]])
-    return {**estimate, **disk, "cases": normalized["cases"],
+    return {**estimate, **disk, "kind": _plan_kind(normalized), "cases": normalized["cases"],
             "plan_sha256": json_sha256(normalized)}
 
 
@@ -182,8 +214,9 @@ def _publish_batch(root, batch_id, key, digest, plan, cases, timestamp):
             identifier = case["job_id"]
             connection.execute("""INSERT INTO jobs
                 (job_id,state,name,created_at,updated_at,completed_rows,total_rows,error,kind)
-                VALUES (?,'queued',?,?,?,0,?,NULL,'sam_rf_volume')""",
-                (identifier, case["label"], timestamp, timestamp, case["manifest"]["total_rows"]))
+                VALUES (?,'queued',?,?,?,0,?,NULL,?)""",
+                (identifier, case["label"], timestamp, timestamp, case["manifest"]["total_rows"],
+                 _request_kind(case["request"])))
             payload = {name: value for name, value in case.items() if name != "manifest"}
             connection.execute("""INSERT INTO batch_cases
                 (case_id,batch_id,case_index,job_id,payload_json,payload_sha256) VALUES (?,?,?,?,?,?)""",
@@ -209,7 +242,7 @@ def submit_batch(manager, plan, idempotency_key):
                "plan_sha256": digest, "job_ids": [case["job_id"] for case in cases]}
     atomic_json(stage / "owner.json", journal)
     atomic_json(stage / "plan.json", plan)
-    stage_store = DatasetStore(stage)
+    stage_store = _jobs_module().store_for_manifest(stage, {"kind": _plan_kind(plan)})
     try:
         for case in cases:
             case["manifest"] = stage_store.create(case["job_id"], case["request"], case["estimate"])
@@ -303,11 +336,13 @@ def get_batch(root, identifier):
     plan = json.loads(batch["plan_json"])
     if json_sha256(plan) != batch["plan_sha256"] or len(rows) != len(plan["cases"]):
         raise ValueError("Frozen batch identity or case registry is corrupt.")
+    kind = _plan_kind(plan)
     cases = []
     for index, (row, frozen) in enumerate(zip(rows, plan["cases"])):
         payload = json.loads(row["payload_json"])
         if (row["case_index"] != index or json_sha256(payload) != row["payload_sha256"] or
                 payload.get("case_id") != row["case_id"] or payload.get("job_id") != row["job_id"] or
+                (row["kind"] or "sam_rf_volume") != kind or
                 any(payload.get(key) != value for key, value in frozen.items())):
             raise ValueError("Frozen batch case content changed.")
         job = jobs._job_dict({key: row[key] for key in row.keys() if key not in {"payload_json", "payload_sha256", "case_id", "case_index"}})
@@ -315,7 +350,7 @@ def get_batch(root, identifier):
                       "case_sha256": row["payload_sha256"], "batch_id": identifier})
     state = _batch_state(batch["control"], [case["state"] for case in cases])
     estimates = [case["estimate"] for case in cases]
-    return {"id": identifier, "batch_id": identifier, "state": state, "status": state,
+    return {"id": identifier, "batch_id": identifier, "kind": kind, "state": state, "status": state,
             "created_at": batch["created_at"],
             "updated_at": max([batch["updated_at"]]+[case["updated_at"] for case in cases]),
             "case_count": len(cases), "total_cases": len(cases),
@@ -325,10 +360,7 @@ def get_batch(root, identifier):
             "input_sha256": json_sha256({"plan_sha256": batch["plan_sha256"],
                                          "case_sha256": [case["case_sha256"] for case in cases]}),
             "error": next((case["error"] for case in cases if case["error"]), None),
-            "estimate": {"case_count": len(cases), "total_bytes": sum(e["total_bytes"] for e in estimates),
-                "estimated_peak_bytes": max(e["estimated_peak_bytes"] for e in estimates),
-                **{key: sum(e.get(key, 0) for e in estimates)
-                   for key in ("rf_work_cells", "path_candidate_tests", "path_event_work_units")}}}
+            "estimate": _summary(kind, estimates)}
 
 
 def list_batches(root):
@@ -357,7 +389,8 @@ def validate_case_identity(root, identifier, manifest):
         return
     batch = get_batch(root, row["batch_id"])
     case = next(case for case in batch["cases"] if case["job_id"] == identifier)
-    if (manifest["input_sha256"] != case["input_sha256"] or
+    if (manifest.get("kind", "sam_rf_volume") != batch["kind"] or
+            manifest["input_sha256"] != case["input_sha256"] or
             manifest["request"] != case["request"] or manifest["estimate"] != case["estimate"] or
             manifest["solver"] != case["solver"] or manifest["materials_sha256"] != case["materials_sha256"]):
         raise ValueError("Frozen batch case dataset identity changed.")
@@ -376,38 +409,39 @@ def cancel_batch(manager, identifier):
         connection.commit()
     for case in get_batch(manager.root, identifier)["cases"]:
         if case["state"] == "cancelled":
-            manager.store.set_state(case["job_id"], "cancelled")
+            _store(manager, batch["kind"]).set_state(case["job_id"], "cancelled")
     return get_batch(manager.root, identifier)
 
 
 def resume_batch(manager, identifier):
-    from .sam_volume import estimate_sam
     batch = get_batch(manager.root, identifier)
     if batch["state"] not in {"failed", "interrupted", "cancelled"}:
         raise ValueError("Only failed, interrupted or cancelled batches can be resumed.")
+    store = _store(manager, batch["kind"])
+    estimate_acquisition = _jobs_module()._backend(batch["kind"])[1]
     unfinished = {}
     # Validate every case before changing any case's queue state. Completed
     # historical data is checked with its frozen reader, never current solver.
     for case in batch["cases"]:
         path = manager.root / case["job_id"]
         validate_dataset_paths(path, case["job_id"], include_arrays=False)
-        manifest = manager.store.manifest(case["job_id"])
+        manifest = store.manifest(case["job_id"])
         if manifest["arrays_initialized"]:
             validate_dataset_paths(path, case["job_id"])
         validate_case_identity(manager.root, case["job_id"], manifest)
         if manifest["complete"]:
-            manager.store.verify_complete(case["job_id"])
+            store.verify_complete(case["job_id"])
         else:
-            manifest = manager.store.validate_identity(case["job_id"])
-            if estimate_sam(manifest["request"]) != manifest["estimate"]:
+            manifest = store.validate_identity(case["job_id"])
+            if estimate_acquisition(manifest["request"]) != manifest["estimate"]:
                 raise ValueError("Batch case acquisition estimate changed; create a new batch.")
             unfinished[case["job_id"]] = manifest
     for job_id, manifest in list(unfinished.items()):
         if manifest["arrays_initialized"]:
-            unfinished[job_id] = manager.store.verify_chunks(job_id)
+            unfinished[job_id] = store.verify_chunks(job_id)
     check_reservations(manager.root, replacing=unfinished)
     for job_id in unfinished:
-        manager.store.set_state(job_id, "queued")
+        store.set_state(job_id, "queued")
     with _jobs_module()._connection(manager.root) as connection:
         connection.execute("BEGIN IMMEDIATE")
         check_reservations(manager.root, replacing=unfinished, connection=connection)

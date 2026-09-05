@@ -36,7 +36,7 @@ defects follow their assembly; global defects preserve existing coordinates.
 
 ## API
 
-- GET /api/health -> {status:'ok',version:'0.9.0'}
+- GET /api/health -> {status:'ok',version:'0.10.0'}
 - GET /api/examples -> [{id,name,description,twin}]
 - GET /api/materials -> list of material dicts with id,name,color,density_g_cm3,sound_speed_m_s,impedance_mrayl and provenance; extra properties permitted.
 - POST /api/validate -> twin body -> {valid:true,twin:normalized twin,warnings:[]}; errors HTTP 422.
@@ -300,6 +300,18 @@ with a reason for a zero reference norm. Reports retain formulas, exact coordina
 source manifests/hashes and processing identity. Source arrays are read-only.
 See [ACQUISITION_COMPARISONS.md](docs/ACQUISITION_COMPARISONS.md) for precise metrics,
 resource estimates and the distinction between numerical contrast and accuracy.
+
+## X-ray recipes and comparisons (0.10)
+
+The generic recipe endpoints also accept `request:{kind:'xray_projection_volume',twin,acquisition}` and store `kind:'xray_acquisition_recipe'`. An omitted request kind retains the existing SAM interpretation. X-ray recipes cannot have acoustic gates. Recipe lists include instrument kind; frozen historical SAM record/plan JSON and hashes are unchanged. A parent revision must retain its acquisition kind. X-ray exports use an `xray-recipe-` filename.
+
+X-ray case fields are `energy_kev`, `photons`, `detector_fwhm_mm`, `geometry_nx`, `geometry_ny`, `geometry_nz`, `noise`, `seed`, `include_defects`, and the existing isolated `defect` selector. Each batch contains a single instrument kind. Computed batch responses expose `kind`; X-ray progress units are views. Resource, staging, idempotency, cancellation and resume contracts remain shared with SAM.
+
+- `POST /api/v2/xray-comparisons`: `{reference_dataset_id,candidate_dataset_id,product:'counts'|'transmission'|'line_integrals',normalization:'native'|'per_source_incident',observation_policy:'same_kind'|'observed_vs_expected',view_index?,detector_row?,detector_col?}` creates a frozen report (201). Defaults are transmission/native/same_kind.
+- `GET /api/v2/xray-comparisons` returns summaries. `GET /api/v2/xray-comparisons/{id}` and `/export?format=json|csv` return frozen data without requiring source datasets.
+- `/view?view_index=&detector_row=&detector_col=` verifies unchanged sources and returns linked projection/profile/sinogram products, masks, shared scales, pose and support. New display coordinates do not change frozen metrics.
+
+Require exact shape, angles, u/v and all four float64 pose arrays, frozen semantic definitions and units. Incompatibility returns 422 with `{message,issues}`. Native requires equal source photons; counts additionally require the same observed/expected kind. Normalized observed-versus-expected comparisons require the explicit observation policy. Counts/transmission metrics include zero counts; log metrics use only common positive-count support. Unsupported log displays are null. Negative logs and transmission above one remain quantitative values. See [XRAY_COMPARISONS.md](docs/XRAY_COMPARISONS.md) for formulas, limitations and provenance.
 
 ## Simulation response (plain JSON numeric arrays)
 
