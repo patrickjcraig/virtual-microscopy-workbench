@@ -28,7 +28,7 @@ if (-not $NoBrowser) {
         for ($attempt = 0; $attempt -lt 40; $attempt++) {
             try {
                 $health = Invoke-RestMethod -Uri "$url/api/health" -TimeoutSec 1
-                if ($health.status -eq 'ok' -and $health.version -eq '0.1.0') {
+                if ($health.status -eq 'ok' -and $health.version) {
                     Start-Process $url
                     break
                 }

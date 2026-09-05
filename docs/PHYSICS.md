@@ -186,6 +186,14 @@ Experimental validation would require independently measured specimens and held-
 
 ## Next modeling upgrades
 
+Version 0.11 adds a separate [layered-acoustics instrument](LAYERED_ACOUSTICS.md)
+with a stable backward scattering recurrence, explicit constant pressure loss,
+full coherent energy accounting and causal single-slab echo/RF synthesis with a
+global omitted-amplitude bound. It extracts complete columns and preserves source
+assumptions but does not alter the existing saved SAM solver. General multilayer
+RF, elastic/focused response and measured material or instrument calibration
+remain planned. The linked guide specifies the actual equations and bounds.
+
 Version 0.9 adds controlled acquisition cases and comparisons of saved signals,
 without changing the forward propagation equations. Its B−A metrics, inclusive
 gates and exact coordinate requirements are documented in

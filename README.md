@@ -6,7 +6,7 @@ A local research prototype that loads a material-aware digital twin of a microel
 
 **Evidence status:** synthetic, reduced-order forward models. This version provides two imaging physics models sharing one specimen. It has no experimental calibration and does not claim a coupled elastic/electromagnetic solver or measured instrument accuracy.
 
-Version **0.10** adds [X-ray recipes, reviewed parameter batches and saved projection comparisons](docs/XRAY_COMPARISONS.md). Sweep energy, photons, detector blur, material sampling or a selected authored defect; compare saved counts, transmission and logarithms with explicit photon/noise policies, exact detector poses, shared projection/profile/sinogram scales and immutable JSON/CSV reports. Existing [SAM recipes and comparisons](docs/ACQUISITION_COMPARISONS.md) remain available.
+Version **0.11** adds the [layered-acoustics instrument](docs/LAYERED_ACOUSTICS.md): extract a complete HBM material column, edit its acoustic properties, compare primary and coherent complex reflection/transmission spectra, and inspect certified causal single-slab RF. Reports preserve original geometry, edited assumptions, numerical error bounds and quantitative arrays. Existing [X-ray recipes and comparisons](docs/XRAY_COMPARISONS.md) and [SAM recipes and comparisons](docs/ACQUISITION_COMPARISONS.md) remain available.
 
 ![H100 reference specimen in the virtual microscopy workbench, with X-ray transmission, acoustic C-scan and pulse-echo inspection](docs/images/h100-workbench.png)
 
@@ -130,6 +130,17 @@ ROI when the compact patch exceeds resource limits. See
 ![Continuous normal-incidence HBM6 acquisition with explicit method and displayed signal scales](docs/images/continuous-hbm-workspace.png)
 
 ## Numerical exports and headless execution
+
+**New in 0.11: layered acoustic response.** Open **Layered acoustics**, or inspect
+the applied feature from the HBM laboratory. Extract full-depth continuous layers,
+edit thickness/impedance/speed/loss and exterior media, and compare primary/direct
+with coherent magnitude, phase and energy at saved frequency samples. Use the
+single-slab preset for signed RF, with independent pulse/record/standoff controls
+and a global omitted-echo bound. Reopen immutable JSON/CSV reports without
+recalculation. General multilayer RF and saved SAM integration remain planned;
+see the [layered-acoustics guide](docs/LAYERED_ACOUSTICS.md) for equations and limits.
+
+![Saved HBM6 layered response with editable acoustic properties and linked spectra](docs/images/layered-acoustics-workspace.png)
 
 **New in 0.10: X-ray recipes, batches and comparisons.** Open **X-ray recipes**
 to freeze a complete projection acquisition, review a parameter sweep and compare

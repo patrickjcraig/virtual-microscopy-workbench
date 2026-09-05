@@ -1,6 +1,8 @@
-# Proposed next loop: bounded layered acoustic reverberation
+# Layered acoustic reverberation specification
 
-**Status: planned and unimplemented.** Prepared 5 September 2026 against v0.10. This is a proposed normal-incidence longitudinal layered approximation. It is not a full three-dimensional elastic solver or an experimentally calibrated model.
+**Status: partially delivered in v0.11.** The standalone coherent multilayer frequency kernel, complete-column extraction, explicit property editor, primary/direct comparison, certified causal single-slab RF and immutable report workflow are implemented. See [LAYERED_ACOUSTICS.md](LAYERED_ACOUSTICS.md) for the selected recurrence, equations, controls and limits, and [VERIFICATION.md](VERIFICATION.md) for executed evidence. General multilayer RF and saved SAM ROI integration below remain planned. Prepared 5 September 2026 against v0.10; the wider contract is retained to guide that next increment. This is not a full three-dimensional elastic solver or an experimentally calibrated model.
+
+The v0.11 standalone instrument defaults extracted exterior media to water and permits explicitly edited positive real exterior impedance/speed assumptions. Its spectral reference planes exclude standoff; single-slab RF adds the explicit incident-medium round trip. Existing saved SAM still uses the primary-echo model. General RF was deferred because stable frequency coefficients and energy passivity do not certify time-tail or circular-wrap error; unrestricted echo-path enumeration can grow impractically. Do not attach the new spectra to saved RF or depth products until the remaining numerical and lifecycle contract has passed.
 
 ## Scope
 

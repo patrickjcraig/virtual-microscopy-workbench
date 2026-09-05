@@ -329,4 +329,19 @@ Rows of xray/SAM are y; columns x. Bscan rows time, columns x; positive down. Im
 
 ## Frontend
 
+Version 0.11 adds standalone endpoints under `/api/v2/layered-acoustics`:
+`POST /column` takes `{twin,x_mm,y_mm,include_defects}`; `POST /estimate` and
+`POST /reports` take the strict `LayeredAnalysisRequest` from
+`virtual_microscopy/layered_schemas.py`; report creation returns 201.
+`GET /reports` returns `{reports:[summaries]}`; `GET /reports/{id}` and
+`GET /reports/{id}/export?format=json|csv` read immutable reports. These operations
+use the shared processing lock and never create volume jobs. Validation errors
+return 422, missing reports 404 and storage errors 507. A request contains name,
+stack (incident/terminal media and ordered finite layers), spectrum settings,
+optional single-slab pulse settings and optional original source-column request.
+Responses retain real/imaginary/magnitude/wrapped-phase arrays, raw energy,
+optional RF/echo arrays, provenance and source-difference status. Phase is null
+below pressure magnitude 1e-12. See [LAYERED_ACOUSTICS.md](docs/LAYERED_ACOUSTICS.md)
+for units, limits, reference planes, coefficients and immutable CSV conventions.
+
 `npm run build` emits `web/dist`; Vite development proxies `/api` to `127.0.0.1:8765`. The app fetches examples and simulates the selected twin; `?specimen=<example-id>` selects a specific initial example. A validated recommended preset takes precedence over generic initial controls. Imports are validated before replacing the twin. Imported labels/references are rendered as text, with HTTP(S) links only. Geometry and acquired data are drawn with Three.js and canvas; acquisition values remain distinct from display windowing and exploded-view spacing.

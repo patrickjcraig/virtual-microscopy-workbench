@@ -46,6 +46,17 @@ explicit photon/observation policies and common logarithm support protect the
 interpretation of residuals. See [XRAY_COMPARISONS.md](XRAY_COMPARISONS.md).
 The X-ray forward model and saved product schema are unchanged.
 
+Version 0.11 delivers a usable standalone layered-acoustics instrument: full
+continuous-column extraction, explicit layer and exterior-medium editing,
+coherent complex spectra against primary/direct baselines, and causal single-slab
+RF with an aggregate omitted-echo certificate. Immutable reports retain geometry,
+assumptions and numerical arrays. See [LAYERED_ACOUSTICS.md](LAYERED_ACOUSTICS.md).
+This partially implements [LAYERED_ACOUSTICS_SPEC.md](LAYERED_ACOUSTICS_SPEC.md).
+The next dependency is a bounded general multilayer time-response method with
+independent tail/window and sampling checks, followed by opt-in saved SAM ROI
+integration. Existing SAM volume propagation and time-to-depth semantics are
+unchanged; spectral passivity alone is insufficient to certify reverberant RF.
+
 Implementation loops now continue without waiting for another user prompt.
 Each loop must finish a bounded working increment, exercise its numerical and
 browser behavior, update these records, and publish verified code to the existing

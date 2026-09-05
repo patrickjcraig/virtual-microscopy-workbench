@@ -2,6 +2,84 @@
 
 This record concerns the first local implementation in `E:\git\Dissertation`. It establishes software and analytical-model behavior, not experimental imaging accuracy.
 
+## Version 0.11 — layered-acoustics instrument
+
+The full Windows suite passed **789 tests in 176.32 seconds**, with the same two
+third-party deprecation warnings. The 90 new checks comprise 48 numerical-kernel,
+17 column/analysis/schema and 25 immutable-report/API cases. Lock verification
+and the frontend production build passed. Existing saved SAM and X-ray forward
+models and product schemas are unchanged.
+
+Independent fixtures check signed interface coefficients, analytic slab
+reflection/transmission and echo series, impedance-weighted energy conservation,
+passive constant loss, negative-frequency conjugacy, reciprocal transmission,
+zero-thickness collapse, homogeneous subdivision, strong absorption, cancellation,
+sampling refinement, global echo-tail tolerance, record-window independence and
+explicit resource rejection. Review caught and fixed a floating-point pulse-edge
+case where a sample inside the evaluated four-sigma support could be dropped by
+the candidate search. Tests cover uniform and tightly spaced nonuniform centers.
+
+Column tests retain complete z intervals, primitive precedence, explicit air,
+thin films and HBM6 microfeatures. Edited properties are marked as changed
+assumptions while preserving the original source twin. Persistence tests cover
+atomic exclusive publication, collisions, disk/serialization/expanded limits,
+tampered input/report hashes, unsafe paths and historical exports without current
+schema construction or numerical execution. Actual large bounded reports remain
+below their declared serialization and expanded-JSON estimates.
+
+The live `tools/verify_layered_acoustics.py` delivery completed in **4.01 seconds**
+at `http://127.0.0.1:8767`, preserving results under
+`artifacts/v011-layered-delivery/verification-report.json`. It uses independent
+closed-form complex coefficients, signed geometric echoes and direct compact
+Gaussian sums, without importing the numerical kernel for its oracles:
+
+| Saved experiment | Independent numerical evidence |
+| --- | --- |
+| Lossless 100 µm silicon slab in water | 77 impulses; maximum complex-coefficient error 1.185e-14; signed RF error 1.499e-15; global omitted-amplitude bound 9.188e-11 |
+| Same slab, assumed constant 3 dB/mm pressure loss | 62 impulses; maximum complex-coefficient error 7.875e-15; signed RF error 1.152e-15; minimum absorbed-energy fraction 0.0102981; omitted-amplitude bound 9.907e-11 |
+| HBM6 microbump column at X=49.475, Y=39.95 mm | 26 finite layers spanning all 2.65 mm of the specimen; maximum lossless energy residual 6.684e-14; all six sites, 574 primitives and 102 nominal microfeatures retained in the source twin |
+
+The slab records use a requested aggregate echo tolerance of `1e-10`; independent
+impulse spacing is 0.0237247924081 µs. Both RF results differ from their primary
+baseline. The HBM column has no RF result because general multilayer time
+synthesis is not enabled. Its sampled frequency plot does not certify narrow
+resonances between samples or establish measured feature resolution.
+
+All three JSON/CSV exports reconstructed their complete saved reports exactly;
+JSON bytes matched the immutable stored files. Historical reads with numerical
+functions blocked passed. **All 524 files across 12 previously delivered v0.9/
+v0.10 datasets remained byte-identical. Zero volume jobs were created**, and the
+entire job-catalog response was unchanged. A repeat verifier call against the
+same output directory failed before API calls and preserved existing evidence.
+The directory contains 30 files totaling 5,652,393 bytes including that check.
+
+Native Chrome verification passed in
+`web/test-artifacts/layered-acoustics-1788618839102/verification.json`, with no
+page errors. It exercised real controls, four saved reports, HBM feature-column
+entry, modified-source disclosure, a delayed old extraction losing to a newer
+manual draft, independent slab echo signs/timing, rejected undersampling and
+echo-budget/multilayer-RF requests, pressure transmission above one with correct
+energy weighting, exact export/reload, and desktop/390 px layouts. Jobs stayed at
+75 and batches at 14. Cursor and phase inspection created no reports. The separate
+`delivery-reopen-verification.json` confirms the delivered HBM report reopened
+without writes. The generated-only application screenshot is
+`docs/images/layered-acoustics-workspace.png` (1600 × 1350); desktop and mobile
+views were visually inspected.
+
+A bounded copy of the existing microstructure browser verifier also passed at
+`web/test-artifacts/microstructure-bounded-v011-1788619714817/verification.json`:
+patch/defect editing, feature material sections, 3D focus, ROI preview, specimen
+import/export, mobile layout, and reopening real saved SAM and X-ray datasets
+with separate catalogs. It created no saved jobs. Its saved-acquisition/gate/
+reload block was explicitly skipped; this is not a claim that the entire old
+microstructure job verifier was rerun. Committed verification scripts are intact.
+
+This is a bounded first increment of `LAYERED_ACOUSTICS_SPEC.md`. General
+multilayer RF, saved reverberant SAM ROI acquisition, unique-depth interpretation,
+focused elastic response and experimental calibration remain unimplemented.
+The launcher also now recognizes healthy current-version servers rather than
+requiring the historical 0.1.0 version string before opening the browser.
+
 ## Version 0.10 — X-ray recipes, batches and saved comparisons
 
 The complete Windows suite passed **699 tests in 171.94 seconds**, with two
