@@ -5,11 +5,21 @@ This record concerns the first local implementation in `E:\git\Dissertation`. It
 ## Version 0.18 — saved SLS material comparisons
 
 The complete local Windows suite passed **1,747 tests in 477.31 seconds**, with
-two existing third-party warnings. The 133 new cases comprise 63 schema/core/math
-tests, 64 storage/API tests and six independent delivery-oracle tests. Evidence:
+two existing third-party warnings. That baseline included 133 new cases across
+schema/core/math, storage/API and independent delivery-oracle tests. Evidence:
 `artifacts/v018-final-pytest.log`. Locked dependency checks passed with no new
 dependencies. The exact published commit's Windows/Linux CI evidence is retained
 separately in `artifacts/v018-release-ci.json` and the GitHub Actions run.
+
+The first Linux CI run caught a test fixture that set the candidate system to
+`Linux` and expected a runtime difference even when the source already reported
+Linux. The final test explicitly covers both Windows and Linux source metadata,
+choosing the opposite candidate each time. All **134 final new tests passed in
+12.95 seconds**, with the same two warnings; the extra case brings the current
+whole-suite collection to 1,748. Evidence is
+`artifacts/v018-platform-fixture-final-tests.log`; the first CI run is preserved
+separately from final release CI. The correction changes only the test fixture:
+production fingerprints, saved reports and native verification remain unchanged.
 
 Tests cover actual binary64 subtraction including signed zero and subnormals,
 five exact outward bounds, full/gate reductions and locators, frequency-only

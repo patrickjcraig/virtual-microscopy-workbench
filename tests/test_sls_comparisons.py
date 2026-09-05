@@ -138,13 +138,16 @@ def test_exact_time_axis_changes_reject_even_without_interpolation(tmp_path,temp
     with pytest.raises(ValueError,match='centers'):core.compute_sls_comparison(tmp_path,request(a,broken))
 
 
-def test_disclosed_layer_changes_names_and_runtime_do_not_infer_correspondence(tmp_path,template):
+@pytest.mark.parametrize('source_system',['Windows','Linux'])
+def test_disclosed_layer_changes_names_and_runtime_do_not_infer_correspondence(tmp_path,template,source_system):
+    template=deepcopy(template)
+    template['provenance']['runtime']['system']=source_system
     a=save(tmp_path,template)
     def changes(r):
         r['request']['stack']['layers'][0]['unrelaxed_modulus_gpa']=4.5
         r['request']['stack']['layers'][0]['relaxation_time_us']=.02
         r['request']['stack']['terminal']['name']='Relabeled boundary'
-        r['provenance']['runtime']['system']='Linux'
+        r['provenance']['runtime']['system']='Linux' if source_system=='Windows' else 'Windows'
     b=save(tmp_path,template,changes)
     result=core.compute_sls_comparison(tmp_path,request(a,b))
     fields={v['path'] for v in result['parameter_differences']}
