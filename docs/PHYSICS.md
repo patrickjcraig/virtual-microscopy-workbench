@@ -25,6 +25,14 @@ See [Reconstruction](RECONSTRUCTION.md) for invalid-log handling, truncation,
 filter equations, interpolation, numerical checks and limits. A fine output
 voxel pitch does not establish physical image resolution.
 
+Version 0.6 adds `depth_mapping.py`: saved SAM RF and analytic envelope are
+resampled using a declared homogeneous or piecewise-layered velocity and a
+surface arrival time on the original recording axis. X/Y remain unchanged;
+output axes are `[z,y,x]`. Data outside the recorded time interval or velocity
+model remain masked. Speeds are explicitly supplied assumptions or provenance,
+not inferred material truth. This mapping does not solve an acoustic inverse
+problem or establish calibrated depth accuracy. See [SAM depth](SAM_DEPTH.md).
+
 ## Digital-twin interpretation and units
 
 The v1 JSON twin contains a bounded volume and ordered boxes, spheres and vertical cylinders. Object positions and full extents use **millimetres**. The x axis points right, y increases down the image and z increases from the specimen top into its thickness. Later objects replace earlier objects wherever they overlap. A void is therefore an air object placed after the solid it removes. Excluding defects skips objects with `role: "defect"`, exposing the underlying structures.

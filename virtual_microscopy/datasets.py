@@ -167,6 +167,8 @@ def solver_identity(model_version: str, kind: str = "sam_rf_volume") -> dict:
         filenames = ("xray_volume.py", "xray_schemas.py", "physics.py", "schemas.py", "materials.py")
     elif kind == "xray_reconstruction":
         filenames = ("reconstruction.py", "reconstruction_schemas.py")
+    elif kind == "sam_depth_volume":
+        filenames = ("depth_mapping.py", "depth_schemas.py")
     else:
         raise ValueError(f"Unknown dataset kind: {kind}.")
     for filename in filenames:

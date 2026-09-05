@@ -17,6 +17,8 @@ from .xray_volume import estimate_xray
 from .xray_processing import xray_view
 from .reconstruction_schemas import ReconstructionRequest
 from .reconstruction_processing import reconstruction_view
+from .depth_schemas import SamDepthRequest
+from .depth_processing import depth_view
 
 router = APIRouter(prefix="/api/v2", tags=["Saved volumes"])
 # Aborting an HTTP fetch does not stop its synchronous disk reads. Serialize
@@ -47,6 +49,17 @@ def invoke(function, *args):
 def public_manifest(manifest):
     result = dict(manifest)
     request = result.get("request", {})
+    if result.get("kind") == "sam_depth_volume":
+        source = result.get("source_manifest", {}).get("request", {}).get("twin", {})
+        estimate = result.get("estimate", {})
+        result.setdefault("id", result.get("dataset_id"))
+        result.setdefault("dataset_id", result.get("id"))
+        result.setdefault("name", f"Depth estimate / {source.get('name', 'SAM recording')}")
+        result.setdefault("source_dataset_id", request.get("source_dataset_id"))
+        result.setdefault("mapping", request.get("mapping", {}))
+        result.setdefault("bounds_mm", estimate.get("bounds_mm"))
+        result.setdefault("voxel_pitch_mm", estimate.get("voxel_pitch_mm"))
+        return result
     if result.get("kind") == "xray_reconstruction":
         source = result.get("source_manifest", {}).get("request", {}).get("twin", {})
         estimate = result.get("estimate", {})
@@ -84,9 +97,11 @@ def public_manifest(manifest):
 
 
 @router.post("/estimate")
-def estimate(body: SamVolumeRequest | XrayVolumeRequest | ReconstructionRequest, request: Request):
+def estimate(body: SamVolumeRequest | XrayVolumeRequest | ReconstructionRequest | SamDepthRequest, request: Request):
     from .datasets import check_disk_space, default_data_root
-    if isinstance(body, ReconstructionRequest):
+    if isinstance(body, SamDepthRequest):
+        result = invoke(manager(request).estimate_depth, body)
+    elif isinstance(body, ReconstructionRequest):
         result = invoke(manager(request).estimate_reconstruction, body)
     else:
         result = invoke(estimate_xray if isinstance(body, XrayVolumeRequest) else estimate_sam, body)
@@ -96,7 +111,7 @@ def estimate(body: SamVolumeRequest | XrayVolumeRequest | ReconstructionRequest,
 
 
 @router.post("/jobs", status_code=202)
-def submit(body: SamVolumeRequest | XrayVolumeRequest | ReconstructionRequest, request: Request):
+def submit(body: SamVolumeRequest | XrayVolumeRequest | ReconstructionRequest | SamDepthRequest, request: Request):
     from .server import _compute_lock
     if not _compute_lock.acquire(blocking=False):
         raise HTTPException(409, "A preview is running. Wait for it to finish before starting a volume acquisition.")
@@ -210,6 +225,23 @@ def _export_files(path: Path, dataset_id: str):
     return validate_dataset_paths(path, dataset_id)
 
 
+@router.get("/datasets/{dataset_id}/depth-view")
+def depth_view_api(dataset_id: str, request: Request,
+                   x_index: int | None = Query(None, ge=0),
+                   y_index: int | None = Query(None, ge=0),
+                   z_index: int | None = Query(None, ge=0),
+                   product: Literal["rf", "envelope"] = "envelope"):
+    path = complete_path(request, dataset_id, "sam_depth_volume")
+    manifest = invoke(manager(request).get_manifest, dataset_id)
+    try:
+        with _processing_lock:
+            return depth_view(path, manifest, x_index=x_index, y_index=y_index, z_index=z_index, product=product)
+    except KeyError as exc:
+        raise HTTPException(422, "Saved SAM depth arrays or metadata are missing.") from exc
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+
+
 def _archive(path, dataset_id):
     from .datasets import DatasetStore, check_disk_space
     files = _export_files(path, dataset_id)
@@ -221,6 +253,9 @@ def _archive(path, dataset_id):
     elif kind == "xray_reconstruction":
         from .reconstruction_datasets import ReconstructionDatasetStore
         store = ReconstructionDatasetStore(path.parent)
+    elif kind == "sam_depth_volume":
+        from .depth_datasets import DepthDatasetStore
+        store = DepthDatasetStore(path.parent)
     manifest = invoke(store.verify_complete, dataset_id)
     invoke(check_disk_space, path.parent, manifest.get("estimate", {}).get("total_bytes", 0))
     # Build on disk, not in API/browser RAM. Stored chunks already use their
@@ -234,6 +269,7 @@ def _archive(path, dataset_id):
     except Exception:
         output.unlink(missing_ok=True)
         raise
-    prefix = {"xray_projection_volume": "xray-projections", "xray_reconstruction": "ct-reconstruction"}.get(kind, "sam-volume")
+    prefix = {"xray_projection_volume": "xray-projections", "xray_reconstruction": "ct-reconstruction",
+              "sam_depth_volume": "sam-depth"}.get(kind, "sam-volume")
     return FileResponse(output, media_type="application/zip", filename=f"{prefix}-{dataset_id}.zip",
                         background=BackgroundTask(output.unlink, missing_ok=True))

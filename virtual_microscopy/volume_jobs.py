@@ -54,7 +54,7 @@ def _job_dict(row) -> dict:
     result.update(id=result["job_id"], dataset_id=result["job_id"],
                   status=result["state"], progress=result["completed_rows"] / result["total_rows"], kind=kind,
                   completed_units=result["completed_rows"], total_units=result["total_rows"],
-                  progress_unit={"xray_projection_volume": "views", "xray_reconstruction": "slices"}.get(kind, "rows"))
+                  progress_unit={"xray_projection_volume": "views", "xray_reconstruction": "slices", "sam_depth_volume": "slices"}.get(kind, "rows"))
     return result
 
 
@@ -68,6 +68,9 @@ def store_for_manifest(root: Path, manifest: dict) -> DatasetStore:
     if kind == "xray_reconstruction":
         from .reconstruction_datasets import ReconstructionDatasetStore
         return ReconstructionDatasetStore(root)
+    if kind == "sam_depth_volume":
+        from .depth_datasets import DepthDatasetStore
+        return DepthDatasetStore(root)
     raise ValueError(f"Unsupported dataset kind: {kind}.")
 
 
@@ -84,6 +87,10 @@ def _backend(kind: str):
         from .reconstruction import estimate_reconstruction, prepare_reconstruction, iter_reconstruction_slices
         from .reconstruction_schemas import ReconstructionRequest
         return ReconstructionRequest, estimate_reconstruction, prepare_reconstruction, iter_reconstruction_slices
+    if kind == "sam_depth_volume":
+        from .depth_mapping import estimate_depth, prepare_depth, iter_depth_slices
+        from .depth_schemas import SamDepthRequest
+        return SamDepthRequest, estimate_depth, prepare_depth, iter_depth_slices
     raise ValueError(f"Unsupported acquisition kind: {kind}.")
 
 
@@ -146,7 +153,7 @@ def _run_job(root: Path, identifier: str, stop_event) -> None:
             return
         Request, estimate_acquisition, prepare_acquisition, iterate = _backend(kind)
         request = Request.model_validate(manifest["request"])
-        if kind == "xray_reconstruction":
+        if kind in {"xray_reconstruction", "sam_depth_volume"}:
             source, source_path = store.source_context(identifier, verify=True)
             acquisition_args = (request, source, source_path)
         else:
@@ -172,7 +179,8 @@ def _run_job(root: Path, identifier: str, stop_event) -> None:
         missing = [y for y in range(0, manifest["total_rows"], manifest["tile_rows"])
                    if str(y) not in manifest["completed_chunks"]]
         start = min(missing, default=manifest["total_rows"])
-        start_key = {"sam_rf_volume": "start_row", "xray_projection_volume": "start_view", "xray_reconstruction": "start_slice"}[kind]
+        start_key = {"sam_rf_volume": "start_row", "xray_projection_volume": "start_view",
+                     "xray_reconstruction": "start_slice", "sam_depth_volume": "start_slice"}[kind]
         iterator = iterate(prepared, **{start_key: start})
         while True:
             halted = _checkpoint(root, identifier, stop_event)
@@ -188,7 +196,8 @@ def _run_job(root: Path, identifier: str, stop_event) -> None:
             if str(y0) in manifest["completed_chunks"]:
                 continue
             check_disk_space(root, (y1 - y0) * manifest["shape"][1] * manifest["shape"][2] * 4 * len(store.signal_units))
-            write_chunk = {"sam_rf_volume": "write_tile", "xray_projection_volume": "write_view", "xray_reconstruction": "write_slice"}[kind]
+            write_chunk = {"sam_rf_volume": "write_tile", "xray_projection_volume": "write_view",
+                           "xray_reconstruction": "write_slice", "sam_depth_volume": "write_slice"}[kind]
             manifest = getattr(store, write_chunk)(identifier, *item)
             # Do not overwrite a concurrently requested cancellation with a
             # progress update. The manifest and catalog have separate duties.
@@ -222,7 +231,7 @@ def _run_job(root: Path, identifier: str, stop_event) -> None:
                 job = _read_job(root, identifier)
                 previous = f"{job['error']} " if job["error"] else ""
                 _update_job(root, identifier, job["state"], job["completed_rows"],
-                            f"{previous}Temporary reconstruction cache cleanup failed: {exc}")
+                            f"{previous}Temporary derived-volume cache cleanup failed: {exc}")
 
 
 def _lock_stream(path: Path):
@@ -312,7 +321,9 @@ class VolumeJobManager:
 
     def _recover(self):
         from .reconstruction_datasets import cleanup_reconstruction_caches
+        from .depth_datasets import cleanup_depth_caches
         cleanup_reconstruction_caches(self.root)
+        cleanup_depth_caches(self.root)
         with _connection(self.root) as connection:
             rows = connection.execute("SELECT * FROM jobs").fetchall()
         for row in rows:
@@ -385,6 +396,11 @@ class VolumeJobManager:
                 source, source_path = reconstruction_source(self.root, request.source_dataset_id)
                 estimate = estimate_acquisition(request, source, source_path)
                 name = "Reconstruction / " + source["request"]["twin"].get("name", "X-ray projections")
+            elif kind == "sam_depth_volume":
+                from .depth_datasets import depth_source
+                source, source_path = depth_source(self.root, request.source_dataset_id)
+                estimate = estimate_acquisition(request, source, source_path)
+                name = "Depth estimate / " + source["request"]["twin"].get("name", "Raw-time SAM acquisition")
             else:
                 estimate = estimate_acquisition(request)
                 name = request.twin.name
@@ -412,6 +428,15 @@ class VolumeJobManager:
         Request, estimate_acquisition, _, _ = _backend("xray_reconstruction")
         request = request if isinstance(request, Request) else Request.model_validate(request)
         source, source_path = reconstruction_source(self.root, request.source_dataset_id)
+        estimate = estimate_acquisition(request, source, source_path)
+        check_disk_space(self.root, estimate["total_bytes"] + estimate.get("estimated_temporary_bytes", estimate.get("workspace_disk_bytes", 0)))
+        return estimate
+
+    def estimate_depth(self, request) -> dict:
+        from .depth_datasets import depth_source
+        Request, estimate_acquisition, _, _ = _backend("sam_depth_volume")
+        request = request if isinstance(request, Request) else Request.model_validate(request)
+        source, source_path = depth_source(self.root, request.source_dataset_id)
         estimate = estimate_acquisition(request, source, source_path)
         check_disk_space(self.root, estimate["total_bytes"] + estimate.get("estimated_temporary_bytes", estimate.get("workspace_disk_bytes", 0)))
         return estimate

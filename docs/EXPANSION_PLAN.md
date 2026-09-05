@@ -11,12 +11,25 @@ and resumable derived datasets with source provenance. See
 [RECONSTRUCTION.md](RECONSTRUCTION.md). This resolves the CPU reconstruction item
 in the earlier implementation note; advanced reconstruction remains planned.
 
+Version 0.6 adds declared homogeneous/layered time-to-depth mapping from saved
+acoustic RF and envelope. It preserves source X/Y and raw recordings, records
+surface-time/velocity provenance, masks unsupported times and model depths, and
+provides linked spatial slices with original-time readouts. See
+[SAM_DEPTH.md](SAM_DEPTH.md).
+
 The current app has a six-site H100 package, editable layered HBM regions, saved
-X-ray projections and reconstructed attenuation volumes, saved acoustic RF
-volumes and independently controlled acquisition parameters. The next increment
-should derive acoustic depth estimates with an explicit velocity model. The
-sections below retain the broader expansion design; the milestone table
-distinguishes shipped baselines from future fidelity work.
+X-ray projections and reconstructed attenuation volumes, saved acoustic RF and
+derived depth estimates, and independently controlled acquisition parameters.
+The next increment adds explicit local HBM microstructure, as scoped in
+[HBM_MICROSTRUCTURE_SPEC.md](HBM_MICROSTRUCTURE_SPEC.md). The sections below
+retain the broader expansion design; the milestone table distinguishes shipped
+baselines from future fidelity work.
+
+Implementation loops now continue without waiting for another user prompt.
+Each loop must finish a bounded working increment, exercise its numerical and
+browser behavior, update these records, and publish verified code to the existing
+public repository. Unavailable measured calibration or hardware is a concrete
+dependency, not a reason to substitute synthetic evidence for measured results.
 
 ## 1. Correct the specimen and preserve the image evidence
 
@@ -193,6 +206,7 @@ Never silently lower the requested sampling. Offer a smaller ROI, fewer views, s
 | M3 — SAM volume | Saved signed RF at every raster position, adjustable record/bandwidth settings, post hoc gates, XY/X-time/Y-time browser | Stored traces match the preview baseline; gates reproduce baseline C-scans; gate/display changes do not rerun propagation; timing/polarity and tile-boundary tests pass |
 | M4 — X-ray projection volume (delivered in 0.4) | Full-angle CPU parallel projector, independent detector/material sampling, source/detector/rotation controls, saved poses and counts/transmission/log/mask arrays, view/sinogram browser | Analytical lengths at 0°, 90° and oblique views; no angle singularities; asymmetric orientation tests; seeded noise statistics, byte-identical resume and preserved legacy SAM datasets |
 | M5 — Reconstruction (CPU baseline delivered in 0.5) | CPU parallel FBP from saved projections, linked spatial slices, filter/bounds controls, coverage masks and source provenance; GPU cone CT and iterative laminography remain future | Independent analytical ellipse scale/orientation, detector-sampling convergence, held-out projection residuals, 180°/360° weighting, invalid/truncated/limited-angle handling, byte-preserving resume and source independence after completion |
+| SAM depth extension (delivered in 0.6) | Declared homogeneous/layered velocity, source-water or explicit surface time, independent RF/envelope mapping, spatial slices, support masks and frozen source provenance | Known reflector depths, velocity/reference sensitivity, layered travel times, nonzero recordings, preserved signed RF/X/Y, out-of-model/record masks, resumable byte-identical data and read-only reopened views |
 | M6 — HBM microstructure | Explicit local bumps/TSVs/defects, layered acoustic echoes, spectrum/detector response and parameter sweeps | Feature/mesh convergence; surrounding-package contributions preserved; analytical or independent layered-wave comparisons; defect observability reported per instrument/configuration |
 | M7 — Wave physics and calibration | Bounded elastic ROI, measured instrument responses, measured-data import/comparison | Time/grid/domain convergence, interface/transmission/mode checks, matched acquisition geometry, held-out measurement agreement and uncertainty |
 | M8 — Coupled multiphysics | Temperature/deformation/stress fields driving material and geometry updates between acquisitions | First validate one-way coupling and unit/coordinate transfer, then introduce validated feedback loops if the research requires them |
@@ -203,22 +217,11 @@ Keep the existing regression suite, then add tests that measure the new scientif
 
 ## Recommended next release
 
-The first M1–M5 increments are delivered. Next add **SAM time-to-depth estimates**
-as a separate derived `[z,y,x]` product from saved RF/envelope data:
-
-1. Start with an explicitly declared homogeneous velocity and surface-time
-   reference, then add a user-specified piecewise layered velocity model.
-2. Preserve RF/time data and model provenance. Label any use of synthetic layer
-   truth; do not infer a calibrated velocity map from the geometric twin.
-3. Store depth coordinates, validity and the travel-time mapping. Keep positions
-   outside the recorded interval or model support masked. Do not call mapped
-   amplitude a measured acoustic impedance or a full-wave reconstruction.
-4. Verify known-reflector depths, water-standoff subtraction, nonzero record
-   starts, layered round-trip times and consistent XY/XZ/YZ axes.
-
-After that, implement **M6 local HBM microstructure**: explicit bump/TSV arrays,
-interface-specific defects, fine ROI sampling with surrounding package paths
-retained, and parameter sweeps with convergence/observability results. Extend
+The first M1–M5 increments and the SAM depth extension are delivered. Next
+implement the [first M6 local HBM microstructure increment](HBM_MICROSTRUCTURE_SPEC.md):
+one editable 2×3 patch with 48 inter-die bumps and 54 TSVs, targeted defects,
+feature-centered inspection and fine ROI sampling with surrounding package paths
+retained. Parameter sweeps and richer propagation follow this bounded patch. Extend
 material data before spectrum controls. Optional GPU/cone/laminography backends
 can build on the saved-source reconstruction interface independently of this
 microstructure work. Reuse job, provenance and dataset foundations throughout.

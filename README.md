@@ -2,7 +2,7 @@
 
 [![Verify workbench](https://github.com/patrickjcraig/virtual-microscopy-workbench/actions/workflows/ci.yml/badge.svg)](https://github.com/patrickjcraig/virtual-microscopy-workbench/actions/workflows/ci.yml)
 
-A local research prototype that loads a material-aware digital twin of a microelectronic package and simulates X-ray radiography and scanning acoustic microscopy from the same geometry. A browser workbench combines a 3D specimen, acquisition controls, quantitative images, pulse-echo inspection, saved acoustic RF volumes, full-angle X-ray projection stacks, and reconstructed spatial attenuation volumes.
+A local research prototype that loads a material-aware digital twin of a microelectronic package and simulates X-ray radiography and scanning acoustic microscopy from the same geometry. A browser workbench combines a 3D specimen, acquisition controls, quantitative images, pulse-echo inspection, saved acoustic RF volumes, full-angle X-ray projection stacks, reconstructed spatial attenuation, and SAM depth estimates.
 
 **Evidence status:** synthetic, reduced-order forward models. This version provides two imaging physics models sharing one specimen. It has no experimental calibration and does not claim a coupled elastic/electromagnetic solver or measured instrument accuracy.
 
@@ -98,7 +98,22 @@ The supplied reference has a provisional user estimate of approximately 4.6 µm/
 
 ## Numerical exports and headless execution
 
-**New in 0.5: spatial CT reconstruction.** Open **CT reconstruction**, select a
+**New in 0.6: SAM depth estimates.** Open **SAM depth** and select a completed
+acoustic recording. Set a homogeneous speed or an explicit layer table, choose
+the surface-time reference, and map the saved signed RF and analytic envelope to
+a spatial depth grid. X/Y sampling stays identical to the source. The selected
+velocity model and its evidence label remain visible; an assumed model is not
+an experimentally calibrated depth reconstruction.
+
+Inspect linked XY/XZ/YZ sections with original-time readouts, switch RF/envelope
+display, and export a separate `[z,y,x]` dataset with validity masks and frozen
+source provenance. Unsupported times and depths are masked. Raw RF is retained,
+and mapping jobs support cancellation/resume. See [SAM depth](docs/SAM_DEPTH.md)
+for controls, equations, units and model limits.
+
+![Saved HBM6 SAM depth estimate with linked spatial sections and declared velocity](docs/images/sam-depth-workspace.png)
+
+**Spatial CT reconstruction (0.5 onward).** Open **CT reconstruction**, select a
 completed saved X-ray acquisition, and reconstruct an attenuation volume with
 independent X/Y/Z counts and bounds. Choose Hann or Ram-Lak filtering, frequency
 cutoff, and explicit policies for invalid logarithms and detector truncation.
@@ -142,7 +157,8 @@ rerunning propagation. Download the full data and frozen provenance as a Zarr ZI
 
 These datasets have axes `[y,x,time]`; the time axis is not reconstructed depth.
 The original microscope preview remains available alongside the saved-data
-workflows. Layered acoustic depth conversion is a subsequent milestone.
+workflows. The separate SAM depth workspace maps these saved signals through a
+declared homogeneous or layered velocity model.
 See [Saved volumes](docs/SAVED_VOLUMES.md) for controls, storage, Python access and
 the current numerical/resource limits.
 
@@ -186,11 +202,18 @@ Run `npm.cmd run verify:reconstruction` for the saved-source CT workflow and
 `npm.cmd run verify:reconstruction-jobs` for native cancellation/resume. These
 checks create synthetic datasets and preserve their source acquisitions.
 
-The next increment is acoustic time-to-depth conversion with a declared velocity
-model, followed by explicit HBM microstructure and richer propagation controls.
+Run `npm.cmd run verify:depth` for the saved-source SAM depth workflow and
+`npm.cmd run verify:depth-jobs` for cancellation after committed slices and
+resumption of the same dataset. Run browser volume checks sequentially: the
+shared worker intentionally defers previews while a saved job is active.
+
+The next increment is an editable local bump/TSV patch with targeted defects,
+feature-centered inspection, and fine ROI acquisition. Its concrete scope and
+acceptance checks are in [HBM_MICROSTRUCTURE_SPEC.md](docs/HBM_MICROSTRUCTURE_SPEC.md).
 GPU cone CT and iterative laminography remain separate future extensions. See
 [EXPANSION_PLAN.md](docs/EXPANSION_PLAN.md) for the sequence and acceptance gates.
-Version 0.5 retains raw SAM RF and X-ray projections alongside derived CT volumes.
+Version 0.6 retains raw SAM RF and X-ray projections alongside derived CT and
+SAM depth volumes.
 
 The implementation is separated into `virtual_microscopy/physics.py` and `materials.py`, strict schemas and local API, `web/` UI, reproducible example geometry, and tests. This leaves room for higher-fidelity solvers and CAD/voxel import while keeping the current demo runnable.
 

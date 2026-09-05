@@ -2,6 +2,88 @@
 
 This record concerns the first local implementation in `E:\git\Dissertation`. It establishes software and analytical-model behavior, not experimental imaging accuracy.
 
+## Version 0.6 — SAM time-to-depth estimates
+
+The complete Windows suite passed **315 tests in 86.83 seconds**, including
+the 247 existing cases and 68 depth-mapping/storage/view cases. The same two
+third-party deprecation warnings remain. The new tests comprise 24 analytical
+mapping cases, 20 storage cases and 24 view/API cases. A separate combined
+SAM/X-ray/CT/depth storage regression passed 80 cases.
+
+Analytical tests verify homogeneous and cumulative layered travel times, surface
+water delay from frozen metadata, explicit surface references, nonzero recording
+starts, nonuniform source time samples, exact source X/Y retention, signed RF and
+independent saved envelope interpolation. Out-of-record and out-of-model depths
+have distinct semantics with masked placeholders. Invalid layer ordering,
+nonuniform spatial grids, numeric overflow and flattened travel times are
+rejected. Bounds and temporary/output/workspace requirements are checked before
+allocation. No primitive material labels enter the velocity model.
+
+The independent experiment `tools/verify_depth_mapping.py` constructs analytic
+Gaussian RF pulses at known reflector times without using the production SAM
+forward simulator. It uses **3.90625 µm output depth sampling**:
+
+| Synthetic timing check | Observed result | Analytic expectation |
+| --- | --- | --- |
+| Matching homogeneous model, reflectors at 0.6/1.4 mm | Peak errors −0.391/+0.391 µm | Zero |
+| Matching layered model, reflectors at 0.25/1.25 mm | Peak errors +1.953/−1.953 µm | Zero |
+| Assumed speed 10% high | Peak shifts +58.59/+140.63 µm | +60/+140 µm |
+| Surface time 20 ns late | Both peaks shift −39.06 µm | −40 µm |
+
+The profile arrays and report are retained locally in the ignored
+`artifacts/m6-depth-independent-validation/` directory. The differences above
+reflect interpolation and finite output sampling in a synthetic test. They do
+not establish acoustic resolution or experimental H100 depth accuracy.
+
+Storage/API tests verify frozen source and processing metadata hashes, exact
+X/Y identity, coordinate and signal checksums, binary masks, signed RF,
+nonnegative envelope, safe paths, conservative disk requirements, cache cleanup,
+cancel/resume equality and damaged partial-chunk repair. Source corruption is
+rejected before mapping. Completed derived data verify without requiring the
+raw source directory. A real saved-SAM acquisition is mapped, exported, reopened
+after application restart and checked for byte-identical source files.
+Independent asymmetric arrays verify all three spatial slice axes, profiles,
+original-time cursor values, mask semantics and immutable browsing.
+Final review added view-side coordinate checksum and support-interval checks:
+finite monotone coordinate edits, changed lateral coordinates and zero-signal
+mask flips are rejected. A supported zero amplitude remains valid. These bounded
+checks use frozen derived metadata and require no raw-source directory.
+
+Native Chrome `verify:depth` passed the saved-source mapping workflow with a
+translated ROI, explicit surface offset, two velocity layers, signed RF,
+nonnegative envelope, and both out-of-record and out-of-model masks. It checked
+exact source X/Y retention, null travel times beyond the model, gray invalid
+pixels, linked mouse/keyboard navigation, weak-signal display windowing without
+new jobs, ZIP export, reload persistence, four separate dataset catalogs, and
+desktop/390-pixel layouts. `verify:depth-jobs` cancelled after **2 of 128 committed
+slices**, then resumed the same dataset to completion. Existing slice checksums,
+coordinate checksums, model metadata, request and source manifest were unchanged.
+Both workflows completed with zero uncaught browser page errors. Locked Python
+environment synchronization and the production frontend build also pass.
+The existing native H100, saved-SAM and saved-source CT workflows pass against
+0.6 as well, including their acquisition, inspection, export and reload paths.
+Saved-SAM and CT checks ran sequentially after mapping jobs finished, respecting
+the shared worker's intentional preview/acquisition exclusion.
+
+The delivered HBM6 example maps source
+`b407c38d-244b-4158-8683-bc4e56c03b37` to dataset
+`a3f7a787-2eed-417f-85d6-a6f18a08efa5`. The **128 × 64 × 64 Z/Y/X** volume
+retains the 8 × 9 mm HBM6 footprint at X 45.5–53.5 and Y 35.5–44.5 mm, with depth
+0–2.65 mm. X/Y/Z pitch is **125 / 140.625 / 20.703125 µm**. It explicitly assumes
+a uniform **5,000 m/s** speed and uses the saved source water-delay reference;
+this is not a calibrated H100 velocity or material-depth estimate. Its source
+retains all six physical HBM assemblies.
+
+All derived samples are supported by this assumed model and the recorded time
+interval. That validity does not certify the model. RF ranges from approximately
+−0.091698 to +0.104059; envelope peaks at 0.112287, in their original relative
+units. The three signals and four coordinates occupy **6,294,528 uncompressed
+bytes**; the archive is **448,677 bytes** and passes ZIP CRC checks. The observed
+queue/mapping/export interval was **52.81 seconds** while other verification
+work was active; this is not a runtime guarantee. Original raw files and X/Y
+coordinates remained unchanged. The [depth workspace screenshot](images/sam-depth-workspace.png)
+shows actual saved data under an explicitly chosen display window.
+
 ## Version 0.5 — saved-source CPU CT reconstruction
 
 The complete Windows Python suite passed **247 tests in 95.69 seconds**, including

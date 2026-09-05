@@ -1,4 +1,4 @@
-# Virtual microscopy 0.5 integration contract (compatible twin schema 1)
+# Virtual microscopy 0.6 integration contract (compatible twin schema 1)
 
 Local application: Python FastAPI serves a Vite/vanilla JS + Three.js client. Source in `virtual_microscopy/` and `web/`. Physical dimensions use millimetres. Coordinates x right, y down in image, z depth from specimen top; surrounding material is water for SAM and air for X-ray. Later primitives replace earlier ones. This is a reduced-order synthetic forward simulator, not experimentally validated or coupled full-wave multiphysics.
 
@@ -20,7 +20,7 @@ Optional `image_reference` contains SHA-256, raster width/height, pixel_size_um,
 
 ## API
 
-- GET /api/health -> {status:'ok',version:'0.5.0'}
+- GET /api/health -> {status:'ok',version:'0.6.0'}
 - GET /api/examples -> [{id,name,description,twin}]
 - GET /api/materials -> list of material dicts with id,name,color,density_g_cm3,sound_speed_m_s,impedance_mrayl and provenance; extra properties permitted.
 - POST /api/validate -> twin body -> {valid:true,twin:normalized twin,warnings:[]}; errors HTTP 422.
@@ -179,6 +179,64 @@ read/exported without the original source directory. GET `/export` produces
 `ct-reconstruction-{id}.zip` containing the derived arrays and manifest, without
 duplicating original projections. See [Reconstruction](docs/RECONSTRUCTION.md).
 
+
+### SAM spatial depth extension (0.6)
+
+POST `/api/v2/estimate` and `/api/v2/jobs` accept a fourth kind:
+
+```json
+{
+  "kind": "sam_depth_volume",
+  "source_dataset_id": "<completed saved SAM UUID>",
+  "mapping": {
+    "nz": 128, "z_min_mm": 0, "z_max_mm": 2.65,
+    "surface_reference": "source_water_delay",
+    "velocity_model": "homogeneous", "sound_speed_m_s": 5000,
+    "layers": [], "model_evidence": "user_assumed",
+    "model_note": "Illustrative assumed velocity; not calibrated H100 depth."
+  }
+}
+```
+
+The source must be complete raw-time SAM. It is integrity-checked before mapping;
+no preview twin accompanies the request. X/Y shape and coordinates remain
+identical to the source. Depth bounds lie within the source specimen; `nz` accepts
+16–1024. `velocity_model:'layered'` requires up to 128 ordered
+`{end_depth_mm,sound_speed_m_s}` layers with positive speeds and increasing
+endpoints, starting implicitly at zero. The layer model need not cover the full
+requested output range; uncovered depths are masked. A homogeneous model requires
+an empty layer list. `surface_reference:'explicit'` requires nonnegative
+`surface_time_us` on the saved recording axis; omit it for `source_water_delay`.
+Evidence is `user_assumed`, `user_calibrated`, or `synthetic_truth`, with a note.
+
+The estimate includes shape `[nz,source_ny,source_nx]`, X/Y/Z bounds and pitches,
+output/cache/workspace bytes, support warnings and resolved surface time. Shared
+jobs report slice progress and preserve source/processing identities on resume.
+
+GET `/api/v2/datasets/{id}/depth-view` accepts optional `x_index`, `y_index`,
+`z_index` and `product:'rf'|'envelope'` (default `envelope`). It returns `xy`,
+`xz`, `yz` images in `[y,x]`, `[z,x]`, `[z,y]`, boolean `valid_mask` and
+`invalid_mask`, physical extents, original amplitude units, and a shared cursor.
+The cursor includes indices, global x/y/z, both `rf` and `envelope`, the selected
+`value`, `valid`, `model_valid`, and `sample_time_us` (null outside model support).
+Profiles retain spatial coordinates, values and validity. Metadata retains the
+declared mapping, source, model evidence, surface time, mapped-time vector,
+model-support vector and warnings. Wrong kind/indices or corrupted arrays return
+422; incomplete datasets return 409.
+
+Saved `rf`, `envelope`, `valid_mask` are float32 `[z,y,x]`, with one Z plane per
+chunk. `x_mm`, `y_mm`, `z_mm`, `travel_time_us` are float64 vectors, the latter
+indexed by Z. Unsupported amplitudes are finite zero placeholders. Outside the
+velocity model, time is also a zero placeholder distinguished by the frozen
+`metadata.model_depth_valid` vector; a defined time outside the recording remains
+available even though its amplitude is invalid. The mask is binary numerical
+support, not a confidence or experimental-validity score.
+
+The derived manifest embeds the complete raw-source manifest/hash and immutable
+mapping metadata with its checksum. Completed derived data can be inspected and
+exported independently of source-directory availability. `/export` returns
+`sam-depth-{id}.zip`, without duplicating raw-time arrays. See
+[SAM_DEPTH.md](docs/SAM_DEPTH.md) for the scientific interpretation.
 
 ## Simulation response (plain JSON numeric arrays)
 
