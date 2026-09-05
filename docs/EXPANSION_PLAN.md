@@ -86,8 +86,27 @@ exact source coordinates and excitation/observation checks, signed complex
 residuals, separately propagated source and subtraction bounds, linked time
 inspection, immutable reports and lossless exports. The first controlled HBM
 comparison uses the saved intact and missing-bump recordings without reacquisition.
-A defined finite lateral observation with propagated numerical bounds, additional
-material loss assumptions and measured calibration remain extensions.
+A defined finite lateral observation with propagated numerical bounds is delivered
+in v0.15 below. Additional material loss assumptions and measured calibration
+remain extensions.
+
+Version 0.15 delivers [finite coherent spatial observations](COHERENT_OBSERVATIONS.md)
+as a distinct derived dataset: fixed exact 3 × 3 weights, fully supported interior
+centers, signed complex mixing before magnitude, separate source/arithmetic/total
+bounds, resumable typed row commits, and source-free completed views/exports.
+The shared background worker preserves historical acquisition identities and
+batch controls. This is an explicit discrete filter; focus, lens geometry,
+diffraction, material losses and measured beam calibration remain unimplemented.
+
+The next bounded increment is compatible comparison of these saved derived
+observations. It should require identical actual coordinates, stencil/phase and
+supported excitation semantics; propagate each source's published total bounds
+through signed subtraction; retain separate ordinary diagnostic gate statistics;
+and preserve source-free historical reports. The existing independent-column
+comparison kind must keep its current guards. After that, investigate an explicit
+causal material-loss law with independent analytic/passivity/time-domain checks
+before introducing its controls into saved acquisitions. Frequency-dependent
+X-ray spectra and calibrated source/detector effects remain separate physics work.
 
 ## 1. Correct the specimen and preserve the image evidence
 

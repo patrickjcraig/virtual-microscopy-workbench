@@ -111,31 +111,68 @@ def check_reservations(root: Path, *, extra_estimates=(), replacing=None, connec
     ``replacing`` supplies current manifests for jobs being resumed, including
     inactive jobs. Existing reservations for those IDs are replaced, not added.
     Dynamic disk numbers are never persisted in an acquisition estimate.
+
+    A worker rechecking only already-running/cancelling jobs does not count ZIP
+    leases again: each export was admitted against all pending job output before
+    it began, so physical ZIP growth consumes its own admitted slack. Charging
+    both that growth and the full lease can spuriously fail an admitted worker.
+    New jobs, inactive resumes, queued-only checks and new exports always retain
+    the full lease charge. Their admission is therefore conservative during a
+    copy. This does not protect against unrelated external disk consumers.
     """
     if connection is None:
         with _jobs_module()._connection(root) as current:
             return check_reservations(root, extra_estimates=extra_estimates,
                                       replacing=replacing, connection=current)
     replacing = replacing or {}
-    pending = connection.execute("SELECT job_id,kind FROM jobs WHERE state IN ('queued','running','cancelling')").fetchall()
+    extra_estimates = tuple(extra_estimates)
+    pending = connection.execute("SELECT job_id,kind,state FROM jobs WHERE state IN ('queued','running','cancelling')").fetchall()
     store, output, temporary = DatasetStore(root), 0, 0
     kinds = {row["job_id"]: row["kind"] for row in pending}
+    states = {row["job_id"]: row["state"] for row in pending}
+    # New observations have a separate catalog, but share this one worker's
+    # future disk output. Old-only reservation arithmetic remains identical.
+    if connection.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='observation_jobs'").fetchone():
+        for row in connection.execute("SELECT job_id,kind,state FROM observation_jobs WHERE state IN ('queued','running','cancelling')"):
+            if row["job_id"] in kinds:
+                raise ValueError("A job ID cannot belong to both acquisition and observation catalogs.")
+            kinds[row["job_id"]] = row["kind"]
+            states[row["job_id"]] = row["state"]
     identifiers = set(kinds) | set(replacing)
     for identifier in identifiers:
         manifest = replacing.get(identifier)
         if manifest is None:
-            reader = (_jobs_module().store_for_manifest(root, {"kind": kinds[identifier]})
-                      if kinds[identifier] == "sam_causal_rf_volume" else store)
+            if kinds[identifier] == "sam_coherent_observation_volume":
+                from .observation_datasets import ObservationStore
+                reader = ObservationStore(root)
+            else:
+                reader = (_jobs_module().store_for_manifest(root, {"kind": kinds[identifier]})
+                          if kinds[identifier] == "sam_causal_rf_volume" else store)
             manifest = reader.manifest(identifier)
         output += _remaining(manifest)
         if not manifest["complete"]:
             temporary = max(temporary, _temporary(manifest["estimate"]))
+    worker_recheck = bool(replacing) and not extra_estimates and all(
+        states.get(identifier) in {"running", "cancelling"} for identifier in replacing)
+    reserved_exports = 0
+    if connection.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='observation_exports'").fetchone():
+        for row in connection.execute("SELECT export_id,reserved_bytes FROM observation_exports"):
+            checked_id(row["export_id"])
+            value = row["reserved_bytes"]
+            if type(value) is not int or value < 0:
+                raise ValueError("Observation export reservation is invalid.")
+            reserved_exports += value
+        if not worker_recheck:
+            output += reserved_exports
     reserved_output = output
     for estimate in extra_estimates:
         output += int(estimate["total_bytes"])
         temporary = max(temporary, _temporary(estimate))
     disk = check_disk_space(root, output + temporary)
     return {"reserved_output_bytes": reserved_output,
+            "reserved_export_bytes": reserved_exports,
+            "counted_export_bytes": 0 if worker_recheck else reserved_exports,
+            "already_admitted_worker_recheck": worker_recheck,
             "pending_output_bytes": output, "maximum_temporary_bytes": temporary,
             "required_free_bytes": disk["required_disk_bytes"], **disk}
 

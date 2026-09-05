@@ -208,6 +208,15 @@ remain descriptive diagnostics. These operations add no propagation, alignment,
 depth interpretation or experimental calibration. The linked guides specify
 the actual equations and bounds.
 
+Version 0.15 adds a distinct [finite coherent spatial filter](COHERENT_OBSERVATIONS.md).
+It averages nine complex column responses with fixed exact binomial weights and
+zero added phase, then recomputes magnitude. Fully supported interior coordinates
+and original recording times are preserved. Source-pressure bounds propagate
+through the weighted sum; exact component conversion errors and magnitude
+rounding allowances are separately bounded. The filter's finite support is
+defined in sampled positions and does not establish a lens, focus, diffraction
+model or physical resolution. Its gate statistics remain ordinary diagnostics.
+
 Version 0.9 adds controlled acquisition cases and comparisons of saved signals,
 without changing the forward propagation equations. Its B−A metrics, inclusive
 gates and exact coordinate requirements are documented in

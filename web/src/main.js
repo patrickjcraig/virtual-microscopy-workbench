@@ -26,7 +26,7 @@ const app = $('#app');
 app.innerHTML = `
   <header class="topbar">
     <div class="brand"><div class="brand-mark">${icon('cube')}</div><div><h1>Virtual microscopy</h1><p>Microelectronics simulation workbench</p></div></div>
-    <div class="top-actions"><span class="mode-label"><i></i>Synthetic forward model</span><button id="volumes-btn" title="Saved acoustic RF volumes">${icon('layers')}Saved volumes</button><button id="causal-volumes-btn" title="Saved causal multilayer independent-column volumes">${icon('acoustic')}Causal volumes</button><button id="causal-comparisons-btn" title="Compare saved causal responses and residual bounds">${icon('sliders')}Causal comparisons</button><button id="recipes-btn">${icon('sliders')}Recipes & comparisons</button><button id="xray-recipes-btn">${icon('sliders')}X-ray recipes</button><button id="xray-volumes-btn">${icon('xray')}X-ray volumes</button><button id="reconstruction-btn">${icon('layers')}CT reconstruction</button><button id="layered-acoustics-btn">${icon('acoustic')}Layered acoustics</button><button id="sam-depth-btn">${icon('acoustic')}SAM depth</button><button id="assumptions-btn">${icon('info')}Model & assumptions</button><button id="export-results" disabled>${icon('download')}Export acquisition</button></div>
+    <div class="top-actions"><span class="mode-label"><i></i>Synthetic forward model</span><button id="volumes-btn" title="Saved acoustic RF volumes">${icon('layers')}Saved volumes</button><button id="causal-volumes-btn" title="Saved causal multilayer independent-column volumes">${icon('acoustic')}Causal volumes</button><button id="observations-btn" title="Finite coherent spatial filter of saved causal volumes">${icon('sliders')}Spatial filter</button><button id="causal-comparisons-btn" title="Compare saved causal responses and residual bounds">${icon('sliders')}Causal comparisons</button><button id="recipes-btn">${icon('sliders')}Recipes & comparisons</button><button id="xray-recipes-btn">${icon('sliders')}X-ray recipes</button><button id="xray-volumes-btn">${icon('xray')}X-ray volumes</button><button id="reconstruction-btn">${icon('layers')}CT reconstruction</button><button id="layered-acoustics-btn">${icon('acoustic')}Layered acoustics</button><button id="sam-depth-btn">${icon('acoustic')}SAM depth</button><button id="assumptions-btn">${icon('info')}Model & assumptions</button><button id="export-results" disabled>${icon('download')}Export acquisition</button></div>
   </header>
   <main class="workspace">
     <aside class="sidebar" aria-label="Specimen and acquisition controls">
@@ -359,11 +359,14 @@ $('#xray-recipes-btn').addEventListener('click',()=>openXrayComparisons());
 
 $('#volumes-btn').addEventListener('click',()=>volumeWorkspace.open());
 let causalWorkspacePromise;
-async function openCausalVolumes(options){try{causalWorkspacePromise ||= import('./causal-volumes.js').then(({CausalVolumeWorkspace})=>new CausalVolumeWorkspace({request,onCompare:options=>openCausalComparisons(options),getSnapshot:()=>({twin:state.twin,settings:settingsFromControls()})}));(await causalWorkspacePromise).open(options);}catch(error){causalWorkspacePromise=null;notify(`Unable to open causal volumes: ${error.message}`,true);}}
+async function openCausalVolumes(options){try{causalWorkspacePromise ||= import('./causal-volumes.js').then(({CausalVolumeWorkspace})=>new CausalVolumeWorkspace({request,onCompare:options=>openCausalComparisons(options),onObserve:options=>openObservations(options),getSnapshot:()=>({twin:state.twin,settings:settingsFromControls()})}));(await causalWorkspacePromise).open(options);}catch(error){causalWorkspacePromise=null;notify(`Unable to open causal volumes: ${error.message}`,true);}}
 $('#causal-volumes-btn').addEventListener('click',()=>openCausalVolumes());
 let causalComparisonPromise;
 async function openCausalComparisons(options){try{causalComparisonPromise ||= import('./causal-comparisons.js').then(({CausalComparisonWorkspace})=>new CausalComparisonWorkspace({request}));await (await causalComparisonPromise).open(options);}catch(error){causalComparisonPromise=null;notify(`Unable to open causal comparisons: ${error.message}`,true);}}
 $('#causal-comparisons-btn').addEventListener('click',()=>openCausalComparisons());
+let observationWorkspacePromise;
+async function openObservations(options){try{observationWorkspacePromise ||= import('./observations.js').then(({ObservationWorkspace})=>new ObservationWorkspace({request}));await (await observationWorkspacePromise).open(options);}catch(error){observationWorkspacePromise=null;notify(`Unable to open finite coherent spatial filter: ${error.message}`,true);}}
+$('#observations-btn').addEventListener('click',()=>openObservations());
 let xrayWorkspacePromise;
 $('#xray-volumes-btn').addEventListener('click',async()=>{try{xrayWorkspacePromise ||= import('./xray.js').then(({XrayWorkspace})=>new XrayWorkspace({request,onRecipes:options=>openXrayComparisons(options),getSnapshot:()=>({twin:state.twin,settings:settingsFromControls()})}));(await xrayWorkspacePromise).open();}catch(error){xrayWorkspacePromise=null;notify(`Unable to open the X-ray workspace: ${error.message}`,true);}});
 let reconstructionWorkspacePromise;
@@ -399,7 +402,7 @@ function downloadJSON(value,filename) {
 }
 const safeName=name=>String(name).replace(/[^a-z0-9_-]+/gi,'-').replace(/^-|-$/g,'').slice(0,75)||'specimen';
 $('#export-twin').addEventListener('click',()=>{if(state.twin)downloadJSON(state.twin,`${safeName(state.twin.name)}.json`);});
-$('#export-results').addEventListener('click',()=>{if(state.result)downloadJSON({...state.result,export_metadata:{application:'Virtual microscopy workbench',version:'0.14.0',exported_at:new Date().toISOString(),display_windows:{xray:[0,1],sam:[0,state.samCeiling],bscan:[0,1]},settings_changed_since_acquisition:state.stale}},`${safeName(state.result.twin.name)}-acquisition-${safeName(state.result.run_id || new Date().toISOString())}.json`);});
+$('#export-results').addEventListener('click',()=>{if(state.result)downloadJSON({...state.result,export_metadata:{application:'Virtual microscopy workbench',version:'0.15.0',exported_at:new Date().toISOString(),display_windows:{xray:[0,1],sam:[0,state.samCeiling],bscan:[0,1]},settings_changed_since_acquisition:state.stale}},`${safeName(state.result.twin.name)}-acquisition-${safeName(state.result.run_id || new Date().toISOString())}.json`);});
 $('#assumptions-btn').addEventListener('click',()=>$('#assumptions-dialog').showModal());
 $('#specimen-reference-btn').addEventListener('click',()=>$('#specimen-reference-dialog').showModal());
 $('#close-specimen-reference').addEventListener('click',()=>$('#specimen-reference-dialog').close());

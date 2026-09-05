@@ -22,8 +22,8 @@ _compute_lock = threading.Lock()
 
 @asynccontextmanager
 async def lifespan(app):
-    from .volume_jobs import VolumeJobManager
-    jobs = VolumeJobManager()
+    from .observation_jobs import ObservationVolumeManager
+    jobs = ObservationVolumeManager()
     jobs.start()
     app.state.volume_jobs = jobs
     try:
@@ -173,6 +173,8 @@ app.include_router(recipe_router)
 app.include_router(comparison_router)
 app.include_router(xray_comparison_router)
 app.include_router(causal_comparison_router)
+from .observation_api import router as observation_router
+app.include_router(observation_router)
 app.include_router(layered_router)
 
 dist = ROOT / "web" / "dist"

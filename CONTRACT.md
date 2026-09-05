@@ -1,4 +1,4 @@
-# Virtual microscopy 0.9 integration contract (compatible twin schema 1)
+# Virtual microscopy 0.15 integration contract (compatible twin schema 1)
 
 Local application: Python FastAPI serves a Vite/vanilla JS + Three.js client. Source in `virtual_microscopy/` and `web/`. Physical dimensions use millimetres. Coordinates x right, y down in image, z depth from specimen top; surrounding material is water for SAM and air for X-ray. Later primitives replace earlier ones. This is a reduced-order synthetic forward simulator, not experimentally validated or coupled full-wave multiphysics.
 
@@ -36,7 +36,7 @@ defects follow their assembly; global defects preserve existing coordinates.
 
 ## API
 
-- GET /api/health -> {status:'ok',version:'0.10.0'}
+- GET /api/health -> {status:'ok',version:'0.15.0'}
 - GET /api/examples -> [{id,name,description,twin}]
 - GET /api/materials -> list of material dicts with id,name,color,density_g_cm3,sound_speed_m_s,impedance_mrayl and provenance; extra properties permitted.
 - POST /api/validate -> twin body -> {valid:true,twin:normalized twin,warnings:[]}; errors HTTP 422.
@@ -444,3 +444,32 @@ Compatibility errors return 422 with `{message,issues}`; other invalid requests
 return 422, missing reports/sources 404 and storage failures 507. See
 [CAUSAL_COMPARISONS.md](docs/CAUSAL_COMPARISONS.md) for exact numerical semantics,
 resource admission, offline reopening and the distinction from measured accuracy.
+
+## Derived coherent observations (0.15)
+
+The separate kind `sam_coherent_observation_volume` uses
+`/api/v2/observations` routes: estimate; job creation/list/detail/cancel/resume;
+and dataset list/detail/view/export. A strict request contains `kind?`, `name?`,
+`source_dataset_id`, `operator:'binomial_3x3_coherent_v1'` and
+`absolute_tolerance` (default `1e-7`, range `1e-12..1e-3`). Only completed
+supported independent causal sources are accepted. Lists are chronological with
+an ID tie-breaker and bounded `limit`/`offset` pagination.
+
+The fixed nine-neighbor exact dyadic stencil mixes complex pressure with zero
+added phase, crops unsupported borders and preserves actual interior X/Y and
+all recording-time centers. Outputs are three float64 `[y,x,time]` signal arrays
+and five float64 `[y,x]` maps: `source_propagation`, `complex_arithmetic`,
+`complex_total`, `magnitude_arithmetic`, `magnitude_total`. Magnitude is computed
+after complex mixing. Numerical admission and typed publication are specified in
+[COHERENT_OBSERVATIONS.md](docs/COHERENT_OBSERVATIONS.md).
+
+Jobs commit complete output rows through the same owned worker as historical
+acquisitions, preserving the old dispatcher, batch controls and fingerprints.
+The queues have separate catalogs and shared pending disk reservations. Views
+accept actual saved X/Y/time indices, product and recording-time gates; return
+linked maps/traces, source indices and all five bound maps; and never reinterpret
+multiple returns as unique depth. Completed views and typed Zarr ZIP exports
+require only the verified derived dataset. Resume requires the matching parent
+source and implementation. Historical verification explicitly distinguishes
+rechecking saved bound composition from reconstructing source-dependent
+component conversion maxima.

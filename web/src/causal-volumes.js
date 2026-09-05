@@ -15,8 +15,8 @@ const productLabel=product=>({rf:'Signed real pressure',imaginary:'Imaginary qua
 // Instrument palette: white paper, pale blue controls, navy axes, blue signed RF,
 // purple quadrature and green complex magnitude. Maps and saved evidence lead.
 export class CausalVolumeWorkspace {
-  constructor({request,getSnapshot,onCompare}) {
-    Object.assign(this,{request,getSnapshot,onCompare});
+  constructor({request,getSnapshot,onCompare,onObserve}) {
+    Object.assign(this,{request,getSnapshot,onCompare,onObserve});
     this.jobs=[];this.datasets=[];this.cursor={x_index:0,y_index:0,time_index:0};this.product='envelope';this.ceiling=.5;
     document.body.insertAdjacentHTML('beforeend',`
       <dialog id="cv-dialog" aria-labelledby="cv-title" aria-describedby="cv-intro">
@@ -46,7 +46,7 @@ export class CausalVolumeWorkspace {
             <p id="cv-status" class="cv-status" role="status" aria-live="polite">Choose an ROI and estimate its saved causal response.</p>
             <section id="cv-empty" class="cv-empty"><h3>Retain the full reflected waveform.</h3><p>Each XY position follows its complete material column. Coherent repeated reflections produce signed real pressure, imaginary quadrature and their complex magnitude.</p><p>Recording time stays in microseconds. Repeated echoes do not identify unique physical depths.</p></section>
             <section id="cv-viewer" hidden>
-              <div class="cv-result-heading"><div><h3 id="cv-dataset-name"></h3><p id="cv-dataset-detail" class="cv-hint"></p></div><div class="cv-result-actions"><button id="cv-compare" class="small">Compare saved volume</button><button id="cv-use-saved" class="small">Use saved settings as draft</button><a id="cv-export" class="cv-download" download>Download Zarr ZIP</a></div></div>
+              <div class="cv-result-heading"><div><h3 id="cv-dataset-name"></h3><p id="cv-dataset-detail" class="cv-hint"></p></div><div class="cv-result-actions"><button id="cv-observe" class="small">Apply spatial filter</button><button id="cv-compare" class="small">Compare saved volume</button><button id="cv-use-saved" class="small">Use saved settings as draft</button><a id="cv-export" class="cv-download" download>Download Zarr ZIP</a></div></div>
               <p class="cv-model-note">Full coherent gamma response; independent, unfocused columns. Repeated echoes have no unique depth. SAM depth mapping, legacy comparisons and recipes are unavailable for this mode.</p>
               <div class="cv-cursors">${['x','y','time'].map(key=>`<label for="cv-${key}">${key==='time'?'Recorded time':key.toUpperCase()} <output id="cv-${key}-value"></output><input id="cv-${key}" type="range" min="0" max="0" value="0" step="1"></label>`).join('')}</div>
               <div class="cv-processing"><label for="cv-product">Map product<select id="cv-product"><option value="envelope">Complex-pressure magnitude</option><option value="rf">Signed real pressure</option><option value="imaginary">Imaginary quadrature</option></select></label><label for="cv-ceiling">Display amplitude ceiling<input id="cv-ceiling" type="number" min="1e-16" value=".5" step="any"></label><button id="cv-fit" class="small">Fit selected trace</button><label class="cv-check"><input id="cv-quadrature" type="checkbox">Show quadrature trace</label></div>
@@ -65,7 +65,7 @@ export class CausalVolumeWorkspace {
     $('dialog').addEventListener('close',()=>{clearTimeout(this.pollTimer);clearTimeout(this.viewTimer);for(const key of ['estimateController','catalogController','selectionController','viewController'])this[key]?.abort();});
     $('capture').onclick=()=>this.capture();$('patch-preset').onclick=()=>this.applyPatchPreset();
     $('form').addEventListener('input',()=>this.changed());$('form').onsubmit=event=>{event.preventDefault();this.start();};$('estimate-btn').onclick=()=>this.estimate();$('refresh').onclick=()=>this.refreshCatalog();
-    $('use-saved').onclick=()=>this.useSaved();$('compare').onclick=()=>{if(this.manifest&&this.onCompare){$('dialog').close();this.onCompare({datasetId:identity(this.manifest)});}};
+    $('use-saved').onclick=()=>this.useSaved();$('observe').onclick=()=>{if(this.manifest&&this.onObserve){$('dialog').close();this.onObserve({datasetId:identity(this.manifest)});}};$('compare').onclick=()=>{if(this.manifest&&this.onCompare){$('dialog').close();this.onCompare({datasetId:identity(this.manifest)});}};
     for(const key of ['x','y','time'])$(key).oninput=()=>{this.cursor[`${key}_index`]=Number($(key).value);this.loadViewSoon();};
     $('product').onchange=()=>{this.product=$('product').value;this.loadViewSoon();};
     $('ceiling').oninput=()=>{const value=Number($('ceiling').value);if(value>0&&Number.isFinite(value)){this.ceiling=value;this.draw();}};
@@ -201,7 +201,7 @@ export class CausalVolumeWorkspace {
   }
 }
 
-function drawCausalMap(canvas,data,axes,cursor,ceiling,product){
+export function drawCausalMap(canvas,data,axes,cursor,ceiling,product){
   if(!data?.image?.length)return;const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;const ratio=Math.min(devicePixelRatio||1,2);canvas.width=w*ratio;canvas.height=h*ratio;const ctx=canvas.getContext('2d');ctx.scale(ratio,ratio);ctx.fillStyle='#f8fbfd';ctx.fillRect(0,0,w,h);
   const rows=data.image.length,cols=data.image[0].length,left=57,top=12,width=w-left-16,height=h-top-42,extent=data.extent_mm||data.extent,[x0,x1,y0,y1]=extent;
   const times=data.time_us,paintRows=times?.length===rows?Math.max(1,Math.ceil(height*ratio)):rows;

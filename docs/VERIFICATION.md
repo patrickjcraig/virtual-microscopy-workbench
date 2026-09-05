@@ -2,6 +2,131 @@
 
 This record concerns the first local implementation in `E:\git\Dissertation`. It establishes software and analytical-model behavior, not experimental imaging accuracy.
 
+## Version 0.15 — finite coherent spatial observations
+
+The complete final Windows suite passed **1,287 tests in 351.66 seconds**, with
+the same two third-party deprecation warnings. The 153 new cases comprise 84
+numerical, 40 plan/store, eight workflow/API and 21 export-reservation tests.
+Evidence is `artifacts/v015-final-pytest.log`. Locked dependency synchronization
+and lock verification also passed.
+
+The new numerical kernel has **84 focused passing tests**. They exercise exact
+dyadic weights, signed phase cancellation, constant complex fields, decimal and
+subnormal values, nearest-even ties, independent component conversion checks,
+exact-square magnitude brackets, source-bound propagation and outward-rounded
+composition of published bounds. The implementation has no source/forward-solver
+I/O. These checks establish the specified finite discrete operator, not an
+experimental beam or measured spatial resolution.
+
+The frozen plan/store has **40 focused passing tests**. They cover exact saved
+coordinate generation and one-ULP rejection, exact-rational midpoint crop walls,
+resource admission before decode, finite bounded metadata, original source-row
+verification, typed whole-row commits, cancellation before publication, partial
+repair/resume, corruption rejection, source-free completed export and original
+source-certificate validation. Bounded validation caches retain content hashes;
+they do not retain signal volumes or waive typed-byte integrity checks.
+
+Shared-worker/API checks use actual source-backed jobs, committed-row cancel and
+resume, cancellation inside a temporal block and during final source verification,
+alternating old/new SQL claims, paused legacy batches and combined disk
+reservations. An injected SQL-publication failure leaves no runnable catalog job
+and retains the owned unpublished manifest as failed. A real spawned API job
+checks all three products, actual source indices, inclusive gates and exact typed
+ZIP contents, then reopens after moving only its owned temporary source out of
+the source catalog. Historical acquisition fingerprint files remain unchanged.
+
+The **21 focused export-reservation tests** cover both pending queues, disk
+admission before ZIP allocation, a deliberately blocked copy with concurrent
+worker progress and cancellation, allocation/copy failure cleanup, and startup
+reconciliation that preserves orphan files. Near-capacity tests distinguish
+already-running worker continuation from new job/resume/export admission, so a
+growing export cannot double-charge its reservation to an admitted worker or
+make its reserved bytes available to new work.
+
+The native `verify:observations` pass completed in **70.584 seconds** in
+`web/test-artifacts/observations-1788637920607/verification.json`. It created one
+14 × 14 × 1,001 derived slab dataset, cancelled after one committed row, resumed
+the same ID and verified that row's registry remained identical. All three
+signals, five bounds, inclusive RMS gates, rejected gates, actual source indices,
+keyboard cursors, signed display clipping, ZIP download, reload and kind isolation
+passed. A spatially constant signed complex field remained exactly equal to its
+source components. Source-manifest and legacy-job catalog hashes were unchanged;
+there were zero uncaught page errors and no new acquisition jobs.
+
+Desktop/support and 390 px controls, support, maps, traces and bound layouts
+passed automated overflow checks and visual inspection. A simulated unavailable
+parent-metadata response exercised the UI fallback while the real derived view
+remained usable; actual source unavailability is tested with owned temporary
+data in the Python workflow. The existing causal read-only native regression also
+passed in `web/test-artifacts/causal-readonly-1788638028410/verification.json`:
+two older sources reopened and exported, their hashes stayed unchanged, all 82
+legacy job records remained present, and no POST occurred after the initial
+main-workbench preview.
+
+The final production frontend build passed in **1.09 seconds** with the existing main
+chunk-size warning (`web/test-artifacts/v015-production-build.log`).
+
+The frozen `tools/verify_observation_delivery.py` harness completed in **500.815
+seconds**, creating exactly two derived observations and **zero acquisitions**.
+It retained requests, estimates, job timelines, manifests, helper fingerprints,
+typed ZIPs, independent numerical checks and before/after file/catalog snapshots
+in `artifacts/v015-observation-delivery/verification-report.json`.
+
+| Source fixture | Derived dataset ID | Shape `[y,x,time]` | Observed job time |
+| --- | --- | --- | --- |
+| HBM6 intact | `969e51c3-6938-4786-b5fb-49cd5034de2f` | 62 × 30 × 1,601 | 191.182 s |
+| HBM6 missing gap-8/r3/c1 bump | `185aa9df-3075-472d-a5b1-7a8a65bb734d` | 62 × 30 × 1,601 | 190.289 s |
+
+These are real submission-to-completion observations on this local machine,
+including source verification and typed publication. The first job overlapped
+part of the isolated regression suite. They are not performance guarantees. Each
+volume retains 2,977,860 complex samples and all original 0–2 µs recording centers.
+Its spatial extent is `[49.4296875,49.5703125,39.87890625,40.12109375]` mm in
+`[xmin,xmax,ymin,ymax]` order, computed from exact crop midpoints.
+
+Independent Fraction oracles cover all 1,860 columns through **103 intact and
+144 missing-bump ordered neighborhood representatives**. They check both complete
+component traces, exact nearest-even conversion, every magnitude bracket and
+all five minimal bound maps. Every equivalent column must match its
+representative's full traces and maps byte for byte. Maximum complex total and
+magnitude total bounds in both results are respectively
+`4.997135833047948e-8` and `4.997135844150178e-8`, below the requested `1e-7`.
+
+The controlled source change remains the single epoxy replacement at
+`hbm-6-mb-08-r03-c01`; all other twin fields and nominal primitives match. Its
+27 changed source columns influence 53 retained columns under the stencil. All
+1,807 output columns outside that support are byte-identical in all three
+signals. All 53 supported columns show an RF change; maximum absolute RF
+difference is `0.27842071575148486`. These are ordinary controlled synthetic
+sensitivity/locality diagnostics, not enclosed change classification or measured
+defect detection.
+
+Each derived export contains **512 files**. Actual intact/missing dataset bytes
+are **72,284,603 / 72,302,221**, below reservations of **74,322,116 / 74,339,728**.
+The uncompressed ZIPs occupy **72,354,611 / 72,372,229 bytes**. All file payloads
+and decoded typed arrays match exactly. Both exported copies pass cold historical
+verification and views with source access and current synthesis entry points
+trapped. The independent oracle established source-dependent conversion maxima;
+offline checks verify the saved hashes, bound propagation/composition and
+magnitude brackets within the documented historical limit.
+
+Final snapshots preserve **all 524 earlier delivered acquisition files**, all six
+saved causal datasets, 19 layered reports, all preexisting comparison reports,
+the native slab observation and the complete old job catalog. Inspection also
+leaves the two new observations unchanged. A too-tight tolerance control creates
+no job. The original reference image and generated scientific data remain outside
+Git.
+
+The final delivered-HBM native reopening passed in
+`web/test-artifacts/observation-delivery-1788638733697/verification.json`, after a
+cosmetic bound-map label correction from grayscale to color scale. Output
+`[y41,x8,t265]` correctly maps to source `[y42,x9,t265]`, at 0.33125 µs. It checks
+the copied coordinates, 0.32–0.4 µs gate, native 72,372,229-byte ZIP download and
+unchanged source/output hashes and both catalogs. There were zero POSTs after
+the initial preview and zero page errors. The [final HBM workspace image](images/coherent-observation-workspace.png)
+is an actual 1,568 × 2,090 browser capture with signed RF, full traces and all five
+numerical bounds; it contains no private reference image.
+
 ## Version 0.14 — compatible saved causal-volume comparisons
 
 The complete Windows suite passed **1,134 tests in 274.15 seconds**, with the
