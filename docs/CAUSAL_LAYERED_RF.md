@@ -5,8 +5,9 @@ This guide documents the standalone v0.12 numerical kernel in
 `layered-causal-gamma-arb-0.12.0`, and its controls in the layered-acoustics
 instrument. Independent numerical checks are described below; release and live
 browser evidence is recorded in [VERIFICATION.md](VERIFICATION.md). This mode
-creates standalone reports; saved reverberant SAM rasters and experimental
-calibration remain separate, unimplemented work.
+creates standalone reports. Version 0.13 provides a separate
+[saved independent-column raster](CAUSAL_SAM_VOLUMES.md) using the same kernel;
+experimental calibration and focused propagation remain future work.
 
 ## Workbench workflow
 

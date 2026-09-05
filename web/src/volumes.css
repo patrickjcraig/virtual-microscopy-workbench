@@ -13,3 +13,4 @@
 .vol-dataset{white-space:normal}.vol-job p{overflow-wrap:anywhere}#vol-estimate-warnings{font-size:11px;margin-bottom:10px}#vol-estimate-warnings summary{font-size:12px}#vol-estimate-warnings ul{padding-left:17px;max-height:150px;overflow:auto;color:#526c82;line-height:1.6}#vol-estimate-warnings[hidden]{display:none}.vol-processing .vol-window:after{content:"0  –  selected ceiling";font-size:9px;color:#657e91;margin-top:1px}
 
 .vol-path-choice label{display:block;font-size:12px;font-weight:600;color:#3c607b}.vol-path-choice select{display:block;width:100%;padding:8px 6px;font-size:11px;font-weight:400;margin-top:7px}.vol-path-summary{font-size:12px;line-height:1.65;color:#345d79;padding:9px 12px;background:#e8f1f7;border-left:3px solid #7ca1bb;margin:0 0 13px}#vol-depth_samples:disabled{background:#edf2f7;color:#708295}#vol-depth-state{font-size:10px;color:#667f93}.vol-dataset-heading>div{min-width:0}
+#vol-causal-btn{width:100%;white-space:normal;margin:9px 0}

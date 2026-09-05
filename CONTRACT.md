@@ -360,3 +360,36 @@ reports record python-flint and native FLINT versions. No saved volume schema,
 job semantics or depth-mapping contract changes in this release.
 
 `npm run build` emits `web/dist`; Vite development proxies `/api` to `127.0.0.1:8765`. The app fetches examples and simulates the selected twin; `?specimen=<example-id>` selects a specific initial example. A validated recommended preset takes precedence over generic initial controls. Imports are validated before replacing the twin. Imported labels/references are rendered as text, with HTTP(S) links only. Geometry and acquired data are drawn with Three.js and canvas; acquisition values remain distinct from display windowing and exploded-view spacing.
+
+## Saved causal column volumes (0.13)
+
+`POST /api/v2/estimate` and `POST /api/v2/jobs` accept the explicitly tagged
+`{kind:'sam_causal_rf_volume',twin,acquisition}`. The strict acquisition combines
+the v0.12 gamma settings with `scan_nx`, `scan_ny` (16–64), optional global
+`roi_mm`, `include_defects`, fixed `path_model:'continuous_columns_v1'`, and
+fixed `observation_model:'independent_columns_v1'`. Unsupported focus, Z-grid,
+noise or alternate observation fields reject. Omitted-kind historical SAM
+requests keep their original meaning. The existing job status/cancel/resume and
+dataset manifest/catalog/export endpoints handle the new kind explicitly.
+
+The estimate freezes actual `x_mm`, `y_mm`, `time_us`, complete `stack_table`,
+`class_index`, shape `[y,x,time]`, resource/work counts, material assumptions and
+observation/excitation identities. Three float64 signal arrays (`rf`,
+`imaginary`, `envelope`) accompany a float64 `[y,x]` `error_bound` and uint16
+`class_index`. Every row commits its signals and class certificates together;
+the completed `total_error_bound` is the maximum retained per-column bound.
+
+`GET /api/v2/causal-datasets/{id}/view` accepts `x_index`, `y_index`, `time_index`,
+`product:'rf'|'imaginary'|'envelope'`, and optional `gate_start_us`, `gate_end_us`,
+`gate_mode:'peak_envelope'|'rms_rf'`. It returns `xy`, `xt`, `yt`, `ascan`,
+`cscan`, `cursor`, `gate`, `certificate`, and `metadata`. All time centers are
+retained without time pooling. The gate must lie in the saved record and contain
+samples; its response includes the actual first/last included centers. The
+per-sample certificate is distinct from derived gate statistics.
+
+Numerical views and exports require a completed, verified dataset. Wrong-kind
+legacy views, depth mapping, comparisons, recipes and batches reject this new
+kind until explicitly extended. Export is a `sam-causal-volume-` Zarr ZIP of
+the original typed bytes and frozen manifest. See
+[CAUSAL_SAM_VOLUMES.md](docs/CAUSAL_SAM_VOLUMES.md) for model, resource, time and
+historical-reader conventions.

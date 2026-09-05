@@ -10,6 +10,7 @@ from fastapi.responses import FileResponse
 from starlette.background import BackgroundTask
 
 from .volume_schemas import SamVolumeRequest
+from .causal_sam_schemas import CausalSamVolumeRequest
 from .sam_volume import estimate_sam
 from .volume_processing import sam_view
 from .xray_schemas import XrayVolumeRequest
@@ -33,9 +34,9 @@ def manager(request: Request):
     return value
 
 
-def invoke(function, *args):
+def invoke(function, *args, **kwargs):
     try:
-        return function(*args)
+        return function(*args, **kwargs)
     except KeyError as exc:
         raise HTTPException(404, "The requested volume job or dataset does not exist.") from exc
     except ValueError as exc:
@@ -89,7 +90,19 @@ def public_manifest(manifest):
     roi = acquisition.get("roi_mm")
     # Describe legacy acquisitions without normalizing or rewriting their
     # frozen request. A new default must never change historical input hashes.
-    result.setdefault("path_model", acquisition.get("path_model", "voxel_centers_v1"))
+    result.setdefault("path_model", acquisition.get("path_model", "continuous_columns_v1" if
+                      result.get("kind") == "sam_causal_rf_volume" else "voxel_centers_v1"))
+    if result.get("kind") == "sam_causal_rf_volume":
+        estimate = result.get("estimate", {})
+        times = estimate.get("time_us")
+        result.setdefault("path_model", "continuous_columns_v1")
+        result.setdefault("observation_model", "independent_columns_v1")
+        result.setdefault("response_model", "layered_causal_gamma_v1")
+        if times:
+            result.setdefault("time_range_us", [times[0], times[-1]])
+        if estimate.get("extent_mm") is not None:
+            result.setdefault("extent_mm", estimate["extent_mm"])
+        return result
     size = twin.get("size_mm")
     if size:
         result.setdefault("extent_mm", [roi[0], roi[2], roi[1], roi[3]] if roi else [0, size[0], 0, size[1]])
@@ -100,9 +113,12 @@ def public_manifest(manifest):
 
 
 @router.post("/estimate")
-def estimate(body: SamVolumeRequest | XrayVolumeRequest | ReconstructionRequest | SamDepthRequest, request: Request):
+def estimate(body: SamVolumeRequest | XrayVolumeRequest | ReconstructionRequest | SamDepthRequest | CausalSamVolumeRequest, request: Request):
     from .datasets import check_disk_space, default_data_root
-    if isinstance(body, SamDepthRequest):
+    if isinstance(body, CausalSamVolumeRequest):
+        from .causal_sam import estimate_causal_sam
+        result = invoke(estimate_causal_sam, body)
+    elif isinstance(body, SamDepthRequest):
         result = invoke(manager(request).estimate_depth, body)
     elif isinstance(body, ReconstructionRequest):
         result = invoke(manager(request).estimate_reconstruction, body)
@@ -114,7 +130,7 @@ def estimate(body: SamVolumeRequest | XrayVolumeRequest | ReconstructionRequest 
 
 
 @router.post("/jobs", status_code=202)
-def submit(body: SamVolumeRequest | XrayVolumeRequest | ReconstructionRequest | SamDepthRequest, request: Request):
+def submit(body: SamVolumeRequest | XrayVolumeRequest | ReconstructionRequest | SamDepthRequest | CausalSamVolumeRequest, request: Request):
     from .server import _compute_lock
     if not _compute_lock.acquire(blocking=False):
         raise HTTPException(409, "A preview is running. Wait for it to finish before starting a volume acquisition.")
@@ -202,8 +218,24 @@ def xray_view_api(dataset_id: str, request: Request,
 @router.get("/datasets/{dataset_id}/export")
 def export(dataset_id: str, request: Request):
     path = complete_path(request, dataset_id)
+    kind = invoke(manager(request).get_manifest, dataset_id).get("kind", "sam_rf_volume")
     with _processing_lock:
-        return invoke(_archive, path, dataset_id)
+        return invoke(_archive, path, dataset_id, kind)
+
+
+@router.get("/causal-datasets/{dataset_id}/view")
+def causal_view_api(dataset_id: str, request: Request,
+                    x_index: int | None = Query(None, ge=0), y_index: int | None = Query(None, ge=0),
+                    time_index: int | None = Query(None, ge=0),
+                    product: Literal["rf", "imaginary", "envelope"] = "envelope",
+                    gate_start_us: float | None = Query(None, ge=0, allow_inf_nan=False),
+                    gate_end_us: float | None = Query(None, gt=0, allow_inf_nan=False),
+                    gate_mode: Literal["peak_envelope", "rms_rf"] = "peak_envelope"):
+    from .causal_processing import causal_sam_view
+    path = complete_path(request, dataset_id, "sam_causal_rf_volume")
+    with _processing_lock:
+        return invoke(causal_sam_view, path, x_index=x_index, y_index=y_index, time_index=time_index,
+                      product=product, gate_start_us=gate_start_us, gate_end_us=gate_end_us, gate_mode=gate_mode)
 
 
 @router.get("/datasets/{dataset_id}/reconstruction-view")
@@ -245,12 +277,15 @@ def depth_view_api(dataset_id: str, request: Request,
         raise HTTPException(422, str(exc)) from exc
 
 
-def _archive(path, dataset_id):
+def _archive(path, dataset_id, kind=None):
     from .datasets import DatasetStore, check_disk_space
     files = _export_files(path, dataset_id)
     store = DatasetStore(path.parent)
-    kind = invoke(store.manifest, dataset_id).get("kind", "sam_rf_volume")
-    if kind == "xray_projection_volume":
+    kind = kind or invoke(store.manifest, dataset_id).get("kind", "sam_rf_volume")
+    if kind == "sam_causal_rf_volume":
+        from .causal_datasets import CausalSamDatasetStore
+        store = CausalSamDatasetStore(path.parent)
+    elif kind == "xray_projection_volume":
         from .xray_datasets import XrayDatasetStore
         store = XrayDatasetStore(path.parent)
     elif kind == "xray_reconstruction":
@@ -273,6 +308,6 @@ def _archive(path, dataset_id):
         output.unlink(missing_ok=True)
         raise
     prefix = {"xray_projection_volume": "xray-projections", "xray_reconstruction": "ct-reconstruction",
-              "sam_depth_volume": "sam-depth"}.get(kind, "sam-volume")
+              "sam_depth_volume": "sam-depth", "sam_causal_rf_volume": "sam-causal-volume"}.get(kind, "sam-volume")
     return FileResponse(output, media_type="application/zip", filename=f"{prefix}-{dataset_id}.zip",
                         background=BackgroundTask(output.unlink, missing_ok=True))

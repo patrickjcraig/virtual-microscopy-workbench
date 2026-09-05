@@ -6,8 +6,8 @@ const parameters=['die_count','die_thickness_um','gap_um','base_thickness_um','c
 
 // This panel edits the twin, while the instrument keeps its previous acquisition snapshot.
 export class HBMEditor {
-  constructor({request,getTwin,onApply,onSelectROI,onFocusPatch,getIncludeDefects,onSelectSite,getPathModel,onInspectColumn}) {
-    Object.assign(this,{request,getTwin,onApply,onSelectROI,onFocusPatch,getIncludeDefects,onSelectSite,getPathModel,onInspectColumn});this.sequence=0;this.section=null;
+  constructor({request,getTwin,onApply,onSelectROI,onFocusPatch,getIncludeDefects,onSelectSite,getPathModel,onInspectColumn,onCausalVolume}) {
+    Object.assign(this,{request,getTwin,onApply,onSelectROI,onFocusPatch,getIncludeDefects,onSelectSite,getPathModel,onInspectColumn,onCausalVolume});this.sequence=0;this.section=null;
     document.body.insertAdjacentHTML('beforeend',`
       <dialog id="hbm-dialog" aria-labelledby="hbm-title" aria-describedby="hbm-intro">
         <div class="dialog-header"><div><h2 id="hbm-title">HBM assembly laboratory</h2><p id="hbm-intro">Six physical sites. Editable layers. Electrical state stored separately.</p></div><button id="hbm-close" class="quiet" aria-label="Close HBM editor">✕</button></div>
@@ -55,7 +55,7 @@ export class HBMEditor {
             <div class="hbm-section-wrap"><canvas id="hbm-section" role="img" aria-label="Material cross-section through selected HBM stack"></canvas><p id="hbm-section-loading" role="status">Loading material section…</p></div>
             <p id="hbm-section-description" class="hbm-section-description"></p><div id="hbm-materials" class="material-key"></div>
             <p id="hbm-section-warnings" class="gate-hint"></p>
-            <div class="hbm-inspect-actions"><button type="button" id="hbm-layered-response" class="small">Inspect applied layered response</button><button type="button" id="hbm-scan-selected" class="small">Set this stack as scan ROI</button><button type="button" id="hbm-scan-micro" class="small" disabled>Scan microstructure ROI</button><button type="button" id="hbm-scan-continuous-roi" class="small" hidden disabled>Use 0.15 × 0.25 mm preview ROI</button><button type="button" id="hbm-focus-micro" class="small" disabled>Focus patch in 3D</button></div>
+            <div class="hbm-inspect-actions"><button type="button" id="hbm-layered-response" class="small">Inspect applied layered response</button><button type="button" id="hbm-scan-selected" class="small">Set this stack as scan ROI</button><button type="button" id="hbm-scan-micro" class="small" disabled>Scan microstructure ROI</button><button type="button" id="hbm-scan-continuous-roi" class="small" hidden disabled>Use 0.15 × 0.25 mm preview ROI</button><button type="button" id="hbm-causal-volume" class="small" disabled>Causal volume from applied patch</button><button type="button" id="hbm-focus-micro" class="small" disabled>Focus patch in 3D</button></div>
             <p id="hbm-micro-applied" class="hbm-micro-applied">No explicit patch is applied to this site.</p><p id="hbm-micro-roi-note" class="gate-hint"></p>
             <details id="hbm-reference"><summary>Supplied X-ray cross-section reference</summary><p id="hbm-reference-status">Loading local reference image…</p><img id="hbm-reference-image" hidden alt="User-supplied X-ray cross-section showing stacked interconnect rows and larger package joints"/><p id="hbm-reference-scale" class="gate-hint"></p><p id="hbm-reference-source" class="gate-hint"></p></details>
           </div>
@@ -77,6 +77,7 @@ export class HBMEditor {
     $('#hbm-scan-micro').addEventListener('click',()=>{const summary=this.microSummary,assembly=this.assembly();if(!summary?.roi_mm||!assembly)return;const feature=summary.features.find(f=>f.id===$('#hbm-feature').value);this.onSelectROI(assembly,{bounds_mm:summary.roi_mm,probe_mm:feature?.center_mm,microstructure:true});$('#hbm-dialog').close();});
     $('#hbm-scan-continuous-roi').addEventListener('click',()=>{const bounds=this.continuousPreviewROI(),assembly=this.assembly();if(!bounds||!assembly)return;this.onSelectROI(assembly,{bounds_mm:bounds,microstructure:true});$('#hbm-dialog').close();});
     $('#hbm-layered-response').onclick=()=>{const assembly=this.assembly();if(!assembly)return;const feature=this.microSummary?.features?.find(f=>f.id===$('#hbm-feature').value),pointMm=feature?.center_mm||assembly.center_xy_mm;$('#hbm-dialog').close();this.onInspectColumn?.({pointMm,includeDefects:$('#hbm-section-defects').checked});};
+    $('#hbm-causal-volume').onclick=()=>{const summary=this.microSummary;if(!summary?.roi_mm)return;const [x0,y0,x1,y1]=summary.roi_mm;$('#hbm-dialog').close();this.onCausalVolume?.({roiMm:[...summary.roi_mm],patchCenterMm:[(x0+x1)/2,(y0+y1)/2],includeDefects:this.getIncludeDefects?.()!==false});};
     $('#hbm-focus-micro').addEventListener('click',()=>{if(!this.microSummary?.feature_bounds_mm)return;this.onFocusPatch?.(this.microSummary);$('#hbm-dialog').close();});
     new ResizeObserver(()=>this.drawSection()).observe($('#hbm-section-wrap') || $('.hbm-section-wrap'));
   }
@@ -137,7 +138,7 @@ export class HBMEditor {
     return roi[0]>=0&&roi[1]>=0&&roi[2]<=size[0]&&roi[3]<=size[1]?roi:null;
   }
   showSummary(summary){
-    this.microSummary=summary;const active=Boolean(summary?.enabled && summary?.features?.length);$('#hbm-scan-micro').disabled=!active;$('#hbm-focus-micro').disabled=!active;$('#hbm-feature-kind').querySelectorAll('option').forEach(option=>option.disabled=Boolean(option.value)&&!active);
+    this.microSummary=summary;const active=Boolean(summary?.enabled && summary?.features?.length);$('#hbm-scan-micro').disabled=!active;$('#hbm-causal-volume').disabled=!active;$('#hbm-focus-micro').disabled=!active;$('#hbm-feature-kind').querySelectorAll('option').forEach(option=>option.disabled=Boolean(option.value)&&!active);
     $('#hbm-micro-applied').textContent=active?`Applied patch: ${summary.nominal_feature_count} nominal features, ${summary.defect_count} enabled defect overlays. Geometry is assumed; material sections show the actual ordered occupancy.`:'No explicit patch is applied to this site.';
     $('#hbm-micro-roi-note').textContent=active?`Scan microstructure ROI selects 64 × 64 lateral samples, 100 MHz and a normal X-ray beam. ${this.getPathModel?.()===CONTINUOUS_PATHS?'The current continuous path method uses no Z voxel grid; the stored depth-sample setting stays inactive.':'Voxel-center acquisition uses 1,024 depth planes.'} Full specimen depth is retained. Sample pitch is not imaging resolution. Saved angular X-ray volumes still use a whole-specimen material grid.`:'';
     const continuous=this.getPathModel?.()===CONTINUOUS_PATHS;$('#hbm-scan-continuous-roi').hidden=!active||!continuous;$('#hbm-scan-continuous-roi').disabled=!this.continuousPreviewROI();

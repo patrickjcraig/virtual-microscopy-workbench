@@ -2,6 +2,114 @@
 
 This record concerns the first local implementation in `E:\git\Dissertation`. It establishes software and analytical-model behavior, not experimental imaging accuracy.
 
+## Version 0.13 — saved causal column-response volumes
+
+The complete Windows suite passed **984 tests in 237.77 seconds**, with the same
+two third-party deprecation warnings. The 113 new cases comprise 44 causal
+raster-engine tests, 58 typed-storage tests and 11 workflow/API tests. Locked
+environment synchronization, lock verification and the frontend production
+build passed. The existing primary SAM and X-ray numerical models and saved
+product contracts remain separate.
+
+The new `sam_causal_rf_volume` resolves complete continuous material columns at
+the actual global X/Y centers, reuses only exactly equal represented numerical
+stacks, and retains the v0.12 gamma kernel's float64 real pressure, quadrature,
+complex magnitude and per-column numerical certificate. This first observation
+is explicitly independent, unfocused and lossless, with water exteriors. Tests
+cover full HBM depth and all six sites, exact time coordinates, named versus
+numerical material identity, thin features, strict inputs, canonical persisted
+requests, bounded preflight and a complete 32 × 64 × 1,601 HBM raster.
+
+Storage checks cover typed little-endian Zarr bytes, bounded JSON expansion,
+predecode codec/chunk/path validation, coordinate and class maps, atomic row and
+certificate commits, corrupt partial rows, immutable completed data and actual
+output bytes within the advertised reservation. The writer rejects forged
+analytic/cutoff bounds or solver/work diagnostics that differ from the frozen
+kernel plan. A real worker test cancels after a committed row, restores verified
+class responses and resumes with the solver blocked for those saved classes.
+SQL failure injection covers both unpublished retained output and an uncertain
+commit that already published exactly one runnable job. Historical read/export
+works with current forward entry points blocked; the final certificate guard
+also reopened all three earlier native causal QA datasets without changing bytes.
+
+Native verification combines the HBM action sequence with the successful bounded
+continuation in `web/test-artifacts/causal-volumes-1788628923462/verification.json`.
+The early verifier was corrected for asynchronous view readiness and its slab
+fixture's probe location. Native cancellation occurred before the first row;
+committed-row cache restoration is established by the separate worker test above.
+The continuation verifies float64 products, signed linked views and keyboard
+cursors, actual-center gates and outside-record rejection, immutable reload and
+ZIP download, kind/depth isolation, and desktop/390 px layouts. Its independent
+slab oracle differed by at most 7.617e-10 from the saved complex pressure, within
+the saved bound. These are split-run checks, not a claim of one uninterrupted
+execution of the complete browser script.
+
+The final-store read-only pass is recorded in
+`web/test-artifacts/causal-readonly-1788629278912/verification.json`: unchanged
+manifests, native exports, updated display-scale labels, nearest-saved-center
+display rendering, unchanged job count and no processing/acquisition POSTs after
+the initial main preview. The existing `verify:volumes` regression also passed
+in `web/test-artifacts/volumes-1788629319675/verification.json`, including a new
+legacy 24 × 32 × 401 acquisition, signed RF, post hoc RMS gate, export and reload.
+All three successful browser records report zero page errors. The aggregate
+record is `web/test-artifacts/causal-v013-native-summary.json`.
+
+The final `tools/verify_causal_volume_delivery.py` run passed in **162.54 seconds**
+at `http://127.0.0.1:8767`. Its immutable evidence is
+`artifacts/v013-causal-volume-delivery/verification-report.json` (65 files,
+187,697,238 bytes). It records the harness and imported oracle/helper fingerprints,
+exact requests, estimates, typed arrays, class certificates, job histories,
+standalone checks and byte-exact Zarr ZIP exports.
+
+| Delivered dataset | Stored shape `[y,x,time]` | Exact classes | Maximum numerical bound |
+| --- | --- | --- | --- |
+| Silicon slab `53303ddf-a6c1-4b99-9bf5-d8122286fc97` | 16 × 16 × 1,001 | 1 | 4.987993007e-8 |
+| Intact HBM6 `9e166ad9-6229-4c83-99a1-e831cc750fff` | 64 × 32 × 1,601 | 6 | 4.997135827e-8 |
+| Missing bump `e4cdc105-9658-4c6d-9d19-b08a29a12bcd` | 64 × 32 × 1,601 | 8 | 4.997135828e-8 |
+
+All three request absolute tolerance 1e-7 and 128-bit arithmetic. The slab uses
+50 MHz, 400 MHz sampling and 0–2.5 µs; its independent finite causal echo sum
+differs by at most 1.750e-10 in complex pressure. Both HBM volumes use the same
+0.15 × 0.25 mm ROI, 100 MHz carrier, 800 MHz sampling and 0–2 µs recording,
+gamma order 12 and fractional bandwidth 0.5. All 14 HBM class responses agree
+exactly with independently extracted columns passed through the standalone
+instrument. This establishes same-model integration consistency, not independent
+physical validation.
+
+The controlled change enables the epoxy replacement overlay for
+`hbm-6-mb-08-r03-c01`. Its shape/center/size match that nominal bump; all six HBM
+sites, the first five assemblies and every nominal primitive remain intact.
+The largest absolute RF difference is 0.315184 (signed -0.315184) at `[42,9,265]`
+(0.33125 µs), with whole-volume RF RMS difference 0.00548155. All 27 sampled
+columns inside the bump footprint change, and all 2,021 outside columns remain
+bit-identical in real, imaginary and magnitude arrays. These are synthetic
+sensitivity diagnostics. Ordinary subtraction and bound addition do not provide
+a newly certified comparison residual or a defect-detection accuracy claim.
+
+Exactly three volume jobs and no application standalone reports were added by
+the delivery. **All 524 files across 12 prior delivered acquisitions, all 19
+preexisting layered reports and all three preexisting causal QA datasets remained
+unchanged.** New source bytes also remained unchanged through all subsequent
+checks. All actual dataset sizes fit their advertised output reservations. Each
+ZIP passed CRC and exact payload checks; historical views passed with current
+forward functions blocked. A separate no-overwrite check rejected an existing
+output directory before network access.
+
+The delivered intact HBM volume was reopened at `[42,9,265]` for the
+[generated application screenshot](images/causal-sam-volume-workspace.png)
+(1600 × 1850), with the real/imaginary/magnitude trace and full bound table.
+Desktop and 390 px views were visually inspected. The read-only record
+`web/test-artifacts/causal-delivery-reopen-1788629740920/verification.json`
+confirms both delivered HBM manifest hashes and the complete job catalog stayed
+unchanged, with zero POSTs after the initial main preview and zero page errors.
+
+The [causal volume guide](CAUSAL_SAM_VOLUMES.md) documents the equations, controls,
+stored products and admission limits. Numerical bounds concern the represented
+scalar model, not material/geometry uncertainty, lateral sampling or measured
+imaging accuracy. Repeated returns do not identify unique physical depths.
+Compatible causal comparisons, finite lateral observation and calibrated
+wave-physics extensions remain subsequent increments.
+
 ## Version 0.12 — causal multilayer reflected RF
 
 The complete Windows suite passed **871 tests in 185.19 seconds**, retaining the

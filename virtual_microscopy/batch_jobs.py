@@ -117,13 +117,16 @@ def check_reservations(root: Path, *, extra_estimates=(), replacing=None, connec
             return check_reservations(root, extra_estimates=extra_estimates,
                                       replacing=replacing, connection=current)
     replacing = replacing or {}
-    pending = connection.execute("SELECT job_id FROM jobs WHERE state IN ('queued','running','cancelling')").fetchall()
+    pending = connection.execute("SELECT job_id,kind FROM jobs WHERE state IN ('queued','running','cancelling')").fetchall()
     store, output, temporary = DatasetStore(root), 0, 0
-    identifiers = {row["job_id"] for row in pending} | set(replacing)
+    kinds = {row["job_id"]: row["kind"] for row in pending}
+    identifiers = set(kinds) | set(replacing)
     for identifier in identifiers:
         manifest = replacing.get(identifier)
         if manifest is None:
-            manifest = store.manifest(identifier)
+            reader = (_jobs_module().store_for_manifest(root, {"kind": kinds[identifier]})
+                      if kinds[identifier] == "sam_causal_rf_volume" else store)
+            manifest = reader.manifest(identifier)
         output += _remaining(manifest)
         if not manifest["complete"]:
             temporary = max(temporary, _temporary(manifest["estimate"]))

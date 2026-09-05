@@ -6,7 +6,7 @@ A local research prototype that loads a material-aware digital twin of a microel
 
 **Evidence status:** synthetic, reduced-order forward models. This version provides two imaging physics models sharing one specimen. It has no experimental calibration and does not claim a coupled elastic/electromagnetic solver or measured instrument accuracy.
 
-Version **0.12** adds [causal multilayer RF](docs/CAUSAL_LAYERED_RF.md) to the layered-acoustics instrument. Extract a complete HBM column and calculate repeated reflections using an explicit causal gamma pulse. Control pulse shape, recording and numerical precision; inspect signed RF, quadrature, envelope and separate alias, frequency-cutoff and arithmetic bounds. Immutable reports retain the exact inputs and accepted error certificate. The existing Gaussian slab, [X-ray comparisons](docs/XRAY_COMPARISONS.md) and [SAM comparisons](docs/ACQUISITION_COMPARISONS.md) remain available.
+Version **0.13** adds [saved causal column-response volumes](docs/CAUSAL_SAM_VOLUMES.md): acquire a full-depth HBM ROI with coherent internal reflections, retained float64 real pressure, quadrature, magnitude and per-column numerical bounds. Exact resolved stack reuse makes a bounded raster practical. Inspect linked time slices and A-scans, cancel/resume, and export/reopen immutable data. This explicit unfocused column model uses the [v0.12 gamma response](docs/CAUSAL_LAYERED_RF.md); existing primary SAM, Gaussian slab, [X-ray comparisons](docs/XRAY_COMPARISONS.md) and [SAM comparisons](docs/ACQUISITION_COMPARISONS.md) remain available.
 
 ![H100 reference specimen in the virtual microscopy workbench, with X-ray transmission, acoustic C-scan and pulse-echo inspection](docs/images/h100-workbench.png)
 
@@ -296,12 +296,17 @@ synthetic records and datasets; display changes never reacquire the sources.
 Run `npm.cmd run verify:xray-comparisons` for the corresponding X-ray recipe,
 batch, normalization, mask, linked-view, download and reopening workflow.
 
+Run `npm.cmd run verify:causal-volumes` for independent-column HBM acquisition,
+cancel/resume, saved float64 views, numerical certificates, gates and exact export.
+It creates synthetic datasets; run it sequentially with other volume checks.
+
 The local bump/TSV patch, continuous material paths and both SAM/X-ray recipes,
-batches and saved comparisons are delivered. The next work adds a bounded
-layered acoustic response with independently checked repeated echoes.
+batches and saved comparisons are delivered. Standalone causal multilayer RF and
+saved independent-column causal volumes are also available. Next come compatible
+saved causal comparisons and a separately specified finite lateral observation.
 GPU cone CT and iterative laminography remain separate future extensions. See
 [EXPANSION_PLAN.md](docs/EXPANSION_PLAN.md) for the sequence and acceptance gates.
-Version 0.10 retains raw SAM RF and X-ray projections alongside derived CT and
+The workbench retains raw SAM RF and X-ray projections alongside derived CT and
 SAM depth volumes.
 
 The implementation is separated into `virtual_microscopy/physics.py` and `materials.py`, strict schemas and local API, `web/` UI, reproducible example geometry, and tests. This leaves room for higher-fidelity solvers and CAD/voxel import while keeping the current demo runnable.

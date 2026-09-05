@@ -193,9 +193,13 @@ global omitted-amplitude bound. It extracts complete columns and preserves sourc
 assumptions but does not alter the existing saved SAM solver. Version 0.12 adds
 [general-column causal RF](CAUSAL_LAYERED_RF.md) for an explicitly defined gamma
 pulse, using an analytically bounded carrier-centred Laplace inverse and Arb
-arithmetic enclosures. Saved ROI integration, elastic/focused response and
-measured material or instrument calibration remain planned. The linked guides
-specify the actual equations and bounds.
+arithmetic enclosures. Version 0.13 adds [saved causal ROI volumes](CAUSAL_SAM_VOLUMES.md)
+with exact resolved-stack reuse, identity observation, original float64 complex
+signals and preserved per-column certificates. The initial raster has nominal
+lossless layers and water exteriors; ordinary depth conversion is rejected for
+repeated returns. Lateral/focused observation, elastic response and measured
+material or instrument calibration remain planned. The linked guides specify
+the actual equations and bounds.
 
 Version 0.9 adds controlled acquisition cases and comparisons of saved signals,
 without changing the forward propagation equations. Its B−A metrics, inclusive
