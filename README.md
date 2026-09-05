@@ -6,7 +6,7 @@ A local research prototype that loads a material-aware digital twin of a microel
 
 **Evidence status:** synthetic, reduced-order forward models. This version provides two imaging physics models sharing one specimen. It has no experimental calibration and does not claim a coupled elastic/electromagnetic solver or measured instrument accuracy.
 
-Version **0.13** adds [saved causal column-response volumes](docs/CAUSAL_SAM_VOLUMES.md): acquire a full-depth HBM ROI with coherent internal reflections, retained float64 real pressure, quadrature, magnitude and per-column numerical bounds. Exact resolved stack reuse makes a bounded raster practical. Inspect linked time slices and A-scans, cancel/resume, and export/reopen immutable data. This explicit unfocused column model uses the [v0.12 gamma response](docs/CAUSAL_LAYERED_RF.md); existing primary SAM, Gaussian slab, [X-ray comparisons](docs/XRAY_COMPARISONS.md) and [SAM comparisons](docs/ACQUISITION_COMPARISONS.md) remain available.
+Version **0.14** adds [saved causal-volume comparisons](docs/CAUSAL_COMPARISONS.md): inspect compatible HBM recordings with shared coordinates, signed complex differences, explicit source and subtraction bounds, gated/full-record metrics and immutable reports. The retained initial view and exports reopen without the source datasets. [Causal volumes](docs/CAUSAL_SAM_VOLUMES.md) retain full-depth coherent column responses; existing primary SAM, Gaussian slab, [X-ray comparisons](docs/XRAY_COMPARISONS.md) and [SAM comparisons](docs/ACQUISITION_COMPARISONS.md) remain available.
 
 ![H100 reference specimen in the virtual microscopy workbench, with X-ray transmission, acoustic C-scan and pulse-echo inspection](docs/images/h100-workbench.png)
 
@@ -300,10 +300,14 @@ Run `npm.cmd run verify:causal-volumes` for independent-column HBM acquisition,
 cancel/resume, saved float64 views, numerical certificates, gates and exact export.
 It creates synthetic datasets; run it sequentially with other volume checks.
 
+Run `npm.cmd run verify:causal-comparisons` for compatible saved-source reports,
+signed residuals, bounds, gates, incompatible-source rejection and immutable
+reopening/export. It creates reports from existing recordings, with no acquisition.
+
 The local bump/TSV patch, continuous material paths and both SAM/X-ray recipes,
 batches and saved comparisons are delivered. Standalone causal multilayer RF and
-saved independent-column causal volumes are also available. Next come compatible
-saved causal comparisons and a separately specified finite lateral observation.
+saved independent-column causal volumes and their comparisons are available.
+Next comes a separately specified finite lateral observation.
 GPU cone CT and iterative laminography remain separate future extensions. See
 [EXPANSION_PLAN.md](docs/EXPANSION_PLAN.md) for the sequence and acceptance gates.
 The workbench retains raw SAM RF and X-ray projections alongside derived CT and

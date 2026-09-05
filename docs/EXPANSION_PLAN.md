@@ -79,9 +79,15 @@ columns, exact resolved-stack reuse, float64 real/quadrature/magnitude arrays,
 per-column numerical certificates, resumable row commits, time views and raw
 exports. The observation is explicitly unfocused and lossless; it does not
 inherit primary-echo focus, Gaussian lateral blur, or unique-depth mapping.
-See [CAUSAL_SAM_VOLUMES.md](CAUSAL_SAM_VOLUMES.md). A defined finite lateral
-observation with propagated numerical bounds, causal acquisition comparisons,
-additional material loss assumptions and measured calibration remain extensions.
+See [CAUSAL_SAM_VOLUMES.md](CAUSAL_SAM_VOLUMES.md).
+
+Version 0.14 delivers [compatible saved causal comparisons](CAUSAL_COMPARISONS.md):
+exact source coordinates and excitation/observation checks, signed complex
+residuals, separately propagated source and subtraction bounds, linked time
+inspection, immutable reports and lossless exports. The first controlled HBM
+comparison uses the saved intact and missing-bump recordings without reacquisition.
+A defined finite lateral observation with propagated numerical bounds, additional
+material loss assumptions and measured calibration remain extensions.
 
 ## 1. Correct the specimen and preserve the image evidence
 
@@ -259,7 +265,7 @@ Never silently lower the requested sampling. Offer a smaller ROI, fewer views, s
 | M4 — X-ray projection volume (delivered in 0.4) | Full-angle CPU parallel projector, independent detector/material sampling, source/detector/rotation controls, saved poses and counts/transmission/log/mask arrays, view/sinogram browser | Analytical lengths at 0°, 90° and oblique views; no angle singularities; asymmetric orientation tests; seeded noise statistics, byte-identical resume and preserved legacy SAM datasets |
 | M5 — Reconstruction (CPU baseline delivered in 0.5) | CPU parallel FBP from saved projections, linked spatial slices, filter/bounds controls, coverage masks and source provenance; GPU cone CT and iterative laminography remain future | Independent analytical ellipse scale/orientation, detector-sampling convergence, held-out projection residuals, 180°/360° weighting, invalid/truncated/limited-angle handling, byte-preserving resume and source independence after completion |
 | SAM depth extension (delivered in 0.6) | Declared homogeneous/layered velocity, source-water or explicit surface time, independent RF/envelope mapping, spatial slices, support masks and frozen source provenance | Known reflector depths, velocity/reference sensitivity, layered travel times, nonzero recordings, preserved signed RF/X/Y, out-of-model/record masks, resumable byte-identical data and read-only reopened views |
-| M6 — HBM microstructure (patch 0.7; continuous columns 0.8; SAM comparisons 0.9; X-ray comparisons 0.10; standalone layered acoustics 0.11–0.12; causal ROI 0.13) | Explicit bumps/TSVs/local defects, inspection, continuous material paths, saved SAM/X-ray parameter comparisons, standalone causal multilayer RF and saved independent-column causal ROI delivered; causal comparisons, finite lateral observation and spectrum/detector response follow | Feature/path and sampling sensitivity; surrounding-package contributions preserved; independent analytical comparisons; defect observability reported per instrument/configuration |
+| M6 — HBM microstructure (patch 0.7; continuous columns 0.8; SAM comparisons 0.9; X-ray comparisons 0.10; standalone layered acoustics 0.11–0.12; causal ROI 0.13; causal comparisons 0.14) | Explicit bumps/TSVs/local defects, inspection, continuous material paths, saved SAM/X-ray parameter comparisons, standalone causal multilayer RF, saved independent-column causal ROI and bounded causal residual reports delivered; finite lateral observation and spectrum/detector response follow | Feature/path and sampling sensitivity; surrounding-package contributions preserved; independent analytical comparisons; defect observability reported per instrument/configuration |
 | M7 — Wave physics and calibration | Bounded elastic ROI, measured instrument responses, measured-data import/comparison | Time/grid/domain convergence, interface/transmission/mode checks, matched acquisition geometry, held-out measurement agreement and uncertainty |
 | M8 — Coupled multiphysics | Temperature/deformation/stress fields driving material and geometry updates between acquisitions | First validate one-way coupling and unit/coordinate transfer, then introduce validated feedback loops if the research requires them |
 
@@ -276,12 +282,16 @@ multilayer spectra, Gaussian single-slab RF, and a separately selected causal
 gamma multilayer RF response with numerical error bounds and immutable reports.
 Version 0.13 also implements the first
 [saved causal column-response ROI](CAUSAL_SAM_VOLUMES.md), using explicit identity
-observation and verified typed row/certificate storage. Continue with controlled
-comparisons of compatible saved causal data and a separately defined finite
-lateral observation model. The latter requires complete support and a propagated
-error bound; it cannot silently reuse primary-echo depth focusing. Preserve
-historical data, distinguish excitation/observation changes, and keep ordinary
-unique-depth mapping unavailable for repeated returns.
+observation and verified typed row/certificate storage. Version 0.14 adds controlled
+comparisons of compatible saved causal data with separate source and subtraction
+bounds. Continue with a separately defined finite coherent lateral observation
+model. It requires complete lateral support, explicit stored weights and phase,
+signed complex mixing, and propagated source and arithmetic bounds before taking
+magnitude. An interior derivation from saved data must reject a footprint that
+extends outside its available support; a padded acquisition must compute its full
+context. Neither may silently extend edge values or reuse primary-echo depth
+focusing. Preserve historical data, distinguish excitation/observation changes,
+and keep ordinary unique-depth mapping unavailable for repeated returns.
 
 Then extend richer propagation and acquisition response.
 Extend material data before spectrum controls. Optional GPU/cone/laminography

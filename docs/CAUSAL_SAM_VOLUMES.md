@@ -141,8 +141,9 @@ compression savings are not assumed. A configuration beyond any limit is rejecte
 without dropping columns, layers or echoes, changing its pulse, or relaxing its
 requested numerical tolerance.
 
-Recipes, parameter batches, ordinary SAM comparisons, depth conversion and
-focused observation are not enabled for this new kind. Historical primary SAM,
+Version 0.14 adds a separate [compatible causal comparison](CAUSAL_COMPARISONS.md)
+workflow for these saved sources. Recipes, parameter batches, ordinary SAM
+comparisons, depth conversion and focused observation are not enabled for this kind. Historical primary SAM,
 X-ray, CT/depth data and standalone layered reports retain their established
 contracts. Executed numerical, storage, browser and release evidence is recorded
 in [VERIFICATION.md](VERIFICATION.md).

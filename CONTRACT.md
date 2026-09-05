@@ -388,8 +388,59 @@ samples; its response includes the actual first/last included centers. The
 per-sample certificate is distinct from derived gate statistics.
 
 Numerical views and exports require a completed, verified dataset. Wrong-kind
-legacy views, depth mapping, comparisons, recipes and batches reject this new
-kind until explicitly extended. Export is a `sam-causal-volume-` Zarr ZIP of
+legacy views, depth mapping, ordinary SAM/X-ray comparisons, recipes and batches
+reject this new kind. Version 0.14 adds its separate comparison routes below.
+Export is a `sam-causal-volume-` Zarr ZIP of
 the original typed bytes and frozen manifest. See
 [CAUSAL_SAM_VOLUMES.md](docs/CAUSAL_SAM_VOLUMES.md) for model, resource, time and
 historical-reader conventions.
+
+## Saved causal-volume comparisons (0.14)
+
+- `POST /api/v2/causal-comparisons` accepts strict
+  `{name?,reference_dataset_id,candidate_dataset_id,policy:'same_excitation_v1',gate_start_us,gate_end_us,x_index?,y_index?,time_index?}`
+  and returns an immutable `sam_causal_comparison` report (201). Policy defaults
+  to `same_excitation_v1`; the initial cursor defaults to the source midpoint.
+  Gate bounds must be ordered, lie in the recording and include actual saved
+  centers. Dataset IDs are canonical UUIDs and indices are strict integers.
+- `GET /api/v2/causal-comparisons?limit=50&offset=0` returns
+  `{comparisons,limit,offset,order:'id_desc',next_offset}`. The limit is 1–100,
+  offset 0–9,999 and scan ceiling 10,000 report filenames. Only the requested
+  page is decoded. UUID order is stable, not chronological.
+- `GET /api/v2/causal-comparisons/{id}` and `/export?format=json|csv` return the
+  frozen report. CSV uses `section,field,value_json`, retaining each complete
+  top-level field in a lossless JSON cell, including maps and source manifests.
+- `GET /api/v2/causal-comparisons/{id}/view` without indices returns the frozen
+  initial view without source access. An explicit `x_index`, `y_index` or
+  `time_index` requests a current source-backed view; both source manifest hashes
+  and typed row bytes must still match the frozen report. Its changed cursor does
+  not modify the report, metrics, maps or gate.
+
+Compatibility requires identical typed X/Y/time coordinates, extents, axes,
+units, excitation parameters, time reference, normalization, supported observation
+and certificate semantics, with independent unfocused lossless columns and water
+exteriors. Different twin inputs, represented layer properties, tolerances and
+precision are retained and disclosed. Source-local class IDs are not cross-source
+identities; changed columns are counted using resolved numerical stacks.
+
+The report retains complete source manifests and hashes, compatibility details,
+full-record and gated metrics, peak-magnitude/RMS-real gate maps, an initial
+linked view, provenance and five `[y,x]` bound maps: `source_sum`,
+`complex_arithmetic`, `complex_total`, `envelope_arithmetic`, `envelope_total`.
+Real/imaginary residuals are signed B−A; the envelope residual subtracts the
+separately saved magnitudes. Source sums and subtraction allowances are rounded
+outward using exact represented-input rational arithmetic. Gate statistics and
+summary metrics remain ordinary diagnostics outside these samplewise bounds.
+
+Sources retain their 8 MiB serialized / 32 MiB expanded limits; reports are capped
+at 64 MiB serialized / 192 MiB expanded. All phases also satisfy a conservative
+512 MiB owned-workspace admission bound. Exclusive publication never overwrites
+an existing report. Historical reads and exports require saved integrity, not a
+matching current solver or installed FLINT runtime. New numerical operations
+require the supported binary64 subtraction environment. Encoding occurs under
+the shared processing lock. No endpoint creates acquisition jobs.
+
+Compatibility errors return 422 with `{message,issues}`; other invalid requests
+return 422, missing reports/sources 404 and storage failures 507. See
+[CAUSAL_COMPARISONS.md](docs/CAUSAL_COMPARISONS.md) for exact numerical semantics,
+resource admission, offline reopening and the distinction from measured accuracy.

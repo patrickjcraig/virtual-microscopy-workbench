@@ -198,7 +198,14 @@ with exact resolved-stack reuse, identity observation, original float64 complex
 signals and preserved per-column certificates. The initial raster has nominal
 lossless layers and water exteriors; ordinary depth conversion is rejected for
 repeated returns. Lateral/focused observation, elastic response and measured
-material or instrument calibration remain planned. The linked guides specify
+material or instrument calibration remain planned. Version 0.14 adds
+[saved causal comparisons](CAUSAL_COMPARISONS.md) under exact coordinate and
+excitation/observation compatibility. Signed complex B−A residuals carry separate
+outward-rounded source-bound sums and subtraction allowances. The difference of
+saved magnitudes has its own subtraction bound; it is not the magnitude of the
+complex residual. Full-record/gated metrics and differences of gate statistics
+remain descriptive diagnostics. These operations add no propagation, alignment,
+depth interpretation or experimental calibration. The linked guides specify
 the actual equations and bounds.
 
 Version 0.9 adds controlled acquisition cases and comparisons of saved signals,

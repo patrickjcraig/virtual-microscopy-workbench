@@ -2,6 +2,111 @@
 
 This record concerns the first local implementation in `E:\git\Dissertation`. It establishes software and analytical-model behavior, not experimental imaging accuracy.
 
+## Version 0.14 — compatible saved causal-volume comparisons
+
+The complete Windows suite passed **1,134 tests in 274.15 seconds**, with the
+same two third-party deprecation warnings. The 150 new cases comprise 56
+comparison-arithmetic tests, 72 immutable-store tests and 22 integration/API
+tests. Locked environment synchronization and lock verification passed. The final
+frontend production build passed in 1.18 seconds with the existing main-chunk
+size warning (`web/test-artifacts/v014-production-build.log`). The
+acquisition implementation files used by v0.13 saved-volume fingerprints remain
+unchanged; comparison code lives in separate modules.
+
+Numerical tests exercise signed real/quadrature and independently saved-magnitude
+subtraction, exact outward conversion, normal/subnormal/tie cases, genuine strided
+subtraction, wide-range diagnostic reductions, deterministic maximum locations
+and differences of gated source statistics. An independent finite silicon-slab
+echo oracle checks the paired response against the combined source and subtraction
+bound. Same-source residuals are exactly zero while their conservative source
+bounds remain present. These establish arithmetic and selected-model behavior,
+not measured material or instrument accuracy.
+
+Compatibility tests reject one-ULP differences in each actual coordinate vector,
+changed excitation, unsupported semantics and invalid gates/cursors, while
+retaining allowed tolerance/precision changes. Sources are checked before decode,
+rows rechecked while processing and manifests checked again before publication.
+Resource-limit rejection precedes expensive decode. Corrupt temporary source rows
+are rejected without publishing a report.
+
+Storage/API checks cover bounded finite JSON, decoded expansion, duplicate and
+escaped keys, path isolation, exclusive immutable publication, injected storage
+failures, exact JSON/CSV round trips and page-only catalog decoding. With the
+forward kernel trapped, the API creates comparisons from saved rows and serves
+linked cursor reads. An owned temporary source manifest is then physically
+removed: frozen report read, export and initial view still work, while a new
+cursor correctly fails. No acquisition jobs or source-byte changes occur during
+comparison processing.
+
+A complete native comparison pass succeeded in
+`web/test-artifacts/causal-comparisons-1788633362601/verification.json`. It created
+three reports from existing recordings: the HBM pair, a same-source zero residual
+and a separate wider gate. It exercised all three signal products, shared A/B
+and symmetric residual scales, linked actual-time cursors, both gate maps,
+incompatible pulse and slab rejection, JSON/CSV and original source ZIP downloads,
+reload, the saved-volume comparison entry, legacy-kind isolation and 390 px
+layouts. It recorded zero page errors and zero acquisition-job POSTs, with the
+complete job-catalog hash and both source-manifest hashes unchanged. The source
+unavailability check in this browser pass injects a 404 response; actual removal
+is covered by the owned temporary-source API test above.
+
+The existing saved causal-volume read-only workflow also passed in
+`web/test-artifacts/causal-readonly-1788633469189/verification.json`: two earlier
+sources reopened with unchanged hashes, native ZIP exports and correct scales/time
+views at desktop and 390 px. The job count remained 82 and no processing or
+acquisition POST occurred after the initial main preview. No page errors occurred.
+
+The final `tools/verify_causal_comparison_delivery.py` run passed in **76.86
+seconds**, creating three immutable reports and **zero volume jobs**. Evidence is
+`artifacts/v014-causal-comparison-delivery/verification-report.json` (36 files,
+30,711,303 bytes). It retains exact requests, reports, JSON/CSV exports, changed
+cursor responses, fixture identity checks, helper/oracle fingerprints and
+before/after source/report hashes.
+
+| Delivered comparison | Recording gate | Report ID |
+| --- | --- | --- |
+| HBM6 intact versus missing bump | 0.32–0.40 µs, 65 centers | `6c58620f-f861-4ee7-adc0-1e1a5494e6e8` |
+| HBM6 intact versus itself | 0.32–0.40 µs, 65 centers | `e7f96fb1-3f85-4545-b685-ebb8fa6213fc` |
+| HBM6 intact versus missing bump, full recording | 0–2 µs, 1,601 centers | `865f983d-2e2a-4c11-b084-9219ec222a5d` |
+
+Each source has shape 64 × 32 × 1,601 `[y,x,time]`. Fixture checks establish two
+distinct saved sources, the one intended epoxy-replacement overlay at
+`hbm-6-mb-08-r03-c01`, and otherwise identical twin fields and nominal primitives.
+All 27 sampled columns in its footprint change; all 2,021 outside columns remain
+byte-identical in real, imaginary and saved-magnitude products. The RF maximum
+absolute difference is 0.3151836225, signed negative, at `[42,9,265]` and 0.33125
+µs. The complex residual maximum is 0.3273696743 at `[42,9,264]` and 0.33 µs.
+Whole-record RF and complex RMS differences are 0.0054815497 and 0.0077517212.
+These metrics describe this synthetic controlled change, not detection accuracy.
+
+At the selected target column, the published source-bound sum is
+9.994271648991719e-8, complex subtraction allowance 2.678552354989287e-16 and
+combined complex bound 9.994271675777243e-8. Independent exact-Fraction checks
+cover all 2,048 columns through 8/6/8 verified waveform-and-bound representatives
+for the gated pair, same-source and full-record reports. The same-source
+differences are exactly zero with their conservative bounds retained. Metrics,
+signed maximum locators and gate maps were also checked directly against typed
+source arrays. The slab-pair test exercises an independent analytical response;
+this delivery verifies reductions of the saved data.
+
+Historical JSON/CSV round trips and initial views passed in literal report-only
+temporary roots with source access and current core/forward entry points trapped.
+New cursor reads verified the frozen source identities. Incompatible slab rejection
+left report and job catalogs unchanged. The delivery preserved **all 524 earlier
+delivered dataset files, all six causal volumes, all 19 layered reports and all 31
+preexisting comparison reports**, including the 11 causal reports from native QA.
+All three delivered reports remained unchanged after reads, cursor changes and
+exports; the complete acquisition-job catalog remained unchanged.
+
+Final native reopening of the delivered gated report passed in
+`web/test-artifacts/causal-comparison-delivery-1788633686465/verification.json`.
+The actual recording cursor is `[42,9,265]`; the signed RF residual, 100 MHz
+excitation caption and all five bound rows were inspected at desktop and 390 px.
+The report, source manifests and complete job-catalog hashes remained unchanged,
+with no POST after initial preview and no page errors. The 1,600 × 1,550 screenshot
+at `docs/images/causal-comparison-workspace.png` was inspected directly. It contains
+the running application and synthetic HBM results, not the private reference image.
+
 ## Version 0.13 — saved causal column-response volumes
 
 The complete Windows suite passed **984 tests in 237.77 seconds**, with the same
