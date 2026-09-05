@@ -2,6 +2,95 @@
 
 This record concerns the first local implementation in `E:\git\Dissertation`. It establishes software and analytical-model behavior, not experimental imaging accuracy.
 
+## Version 0.18 — saved SLS material comparisons
+
+The complete local Windows suite passed **1,747 tests in 477.31 seconds**, with
+two existing third-party warnings. The 133 new cases comprise 63 schema/core/math
+tests, 64 storage/API tests and six independent delivery-oracle tests. Evidence:
+`artifacts/v018-final-pytest.log`. Locked dependency checks passed with no new
+dependencies. The exact published commit's Windows/Linux CI evidence is retained
+separately in `artifacts/v018-release-ci.json` and the GitHub Actions run.
+
+Tests cover actual binary64 subtraction including signed zero and subnormals,
+five exact outward bounds, full/gate reductions and locators, frequency-only
+scope, exact represented axes and supported semantics, complete parameter
+differences, source changes, bounded decoding and publication. Historical tests
+remove the originals and block current schemas, producer, material kernels and
+FLINT imports while reading snapshots, exact-index views and JSON/CSV exports.
+Resealed incompatible exteriors/pulses, false gates/cursors/locators, understated
+bounds, incorrect residuals and corrupted nested identities reject. All earlier
+backend files except application version and router registration remain
+byte-identical to v0.17, including every source numerical/schema/proof identity.
+
+Port **8770** runs the frozen backend with its own `artifacts/volumes-v018` root.
+**10,771 prior dataset/report files totaling 535,701,407 bytes** were copied and
+SHA-256 verified, with an online backup of the idle SQLite catalog. Existing
+startup reconciliation changed only 85 `updated_at` values (82 acquisition and
+three observation records). The full post-startup catalog and all earlier files
+remained unchanged during delivery. The private cross-section stayed ignored
+and retained its original hash and provisional approximately 4.6 µm/pixel scale.
+
+Two new standalone source controls were prepared in **1.055 seconds** from
+existing saved reports, preserving every other request field, including names:
+
+- Elastic source: inactive relaxation time **0.02 → 0.04 µs**; equal relaxed and
+  unrelaxed moduli remove the relaxation term algebraically.
+- Dispersive source: unrelaxed longitudinal modulus **4 → 4.5 GPa**; density,
+  relaxed modulus, relaxation time, geometry, exteriors and recording unchanged.
+
+The real native workflow passed in **30.900 seconds**, creating exactly three
+comparisons and no source analyses or acquisition/observation jobs:
+
+| Control | Comparison ID | Selection |
+| --- | --- | --- |
+| Same-source zero | `aa894c30-4ec1-4eb3-aff3-b9556d7f86fd` | Full 161-center record |
+| Elastic inactive tau | `6ae03235-fe94-445c-8e33-a5d67cdfb640` | Full 161-center record |
+| Single modulus | `db9ab91e-3a58-4c1a-811e-a811bccf204a` | 61 centers, 0.15–0.30 µs |
+
+Every source contains 129 frequencies and 161 time centers. Native verification
+checks preflight differences, rejected incompatible sources/gates, exact linked
+frequency/time/material readouts, shared A/B scales, symmetric residual scales,
+five full-record error bounds, immutable gates, complete exports, stale estimates,
+cold history with browser-intercepted unavailable sources/calculation, and 390 px
+layout. The receipt is
+`web/test-artifacts/sls-comparisons-1788650118808/verification.json`.
+The two prepared analyses are distinct from these three comparison publications.
+
+The final frontend build passed in **1.20 seconds**. After a history-title wrap
+correction and accepted parameter-change summary, a **6.081-second read-only**
+pass verified the same final comparison, seven unchanged source/comparison files,
+five unchanged catalog/report routes, complete exports and zero page errors.
+There were zero POSTs after its initial preview. Evidence is
+`web/test-artifacts/sls-comparisons-readonly-1788650413119/verification.json`.
+The [actual screenshot](images/sls-comparison-workspace.png) shows a signed RF
+residual of **0.024591494278974155 at 0.185 µs** for the modulus control.
+
+Independent read-only delivery passed in **52.266 seconds**, creating no reports
+or jobs. It checks all **1,449 reflected component subtractions**, all **3,483
+spectral subtractions**, minimal outward composition of all five RF bounds,
+complete snapshot/JSON/CSV roundtrips and nine exact API cursor views. It then
+compares ideal-model residuals using the separate pressure/velocity transfer and
+de Hoog inverse at actual indices 64, 96, 128 and 160 (0.16, 0.24, 0.32, 0.40 µs).
+Degrees 96 and 128 agree below **3.89e-17**. For the single-modulus control,
+selected complex-residual differences are below **3.07e-12**, and saved-magnitude
+residual differences below **4.78e-12**, against error bounds of approximately
+**9.84e-8**. These are numerical agreement/convergence diagnostics, not an
+independently certified oracle remainder or experimental accuracy.
+
+The final receipt is `artifacts/v018-sls-comparison-delivery-final.json`; it pins
+verification-script and input-receipt hashes. Its first read-only predecessor
+correctly executed the arithmetic checks but accidentally replaced the returned
+bound dictionary with a loop-local scalar when formatting the receipt. That
+verification-tool naming bug was fixed, the six oracle tests were rerun
+successfully, and the complete read-only delivery was repeated into a new file.
+The earlier receipt remains preserved; no production kernel or saved report
+changed. Independent review also strengthened exact-zero sign checks and clarified
+that the published totals bound error in a residual, not its amplitude.
+
+The next preparation is an explicit material-assignment/column-coverage contract.
+The current comparison feature performs no HBM propagation or material calibration.
+See [SLS_COMPARISONS.md](SLS_COMPARISONS.md) for supported semantics and limits.
+
 ## Version 0.17 — standalone scalar SLS materials
 
 The complete Windows suite passed **1,614 tests in 449.73 seconds**, with the

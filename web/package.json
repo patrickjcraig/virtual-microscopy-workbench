@@ -1,6 +1,6 @@
 {
   "name": "virtual-microscopy-workbench",
-  "version": "0.17.0",
+  "version": "0.18.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -28,7 +28,8 @@
     "verify:causal-comparisons": "node scripts/verify-causal-comparisons.mjs",
     "verify:observations": "node scripts/verify-observations.mjs",
     "verify:observation-comparisons": "node scripts/verify-observation-comparisons.mjs",
-    "verify:sls-acoustics": "node scripts/verify-sls-acoustics.mjs"
+    "verify:sls-acoustics": "node scripts/verify-sls-acoustics.mjs",
+    "verify:sls-comparisons": "node scripts/verify-sls-comparisons.mjs"
   },
   "dependencies": {
     "three": "^0.180.0"

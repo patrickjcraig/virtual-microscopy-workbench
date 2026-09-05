@@ -114,10 +114,11 @@ checks establish the computational contract; the assumed material values are
 not measured HBM data. Earlier schemas, acquisition kernels and resume identities
 remain unchanged. The existing constant-loss-plus-delay model is itself causal.
 
-Next add bounded, compatible parameter comparisons of these standalone saved
-reports, with explicit changed material parameters, shared frequency/time axes,
-and separate propagation of reflected-RF bounds. This will support studying the
-new controls before extending material assignments and saved propagation.
+Version 0.18 adds [compatible saved SLS comparisons](SLS_COMPARISONS.md), with
+explicit material differences, exact shared frequency/time axes, complete source
+snapshots and five full-record reflected residual bounds. Spectral and statistical
+products remain ordinary diagnostics. Next define explicit material assignments
+and their validation/resource contracts before extending saved HBM propagation.
 Any material-to-HBM mapping needs an explicit provenance-aware assignment and
 resource contract; do not infer a calibrated relaxation law from one attenuation
 value. Frequency-dependent X-ray spectra and calibrated source/detector effects
@@ -322,8 +323,9 @@ bounds. Versions 0.15–0.16 add the separately defined finite coherent lateral
 observation and its compatible saved comparisons. Their complete support,
 explicit weights/phase, complex mixing and distinct pressure/magnitude bounds
 are documented above. Version 0.17 adds a standalone SLS material law and its
-independent controls. Continue with bounded compatible SLS report comparisons,
-then explicit material assignments before expanding saved propagation. Preserve historical
+independent controls. Version 0.18 adds compatible saved SLS comparisons.
+Next define provenance-aware material assignments and bounded propagation
+contracts before expanding saved propagation. Preserve historical
 data and numerical identities, distinguish excitation/observation changes, and
 keep ordinary unique-depth mapping unavailable for repeated returns.
 

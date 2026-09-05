@@ -528,3 +528,39 @@ It does not cover transmission, calibrated material uncertainty or physical
 resolution. Historical reads/exports use saved structural contracts without
 current material kernels. Limits, proof and workflow are documented in
 [SLS_ACOUSTICS.md](docs/SLS_ACOUSTICS.md).
+
+## Saved scalar SLS comparisons (0.18)
+
+The separate `sls_analysis_comparison` report kind uses `/api/v2/sls-comparisons`:
+POST `/estimate`, POST `/reports` (201), paginated GET `/reports`, GET
+`/reports/{id}`, GET `/reports/{id}/view?frequency_index=...&time_index=...`
+and GET `/reports/{id}/export?format=json|csv`. Immutable JSON files live in
+`sls-comparisons`. No acquisition or forward-material job is created.
+
+Requests specify `reference_report_id`, `candidate_report_id`, `mode`
+(`spectrum_only` or `spectrum_and_reflected_rf`), optional paired inclusive
+`gate_start_us` / `gate_end_us`, and optional initial `frequency_index` /
+`time_index`. RF gates and time cursors are unavailable in spectrum-only mode.
+Comparison admission validates complete original source reports, exact represented
+axes and exterior/excitation/phase/reference-plane/model semantics. Allowed
+material and numerical-setting differences remain explicit; no automatic layer
+correspondence, alignment, scaling or resampling occurs.
+
+`source_snapshots` retains complete source reports keyed by their canonical
+content digests. `source_reference` and `source_candidate` refer to those entries;
+self-comparisons deduplicate. `spectrum.difference` and optional
+`causal_pulse.difference` contain signed B-minus-A residuals. Source A/B arrays
+remain in snapshots, with no duplicate view copies. RF `bounds` contains
+`source_sum`, `complex_arithmetic`, `complex_total`, `magnitude_arithmetic`
+and `magnitude_total`; both totals enclose their already published components.
+These full-record bounds concern reflected model residuals, including the
+difference of separately saved magnitudes. Spectral and statistical products
+are ordinary diagnostics. Gates never tighten the numerical bounds.
+
+Historical report, cursor and export operations validate frozen snapshots and
+comparison identity without the original source files or current model kernels.
+The comparison retains its own `store_identity` in addition to complete source
+identities. Serialized/expanded comparison ceilings are 32/128 MiB, within a
+512 MiB owned-workspace admission; source manifests remain bounded to 16/64 MiB.
+Publication is exclusive and atomic. See [SLS_COMPARISONS.md](docs/SLS_COMPARISONS.md)
+for the workflow, exact outward bound composition and evidence limits.

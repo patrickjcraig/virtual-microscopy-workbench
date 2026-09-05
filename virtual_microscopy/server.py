@@ -180,6 +180,8 @@ app.include_router(observation_comparison_router)
 app.include_router(layered_router)
 from .sls_api import router as sls_router
 app.include_router(sls_router)
+from .sls_comparison_api import router as sls_comparison_router
+app.include_router(sls_comparison_router)
 
 dist = ROOT / "web" / "dist"
 if dist.is_dir():

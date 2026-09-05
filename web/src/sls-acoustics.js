@@ -21,7 +21,7 @@ const range=(arrays,{zero=false}={})=>{let low=zero?0:Infinity,high=zero?0:-Infi
 // Retain the workbench's instrument palette and prioritize the reflected trace
 // with its certificate. Material and scattering curves are separate diagnostics.
 export class SLSAcousticsWorkspace {
-  constructor({request}){
+  constructor({request,onCompare}){
     this.request=request;this.stack=slab();this.selected=0;this.frequencyIndex=0;this.timeIndex=0;this.materialIndex=0;this.reports=[];this.generation=0;
     document.body.insertAdjacentHTML('beforeend',`
       <dialog id="sls-dialog" aria-labelledby="sls-title"><header class="sls-header"><div><h2 id="sls-title">Scalar SLS acoustics</h2><p>Single-relaxation longitudinal layers with coupled attenuation and dispersion.</p></div><button id="sls-close" aria-label="Close scalar SLS acoustics">✕</button></header>
@@ -47,6 +47,7 @@ export class SLSAcousticsWorkspace {
         <label for="sls-material">Saved material layer<select id="sls-material"></select></label><p id="sls-material-summary" class="sls-hint"></p><div class="sls-material-grid">${plot('attenuation','Pressure attenuation (derived)')}${plot('speed','Phase speed (derived)')}${plot('impedance','Complex longitudinal impedance (derived)')}</div><p id="sls-material-readout" class="sls-readout"></p>
         <div class="sls-plot-grid">${plot('reflection','Full-stack pressure reflection')}${plot('transmission','Full-stack pressure transmission')}${plot('phase','Wrapped coefficient phase')}${plot('energy','Real-exterior energy fractions')}</div><div class="sls-actions"><label for="sls-phase-product">Phase coefficient<select id="sls-phase-product"><option value="reflection">Reflection</option><option value="transmission">Transmission</option></select></label></div><p id="sls-frequency-readout" class="sls-readout"></p><div id="sls-frequency-values" class="sls-values"></div>
       </details><details id="sls-evidence"><summary>Frozen inputs, model identities and numerical diagnostics</summary><pre id="sls-evidence-json"></pre></details></section></main></div></dialog>`);
+    if(onCompare){const button=document.createElement('button');button.id='sls-compare';button.className='small';button.textContent='Compare saved analysis';button.onclick=()=>{if(this.report){const id=idOf(this.report);$('dialog').close();onCompare(id);}};$('json').parentElement.append(button);}
     $('terminal-speed').readOnly=true;$('terminal-speed').setAttribute('aria-label','Terminal speed (m/s), metadata not used by this response');$('terminal-speed').title='Retained medium metadata; not used by this response.';
     $('close').onclick=()=>$('dialog').close();$('dialog').onclose=()=>{this.estimateController?.abort();this.reportController?.abort();this.catalogController?.abort();this.generation++;};
     $('slab').onclick=()=>this.preset(false);$('two-layer').onclick=()=>this.preset(true);

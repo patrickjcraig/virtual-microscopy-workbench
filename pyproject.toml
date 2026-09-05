@@ -1,6 +1,6 @@
 [project]
 name = "virtual-microscopy"
-version = "0.17.0"
+version = "0.18.0"
 description = "Shared digital-twin X-ray and scanning acoustic microscopy workbench"
 requires-python = ">=3.12,<3.15"
 dependencies = [
