@@ -12,3 +12,7 @@
 @media(max-width:650px){#hbm-dialog{width:calc(100vw - 16px)}.hbm-layout{grid-template-columns:1fr}.hbm-feature-controls{grid-template-columns:110px minmax(0,1fr)}.hbm-micro-panel .hbm-fields{grid-template-columns:1fr 1fr}.hbm-inspect-actions .small{font-size:10px}.microstructure-focus .scene-overline span:last-child{max-width:215px}.view-toolbar{flex-wrap:wrap;justify-content:flex-end}}
 
 .twin-panel:has(.microstructure-focus) .twin-body{height:480px}.hbm-micro-panel textarea{font-family:inherit}@media(max-width:590px){.twin-panel:has(.microstructure-focus) .twin-body{height:430px}}
+
+.path-choice select{font-size:10px}.path-angle-error{font-size:10px;line-height:1.6;color:#9e3333;padding-left:8px;border-left:2px solid #c56f61}.path-angle-error[hidden]{display:none}#depth-samples:disabled{background:#edf2f7;color:#697c91;cursor:default}#depth-samples-state{font-weight:400;color:#687d92}.instrument-footer #result-details{line-height:1.6;max-width:calc(100% - 155px)}@media(max-width:1120px){.instrument-footer #result-details{max-width:none}}
+
+#hbm-scan-continuous-roi[hidden]{display:none}#hbm-scan-continuous-roi{background:#eaf4f7;border-color:#aac6d2;color:#285b77}

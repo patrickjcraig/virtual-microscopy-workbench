@@ -115,6 +115,18 @@ controls, defect semantics, numerical checks and current limits.
 
 The supplied reference has a provisional user estimate of approximately 4.6 µm/pixel, with unconfirmed instrument calibration and resizing history. The app only shows the local image when its SHA-256 matches the imported twin's reference. Clones without that image retain all editing and simulation features.
 
+**New in 0.8: continuous material paths.** Main previews and saved SAM now offer
+an explicit continuous-column alternative to voxel-center paths. It integrates
+the authored vertical material intervals without a Z voxel grid, preserving full
+specimen depth, lateral response context, signed RF and frozen provenance. The
+Z-sample value stays in the recipe but is visibly inactive in this mode.
+Continuous previews require 0° X-ray incidence; saved full-angle X-ray projections
+retain their existing projector. The HBM editor offers an explicit larger preview
+ROI when the compact patch exceeds resource limits. See
+[COLUMN_PATHS.md](docs/COLUMN_PATHS.md) for controls, recording examples and limits.
+
+![Continuous normal-incidence HBM6 acquisition with explicit method and displayed signal scales](docs/images/continuous-hbm-workspace.png)
+
 ## Numerical exports and headless execution
 
 **SAM depth estimates (0.6 onward).** Open **SAM depth** and select a completed
@@ -230,11 +242,15 @@ Run `npm.cmd run verify:microstructure` for patch editing, defect sections,
 close viewing, fine ROI preview and saved acoustic acquisition. Set
 `MICROSCOPY_URL` when using a server port other than 8765.
 
-The first local bump/TSV patch is delivered. The next work improves material-path
-sampling and repeatable parameter comparisons before richer propagation models.
+Run `npm.cmd run verify:continuous-paths` for explicit method selection, inactive
+Z settings, saved continuous RF, historical data, and the larger HBM preview ROI.
+
+The local bump/TSV patch and continuous material paths are delivered. The next
+work adds saved-SAM recipes, bounded cases and repeatable comparisons before
+richer propagation models.
 GPU cone CT and iterative laminography remain separate future extensions. See
 [EXPANSION_PLAN.md](docs/EXPANSION_PLAN.md) for the sequence and acceptance gates.
-Version 0.7 retains raw SAM RF and X-ray projections alongside derived CT and
+Version 0.8 retains raw SAM RF and X-ray projections alongside derived CT and
 SAM depth volumes.
 
 The implementation is separated into `virtual_microscopy/physics.py` and `materials.py`, strict schemas and local API, `web/` UI, reproducible example geometry, and tests. This leaves room for higher-fidelity solvers and CAD/voxel import while keeping the current demo runnable.

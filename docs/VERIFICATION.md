@@ -2,6 +2,106 @@
 
 This record concerns the first local implementation in `E:\git\Dissertation`. It establishes software and analytical-model behavior, not experimental imaging accuracy.
 
+## Version 0.8 — continuous normal-incidence paths
+
+The complete Windows suite passed **480 tests in 105.03 seconds**, with the same
+two third-party deprecation warnings. The 82 new cases comprise 27 continuous
+geometry/integral tests, 23 saved/preview numerical tests, 24 path-contract and
+historical-data tests, and eight saved-lifecycle/API tests. Locked environment
+synchronization and the final production frontend build pass.
+
+Independent geometry tests cover box/cylinder intervals, sphere chords and
+tangency, clipped full-depth paths, ordered overlap, equal-material coalescing,
+nontransitive endpoint coincidence and ambiguous tiny-intersection rejection.
+Scalar tests independently compute signed reflection, material travel times,
+transmission/loss/focus, a non-grid-aligned 15 µm film and explicit air/water
+behavior. Pulse tests cover the declared discrete fractional-delay law, record
+edges, full preview time traces, halo-only features, translated ROI placement,
+seeded X-ray noise, inactive-Z invariance and allocation rejection.
+
+Read-only review found and fixed a one-ULP coordinate provenance defect. For an
+ordinary decimal ROI, recomputing a saved X coordinate from the unpadded origin
+gave 0.38515625 mm while its calculated path used 0.38515625000000003 mm. A box
+ending at the former coordinate classified the two columns differently. Saved
+axes now copy the exact padded-coordinate slices used by geometry; the boundary
+counterexample is a regression. Preview/probe coordinates are independently
+checked against those same sampled vectors. Instrumentation also confirmed that
+actual cumulative candidate/event work equals the published preflight counts for
+saved, full-preview and probe paths, including preparation and repeated halos.
+
+Lifecycle tests acquire real continuous arrays, cancel during preparation and
+after a committed tile, resume exactly, repair missing/corrupt chunks while
+preserving good chunks, and reject changed methods, source identity or estimates
+before signal writes. Two actual API acquisitions with inactive Z counts 128 and
+1,024 have different frozen request hashes and identical RF/envelope/coordinates.
+Views, post hoc gates, exports and restart/reopen preserve stored data. Completed
+legacy records without a path field remain readable under a changed solver.
+
+The standalone `tools/verify_continuous_hbm.py` experiment retains complete signed
+RF/envelope arrays and frozen inputs for a 0.12 × 0.18 mm HBM6 ROI, 64 × 64 raster,
+100 MHz carrier, 0.5 fractional bandwidth, 800 MHz sampling, 0.2–0.7 µs record,
+0.55 mm focus and zero external water standoff. Results are local in
+`artifacts/v08-hbm-independent-final/`:
+
+| Numerical comparison | Executed result |
+| --- | --- |
+| Continuous Z setting 128 versus 1,024 | All RF/envelope/XY/time arrays exactly identical; request hashes differ |
+| Voxel RF at 256 / 512 / 1,024 Z planes versus continuous RF | 189.40% / 73.56% / 30.76% relative L2 difference |
+| Continuous missing gap-8, row-3, column-2 bump | 5.082% RF relative L2 difference; max RF 0.013328, envelope 0.011491 in relative units |
+| 32² versus 64² raster at the fixed physical probe | 1.506% RF relative L2 difference, using declared bilinear interpolation |
+| 800 versus 1,600 MHz RF sampling on the 32² raster | 0.220% RF relative L2 difference at shared saved times |
+| Continuous X-ray optical depth versus independent ordered-ray oracle | Maximum absolute difference 8.89 × 10⁻¹⁶ over nine rays for each intact/defect case |
+
+These are differences among numerical configurations under common assumed
+materials and propagation. The continuous path equations remove vertical
+voxel-boundary quantization for the supported primitives; neither two-grid
+sensitivity nor exact Z-setting invariance establishes convergence of all
+sampling choices, physical resolution or experimental defect detectability.
+The X-ray oracle uses a separate midpoint-interval implementation and was
+established against analytical slabs in the preceding release.
+
+The continuous intact 64² recording took **8.343 seconds** in one fresh process,
+with **234,946,560 bytes** observed peak working set, versus **2.116 seconds** and
+**269,238,272 bytes** for the 1,024-plane voxel recording. Numerical admission
+estimates 284,614,216 bytes for the continuous case, with eight-row tiles,
+30,614,864 candidate tests, 18,860,768 event-work units and 18,649,664 RF cells.
+Process peaks include interpreter and retained validation arrays; estimates have
+a different numerical scope. These observations are not performance guarantees.
+
+The compact 0.125 × 0.175 mm HBM preview is rejected under continuous combined
+workspace limits. The explicitly chosen **0.15 × 0.25 mm** preview is admitted
+at **530,295,424 estimated bytes**, with 15-row cores and the full finite A/B
+record. No ROI, method, angle or sampling request is silently changed.
+
+Native Chrome `verify:continuous-paths` passed method selection, rejected tilt,
+inactive-Z equality, explicit larger HBM ROI, saved signed RF, post hoc gates,
+download/reload, imported/exported choices, historical read-only export and
+390-pixel layouts. It caught a compact-catalog method label being defaulted after
+the request was stripped; catalog summaries now preserve the frozen method and
+have separate regressions. Existing `verify:h100` and `verify:volumes` passed
+sequentially. No uncaught browser page errors occurred in the passing flows.
+The [workspace screenshot](images/continuous-hbm-workspace.png) contains generated
+geometry/signals only; its broad-gate C-scan is weak-contrast on the visibly fixed
+0–0.50 display window, without hidden normalization.
+
+Two delivered continuous datasets are saved in the active local catalog:
+
+| Case | Dataset ID | ZIP bytes |
+| --- | --- | ---: |
+| H100 HBM6 / continuous intact | `912a631d-6432-4faa-8323-a3118812ad51` | 6,260,717 |
+| H100 HBM6 / continuous missing gap8 r3 c2 | `18c32ae0-059c-4fc8-b6e2-6ab0d307567d` | 9,643,565 |
+
+Each contains 64 × 64 × 401 RF/envelope samples and **13,144,200 uncompressed
+array/coordinate bytes** under the protocol above. All committed chunks,
+coordinate hashes and ZIP CRCs verify. Every array and coordinate is exactly
+equal to its corresponding offline experiment file. Reopened API traces match
+all 401 saved samples; views and exports leave all dataset files byte-identical.
+Additional completed SAM, projection, CT and depth examples pass integrity
+verification with current code. The paired preview uses the separately declared
+larger ROI and has maximum transmission difference 0.009541 after the normal
+detector response with noise disabled. Archives, preview snapshots and reports
+remain outside Git in `artifacts/v08-hbm6-delivery/`; no measured image is included.
+
 ## Version 0.7 — explicit HBM bumps, TSVs and local defects
 
 The complete Windows suite passed **398 tests in 87.76 seconds**, with the same

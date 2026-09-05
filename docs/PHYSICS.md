@@ -45,6 +45,16 @@ experiments are described in [HBM microstructure](HBM_MICROSTRUCTURE.md).
 Fine voxel spacing is not sufficient evidence of convergence: discrete layer
 boundaries can move between grids and substantially change coherent RF phase.
 
+Version 0.8 adds opt-in `continuous_columns_v1` for saved SAM and zero-angle
+previews. It replaces only the vertical voxel-center material paths with ordered
+primitive intervals and continuous interface depths. Existing scalar reflection,
+transmission, loss, focus, pulse and lateral Gaussian response remain. Sphere
+chords are geometrically continuous, while normal-incidence reflection at a
+curved surface remains an approximation. No acquisition Z grid is used in this
+mode; finite lateral and RF sampling and material uncertainty still apply.
+The interface policy, resource limits and measured numerical comparisons are in
+[COLUMN_PATHS.md](COLUMN_PATHS.md) and [VERIFICATION.md](VERIFICATION.md).
+
 The v1 JSON twin contains a bounded volume and ordered boxes, spheres and vertical cylinders. Object positions and full extents use **millimetres**. The x axis points right, y increases down the image and z increases from the specimen top into its thickness. Later objects replace earlier objects wherever they overlap. A void is therefore an air object placed after the solid it removes. Excluding defects skips objects with `role: "defect"`, exposing the underlying structures.
 
 This is a material geometry model, not an electrical netlist or automatic CAD interpretation. Silicon, copper, solder, epoxy, FR4 and air labels select fixed property presets. Primitive geometry is sampled onto a finite material grid for the forward calculation. Features smaller than grid spacing can disappear, change apparent thickness or shift when the grid changes. The 3D viewer can show a thin primitive even when the acquisition grid cannot represent it reliably.

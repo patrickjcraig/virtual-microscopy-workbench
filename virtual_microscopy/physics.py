@@ -368,6 +368,9 @@ def _image_result(image: np.ndarray, unit: str, extent) -> dict:
 
 def simulate(twin: dict, settings: dict) -> dict:
     """Compute both registered modalities from a validated twin and settings."""
+    if settings.get("path_model", "voxel_centers_v1") == "continuous_columns_v1":
+        from .continuous_preview import continuous_preview
+        return continuous_preview(twin, settings)
     start = perf_counter()
     grid = acquisition_grid(twin, settings)
     xray = project_xray(grid, settings["energy_kev"], settings["angle_deg"],
@@ -421,6 +424,9 @@ def simulate(twin: dict, settings: dict) -> dict:
 
 def probe(twin: dict, settings: dict) -> dict:
     """Synthesize a local RF strip for linked A/B inspection without a full Cscan."""
+    if settings.get("path_model", "voxel_centers_v1") == "continuous_columns_v1":
+        from .continuous_preview import continuous_preview
+        return continuous_preview(twin, settings, full_image=False)
     grid = acquisition_grid(twin, settings)
     sam = _sam_signals(grid, settings, full_image=False)
     return {"ascan": sam["ascan"], "bscan": sam["bscan"]}

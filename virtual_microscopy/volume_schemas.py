@@ -4,10 +4,11 @@ from typing import Literal
 
 from pydantic import Field, model_validator
 
-from .schemas import Coordinate, StrictModel, Twin
+from .schemas import Coordinate, PathModel, StrictModel, Twin
 
 
 class SamVolumeSettings(StrictModel):
+    path_model: PathModel = "voxel_centers_v1"
     scan_nx: int = Field(default=64, ge=16, le=256, strict=True)
     scan_ny: int = Field(default=64, ge=16, le=256, strict=True)
     depth_samples: Literal[128, 256, 512, 1024] = 512

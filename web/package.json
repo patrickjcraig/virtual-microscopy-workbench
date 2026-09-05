@@ -1,6 +1,6 @@
 {
   "name": "virtual-microscopy-workbench",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -18,7 +18,8 @@
     "verify:reconstruction-jobs": "node scripts/verify-reconstruction-jobs.mjs",
     "verify:depth": "node scripts/verify-depth.mjs",
     "verify:depth-jobs": "node scripts/verify-depth-jobs.mjs",
-    "verify:microstructure": "node scripts/verify-microstructure.mjs"
+    "verify:microstructure": "node scripts/verify-microstructure.mjs",
+    "verify:continuous-paths": "node scripts/verify-continuous-paths.mjs"
   },
   "dependencies": {
     "three": "^0.180.0"

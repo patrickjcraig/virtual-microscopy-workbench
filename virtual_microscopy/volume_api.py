@@ -87,6 +87,9 @@ def public_manifest(manifest):
             result.setdefault("angles_range_deg", [start, start + (result["shape"][0]-1) * acquisition["angle_span_deg"] / result["shape"][0]])
         return result
     roi = acquisition.get("roi_mm")
+    # Describe legacy acquisitions without normalizing or rewriting their
+    # frozen request. A new default must never change historical input hashes.
+    result.setdefault("path_model", acquisition.get("path_model", "voxel_centers_v1"))
     size = twin.get("size_mm")
     if size:
         result.setdefault("extent_mm", [roi[0], roi[2], roi[1], roi[3]] if roi else [0, size[0], 0, size[1]])

@@ -1,6 +1,6 @@
 # Next increment: continuous normal-incidence material columns
 
-**Status: proposed next autonomous build loop, prepared 4 September 2026 against the v0.7 implementation. No continuous-column backend described here is implemented or validated.** This specification defines an opt-in numerical alternative to the existing voxel-center paths; it is not a new experimental accuracy claim.
+**Status: first implementation delivered in version 0.8.** This original design was prepared against v0.7; its proposed criteria and rationale remain below. See [COLUMN_PATHS.md](COLUMN_PATHS.md) for implemented behavior and [VERIFICATION.md](VERIFICATION.md) for executed checks. This numerical alternative is not an experimental accuracy claim.
 
 ## Deliverable and reason for the change
 

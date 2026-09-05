@@ -152,8 +152,7 @@ synthetic cases is not evidence of experimental defect detectability. See
 [VERIFICATION.md](VERIFICATION.md) for executed results and
 [PHYSICS.md](PHYSICS.md) for model equations and material provenance.
 
-The next planned numerical increment is described in
-[COLUMN_PATH_SPEC.md](COLUMN_PATH_SPEC.md). It is an explicit proposal to remove
-vertical voxel-center boundary quantization for supported normal-incidence
-paths, while preserving the current solver for comparison. It is not part of
-the 0.7 implementation.
+Version 0.8 adds the opt-in [continuous material-path method](COLUMN_PATHS.md)
+to address vertical voxel-center boundary quantization for supported
+normal-incidence paths. The original voxel solver remains available for
+comparison; the patch dimensions and reduced-order propagation remain assumed.

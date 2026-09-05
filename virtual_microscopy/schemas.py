@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, HttpUrl, model_validator
 Positive = Annotated[float, Field(gt=0, le=100, allow_inf_nan=False)]
 Coordinate = Annotated[float, Field(ge=0, le=100, allow_inf_nan=False)]
 MaterialId = Literal["silicon", "copper", "solder", "epoxy", "fr4", "air"]
+PathModel = Literal["voxel_centers_v1", "continuous_columns_v1"]
 
 
 class StrictModel(BaseModel):
@@ -36,6 +37,7 @@ class Primitive(StrictModel):
 
 
 class Settings(StrictModel):
+    path_model: PathModel = "voxel_centers_v1"
     resolution: Literal[64, 128, 192] = 128
     depth_samples: Literal[128, 256, 512, 1024] | None = None
     roi_mm: tuple[Coordinate, Coordinate, Coordinate, Coordinate] | None = None
@@ -56,6 +58,8 @@ class Settings(StrictModel):
     def check_gate(self):
         if self.gate_end_us <= self.gate_start_us:
             raise ValueError("Gate end must be greater than gate start.")
+        if self.path_model == "continuous_columns_v1" and self.angle_deg != 0:
+            raise ValueError("Continuous-column X-ray previews require 0° incidence. Choose voxel-center paths for tilted previews.")
         if self.roi_mm is not None:
             x0, y0, x1, y1 = self.roi_mm
             if x1 - x0 < 0.05 or y1 - y0 < 0.05:

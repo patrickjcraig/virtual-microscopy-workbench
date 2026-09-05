@@ -27,6 +27,12 @@ fine full-depth ROI previews and saved SAM signals. See
 retain the broader expansion design; the milestone table distinguishes shipped
 baselines from future fidelity work.
 
+Version 0.8 delivers the opt-in continuous normal-incidence material-path
+increment for preview and saved SAM. It removes vertical voxel-center boundary
+quantization for the authored primitives, retains the full specimen and lateral
+halos, and preserves the original voxel method and immutable historical data.
+See [COLUMN_PATHS.md](COLUMN_PATHS.md) for implementation and limitations.
+
 Implementation loops now continue without waiting for another user prompt.
 Each loop must finish a bounded working increment, exercise its numerical and
 browser behavior, update these records, and publish verified code to the existing
@@ -209,7 +215,7 @@ Never silently lower the requested sampling. Offer a smaller ROI, fewer views, s
 | M4 — X-ray projection volume (delivered in 0.4) | Full-angle CPU parallel projector, independent detector/material sampling, source/detector/rotation controls, saved poses and counts/transmission/log/mask arrays, view/sinogram browser | Analytical lengths at 0°, 90° and oblique views; no angle singularities; asymmetric orientation tests; seeded noise statistics, byte-identical resume and preserved legacy SAM datasets |
 | M5 — Reconstruction (CPU baseline delivered in 0.5) | CPU parallel FBP from saved projections, linked spatial slices, filter/bounds controls, coverage masks and source provenance; GPU cone CT and iterative laminography remain future | Independent analytical ellipse scale/orientation, detector-sampling convergence, held-out projection residuals, 180°/360° weighting, invalid/truncated/limited-angle handling, byte-preserving resume and source independence after completion |
 | SAM depth extension (delivered in 0.6) | Declared homogeneous/layered velocity, source-water or explicit surface time, independent RF/envelope mapping, spatial slices, support masks and frozen source provenance | Known reflector depths, velocity/reference sensitivity, layered travel times, nonzero recordings, preserved signed RF/X/Y, out-of-model/record masks, resumable byte-identical data and read-only reopened views |
-| M6 — HBM microstructure (first patch delivered in 0.7) | Explicit local bumps/TSVs/defects and inspection delivered; improved path sampling, layered acoustic echoes, spectrum/detector response and parameter sweeps follow | Feature/mesh sensitivity; surrounding-package contributions preserved; analytical or independent layered-wave comparisons; defect observability reported per instrument/configuration |
+| M6 — HBM microstructure (patch in 0.7; continuous columns in 0.8) | Explicit bumps/TSVs/local defects, inspection and continuous normal-incidence material paths delivered; parameter comparisons, layered acoustic echoes and spectrum/detector response follow | Feature/path and sampling sensitivity; surrounding-package contributions preserved; independent analytical comparisons; defect observability reported per instrument/configuration |
 | M7 — Wave physics and calibration | Bounded elastic ROI, measured instrument responses, measured-data import/comparison | Time/grid/domain convergence, interface/transmission/mode checks, matched acquisition geometry, held-out measurement agreement and uncertainty |
 | M8 — Coupled multiphysics | Temperature/deformation/stress fields driving material and geometry updates between acquisitions | First validate one-way coupling and unit/coordinate transfer, then introduce validated feedback loops if the research requires them |
 
@@ -219,22 +225,20 @@ Keep the existing regression suite, then add tests that measure the new scientif
 
 ## Recommended next release
 
-The first M1–M5 increments, SAM depth extension, and bounded M6 bump/TSV patch
-are delivered. The microstructure grid study exposes substantial voxel-center
-phase sensitivity in SAM, so the next loop should first improve and independently
-validate material-path timing for the existing normal-incidence model. A bounded
-continuous column-intersection path for selected fine ROIs is a candidate; retain
-the current solver as an explicit comparison and preserve immutable historic data.
-Do not label the current 1,024-depth grid converged merely because it is finest.
-The proposed [continuous-column specification](COLUMN_PATH_SPEC.md) defines
-the opt-in contract, ordered geometry, resource limits and independent acceptance
-tests for the next autonomous loop. That backend is not implemented in 0.7.
+The first M1–M5 increments, SAM depth extension, bounded M6 bump/TSV patch and
+continuous-column numerical method are delivered. The next loop is
+[saved-SAM recipes and acquisition comparisons](ACQUISITION_COMPARISONS_SPEC.md):
+two to four explicit cases, per-case and batch resource admission, immutable
+batch/case identity, existing-worker execution and comparisons from retained
+signed RF/envelope data. Keep shared coordinates and time references explicit;
+do not silently align, normalize, resample or reacquire historical recordings.
+That next-loop specification is planned, not implemented in 0.8.
 
-Then add reproducible parameter sweeps with frozen geometry, per-case resource
-admission and comparison of signed RF, envelopes and X-ray transmission. Richer
-propagation follows those numerical foundations. Extend material data before
-spectrum controls. Optional GPU/cone/laminography backends and refined all-angle
-local X-ray integration remain separate extensions. Reuse job, provenance and
-dataset foundations throughout.
+Then extend acquisition comparisons to X-ray transmission and richer propagation.
+Extend material data before spectrum controls. Optional GPU/cone/laminography
+backends and refined all-angle local X-ray integration remain separate extensions.
+Reuse job, provenance and dataset foundations throughout. Continuous vertical
+geometry does not establish convergence of lateral sampling, RF sampling or
+omitted wave physics, and no numerical method certifies experimental resolution.
 
 Before assigning specimen-specific dimensions, resolve the original image scale/resizing history, image type and orientation, H100 revision, HBM vendor/stack construction and instrument settings as information becomes available. Those unknowns do not block the architecture, generic generators or synthetic volume work.

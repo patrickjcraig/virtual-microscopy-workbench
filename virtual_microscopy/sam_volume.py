@@ -135,6 +135,9 @@ complex FFT/filter workspace, output copies and an additional 16 MiB allowance.
 It excludes interpreter, HTTP and disk compression implementation overhead.
 """
     request = _validated(request)
+    if getattr(request.acquisition, "path_model", "voxel_centers_v1") == "continuous_columns_v1":
+        from .continuous_sam import estimate_continuous_sam
+        return estimate_continuous_sam(request)
     a, p = request.acquisition, _layout(request)
     nt, nx, ny = p["nt"], p["nx"], p["ny"]
     if nt > MAX_TIME_SAMPLES:
@@ -213,6 +216,9 @@ It excludes interpreter, HTTP and disk compression implementation overhead.
 
 def prepare_sam(request: SamVolumeRequest | dict) -> PreparedSamVolume:
     request = _validated(request)
+    if getattr(request.acquisition, "path_model", "voxel_centers_v1") == "continuous_columns_v1":
+        from .continuous_sam import prepare_continuous_sam
+        return prepare_continuous_sam(request)
     estimate = estimate_sam(request)
     a, p = request.acquisition, _layout(request)
     grid = voxelize(request.twin.model_dump(mode="json"), (a.scan_nx, a.scan_ny),
@@ -252,6 +258,10 @@ def iter_sam_tiles(prepared: PreparedSamVolume, start_row: int = 0):
     Each tile includes the exact scipy Gaussian support from its neighboring
     geometry rows. No whole-volume echo list or complex RF cube is allocated.
     """
+    if getattr(prepared.request.acquisition, "path_model", "voxel_centers_v1") == "continuous_columns_v1":
+        from .continuous_sam import iter_continuous_sam_tiles
+        yield from iter_continuous_sam_tiles(prepared, start_row)
+        return
     a, grid = prepared.request.acquisition, prepared.grid
     p = _layout(prepared.request)
     chunk = prepared.estimate["tile_rows"]

@@ -487,9 +487,12 @@ class VolumeJobManager:
         for job in self.list_jobs():
             try:
                 manifest = self.store.manifest(job["dataset_id"])
-                result.append({**job, "complete": manifest["complete"], "shape": manifest["shape"],
-                               "axis_order": manifest["axis_order"], "input_sha256": manifest["input_sha256"],
-                               "evidence_status": manifest["evidence_status"]})
+                summary = {**job, "complete": manifest["complete"], "shape": manifest["shape"],
+                           "axis_order": manifest["axis_order"], "input_sha256": manifest["input_sha256"],
+                           "evidence_status": manifest["evidence_status"]}
+                if manifest.get("kind", "sam_rf_volume") == "sam_rf_volume":
+                    summary["path_model"] = manifest["request"].get("acquisition", {}).get("path_model", "voxel_centers_v1")
+                result.append(summary)
             except (KeyError, OSError, ValueError):
                 continue
         return result

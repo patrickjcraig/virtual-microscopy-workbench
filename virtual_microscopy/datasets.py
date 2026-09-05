@@ -163,6 +163,8 @@ def solver_identity(model_version: str, kind: str = "sam_rf_volume") -> dict:
     source_hashes = {}
     if kind == "sam_rf_volume":
         filenames = ("sam_volume.py", "volume_schemas.py", "physics.py", "schemas.py", "hbm.py", "materials.py")
+        if model_version.startswith("sam-continuous-columns-"):
+            filenames += ("column_paths.py", "continuous_sam.py")
     elif kind == "xray_projection_volume":
         filenames = ("xray_volume.py", "xray_schemas.py", "physics.py", "schemas.py", "hbm.py", "materials.py")
     elif kind == "xray_reconstruction":

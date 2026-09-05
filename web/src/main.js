@@ -2,6 +2,7 @@ import './style.css';
 import { TwinViewer } from './scene.js';
 import { mapPlot, ascanPlot, bscanPlot, pointFromEvent } from './plots.js';
 import { HBMEditor } from './hbm.js';
+import { VOXEL_PATHS,CONTINUOUS_PATHS,pathModelLabel,pathModelOptions } from './path-model.js';
 import { VolumeWorkspace } from './volumes.js';
 
 const icons = {
@@ -50,7 +51,7 @@ app.innerHTML = `
           <div class="field"><div class="field-top"><label for="gate-start">Time gate</label><span class="range-limits">µs from top plane</span></div><div class="gate-inputs"><input id="gate-start" type="number" aria-label="Time gate start in microseconds" min="0" max="10" step="0.01" value="0.42"/><span>to</span><input id="gate-end" type="number" aria-label="Time gate end in microseconds" min="0.01" max="12" step="0.01" value="0.56"/></div><p class="gate-hint" id="gate-hint">Die-attach inspection gate</p></div>
           <div class="field"><div class="field-top"><label for="focus">Focal depth</label><output for="focus" id="focus-value">0.50 mm</output></div><input id="focus" type="range" min="0" max="1.9" step="0.01" value="0.5"/><div class="range-limits"><span>Top surface</span><span id="depth-max">1.90 mm</span></div></div>
         </section>
-        <section class="control-section acquisition-controls"><h2 class="section-heading">${icon('sliders')}Acquisition</h2><div class="field"><label for="resolution">Lateral sampling grid</label><select id="resolution"><option value="64">64 × 64</option><option value="128" selected>128 × 128</option><option value="192">192 × 192</option></select></div><div class="field"><label for="depth-samples">Material depth samples</label><select id="depth-samples"><option value="">Automatic (2 × lateral)</option><option value="128">128 planes</option><option value="256">256 planes</option><option value="512">512 planes</option><option value="1024">1,024 planes</option></select></div><div id="roi-controls" hidden><div class="field"><label for="roi-site">HBM region of interest</label><select id="roi-site"></select></div><div class="button-pair"><button id="roi-stack" class="small">Scan stack</button><button id="roi-full" class="small">Full package</button></div></div><p id="roi-summary" class="gate-hint">Full specimen · depth retained</p><p id="roi-angle-hint" class="gate-hint" hidden>ROI acquisition uses a normal X-ray beam (0°).</p></section>
+        <section class="control-section acquisition-controls"><h2 class="section-heading">${icon('sliders')}Acquisition</h2><div class="field path-choice"><label for="path-model">Material paths</label><select id="path-model" aria-describedby="path-model-note path-angle-error">${pathModelOptions}</select><p id="path-model-note" class="gate-hint"></p><p id="path-angle-error" class="path-angle-error" role="status" hidden></p></div><div class="field"><label for="resolution">Lateral sampling grid</label><select id="resolution"><option value="64">64 × 64</option><option value="128" selected>128 × 128</option><option value="192">192 × 192</option></select></div><div class="field"><label for="depth-samples">Material depth samples <span id="depth-samples-state"></span></label><select id="depth-samples"><option value="">Automatic (2 × lateral)</option><option value="128">128 planes</option><option value="256">256 planes</option><option value="512">512 planes</option><option value="1024">1,024 planes</option></select></div><div id="roi-controls" hidden><div class="field"><label for="roi-site">HBM region of interest</label><select id="roi-site"></select></div><div class="button-pair"><button id="roi-stack" class="small">Scan stack</button><button id="roi-full" class="small">Full package</button></div></div><p id="roi-summary" class="gate-hint">Full specimen · depth retained</p><p id="roi-angle-hint" class="gate-hint" hidden>ROI acquisition uses a normal X-ray beam (0°).</p></section>
       </div>
       <div class="run-area"><button class="primary" id="run-btn">${icon('play')}<span>Run acquisition</span></button><p id="run-help" aria-live="polite">Preparing the virtual instruments…</p></div>
     </aside>
@@ -75,10 +76,10 @@ app.innerHTML = `
     </div>
   </main>
   <dialog id="specimen-reference-dialog" aria-labelledby="specimen-reference-title" aria-describedby="specimen-reference-summary"><div class="dialog-header"><div><h2 id="specimen-reference-title">Specimen references</h2><p id="specimen-reference-summary"></p></div><button class="quiet" id="close-specimen-reference" aria-label="Close specimen references">${icon('close')}</button></div><div class="dialog-body"><p class="method-note">Published product facts and the geometry used by this simulator are listed separately below. Simulated microscope outputs are synthetic and have not been validated against measurements of this product.</p><h3>Published product facts</h3><dl id="specimen-published-facts" class="reference-facts"></dl><h3>Modeling assumptions</h3><ul id="specimen-geometry-assumptions"></ul><h3>Source documentation</h3><ol id="specimen-sources" class="reference-sources"></ol><p class="reference-export-note">These references and assumptions are retained in exported twin and acquisition JSON.</p></div></dialog>
-  <dialog id="assumptions-dialog" aria-labelledby="assumptions-title"><div class="dialog-header"><div><h2 id="assumptions-title">Model & assumptions</h2><p>Know what the virtual instruments can tell you.</p></div><button class="quiet" id="close-assumptions" aria-label="Close model assumptions">${icon('close')}</button></div><div class="dialog-body"><p class="method-note">This workbench generates synthetic microscope signals from a shared material geometry. It is a reduced-order forward simulator and has not been experimentally validated. It does not solve coupled full-wave multiphysics.</p><h3>X-ray transmission</h3><p>Monoenergetic Beer–Lambert attenuation along rays through the specimen. Photon counting noise is optional and uses a reproducible seed. The display window is fixed at I / I₀ = 0 to 1; exported arrays retain the numerical values. Tilt rotates the ray direction about the y axis, so detector positions no longer correspond exactly to specimen x/y.</p><h3>Scanning acoustic microscopy</h3><p>A water-coupled, normal-incidence pulse-echo approximation uses material impedance boundaries, propagation loss, and a finite-bandwidth pulse. The C-scan reports gated echo amplitude; the A-scan shows the local waveform and envelope, and the B-scan shows an x/time section. Time starts at the specimen top plane and excludes water standoff.</p><h3>Shared specimen</h3><p>The JSON digital twin uses millimetres, with x right, y down in images, and z depth from the top surface. Boxes, spheres, and z-aligned cylinders reference the built-in material library. Later objects replace earlier objects where they overlap. 3D translucency and exploded spacing are display aids; the simulated geometry retains its original positions.</p><h3>Run-specific assumptions</h3><ul id="run-assumptions"><li>Run an acquisition to read the engine's assumptions and warnings.</li></ul><h3>Import & reproducibility</h3><p>Import a <code>schema_version: 1</code> JSON twin, or export a built-in specimen as a starting template. Acquisition exports include the numerical maps, waveforms, settings, digital twin, and available engine provenance. This workbench runs locally; imported files are sent only to the local simulation server.</p><h3>Material properties</h3><div id="material-provenance"></div></div></dialog>
+  <dialog id="assumptions-dialog" aria-labelledby="assumptions-title"><div class="dialog-header"><div><h2 id="assumptions-title">Model & assumptions</h2><p>Know what the virtual instruments can tell you.</p></div><button class="quiet" id="close-assumptions" aria-label="Close model assumptions">${icon('close')}</button></div><div class="dialog-body"><p class="method-note">This workbench generates synthetic microscope signals from a shared material geometry. It is a reduced-order forward simulator and has not been experimentally validated. It does not solve coupled full-wave multiphysics.</p><h3>X-ray transmission</h3><p>Monoenergetic Beer–Lambert attenuation along rays through the specimen. Photon counting noise is optional and uses a reproducible seed. The display window is fixed at I / I₀ = 0 to 1; exported arrays retain the numerical values. Tilt rotates the ray direction about the y axis, so detector positions no longer correspond exactly to specimen x/y.</p><h3>Scanning acoustic microscopy</h3><p>A water-coupled, normal-incidence pulse-echo approximation uses material impedance boundaries, propagation loss, and a finite-bandwidth pulse. The C-scan reports gated echo amplitude; the A-scan shows the local waveform and envelope, and the B-scan shows an x/time section. Time starts at the specimen top plane and excludes water standoff.</p><h3>Material paths</h3><p>Voxel-center paths sample material occupancy on an XYZ grid. Continuous normal-incidence paths intersect the authored primitives along sampled vertical XY columns, retaining their continuous interface depths. The continuous option requires a 0° beam and does not use the geometry depth-sample setting. Both paths retain the model’s material assumptions, lateral response and finite RF sampling. Continuous paths are an opt-in numerical method, not a claim of measured accuracy. Saved angular X-ray projections retain their separate voxel geometry.</p><h3>Shared specimen</h3><p>The JSON digital twin uses millimetres, with x right, y down in images, and z depth from the top surface. Boxes, spheres, and z-aligned cylinders reference the built-in material library. Later objects replace earlier objects where they overlap. 3D translucency and exploded spacing are display aids; the simulated geometry retains its original positions.</p><h3>Run-specific assumptions</h3><ul id="run-assumptions"><li>Run an acquisition to read the engine's assumptions and warnings.</li></ul><h3>Import & reproducibility</h3><p>Import a <code>schema_version: 1</code> JSON twin, or export a built-in specimen as a starting template. Acquisition exports include the numerical maps, waveforms, settings, digital twin, and available engine provenance. This workbench runs locally; imported files are sent only to the local simulation server.</p><h3>Material properties</h3><div id="material-provenance"></div></div></dialog>
 `;
 
-const defaults = { resolution:128,energy_kev:80,angle_deg:0,photons:50000,noise:true,frequency_mhz:50,gate_start_us:.42,gate_end_us:.56,focus_mm:.5,probe_x_mm:3.1,probe_y_mm:3.1,include_defects:true,seed:42 };
+const defaults = { path_model:VOXEL_PATHS,resolution:128,energy_kev:80,angle_deg:0,photons:50000,noise:true,frequency_mhz:50,gate_start_us:.42,gate_end_us:.56,focus_mm:.5,probe_x_mm:3.1,probe_y_mm:3.1,include_defects:true,seed:42 };
 const state = { twin:null,materials:[],examples:[],settings:{...defaults},result:null,busy:false,stale:false,exploded:false,probePromise:null,pendingProbe:null,probeToken:0,samCeiling:.2 };
 let hbmEditor;
 let viewer;
@@ -107,10 +108,16 @@ async function request(path, body, signal) {
 function settingsFromControls() {
   const s={...state.settings};
   for(const [id,key] of [['energy','energy_kev'],['angle','angle_deg'],['photons','photons'],['frequency','frequency_mhz'],['gate-start','gate_start_us'],['gate-end','gate_end_us'],['focus','focus_mm'],['resolution','resolution']])s[key]=Number($(`#${id}`).value);
-  s.noise=$('#noise').checked;s.include_defects=$('#include-defects').checked;return s;
+  s.path_model=$('#path-model').value;s.noise=$('#noise').checked;s.include_defects=$('#include-defects').checked;return s;
 }
 function refreshLabels() {
-  const s=state.settings;$('#energy-value').textContent=`${s.energy_kev} keV`;$('#angle-value').textContent=`${s.angle_deg}°`;$('#frequency-value').textContent=`${s.frequency_mhz} MHz`;$('#focus-value').textContent=`${s.focus_mm.toFixed(2)} mm`;
+  refreshPathControls();const s=state.settings;$('#energy-value').textContent=`${s.energy_kev} keV`;$('#angle-value').textContent=`${s.angle_deg}°`;$('#frequency-value').textContent=`${s.frequency_mhz} MHz`;$('#focus-value').textContent=`${s.focus_mm.toFixed(2)} mm`;
+}
+function refreshPathControls(){
+  const continuous=state.settings.path_model===CONTINUOUS_PATHS;
+  $('#depth-samples').disabled=state.busy||continuous;$('#depth-samples-state').textContent=continuous?'(inactive)':'';
+  $('#path-model-note').textContent=continuous?'Continuous intersections follow authored layer boundaries along vertical columns. No Z voxel grid is used. XY sampling, lateral blur and finite RF sampling remain.':'Material occupancy is sampled at voxel centers. Depth samples control the Z grid; lateral sampling still limits detail.';
+  const tilted=continuous&&state.settings.angle_deg!==0;$('#path-angle-error').hidden=!tilted;$('#path-angle-error').textContent=tilted?'Continuous paths require 0°. Set the beam angle to 0° or choose voxel-center paths.':'';
 }
 function busy(value,message) {
   state.busy=value;
@@ -183,7 +190,7 @@ function syncSettingsControls() {
     control.value=value;
   }
   $('#noise').checked=state.settings.noise;$('#include-defects').checked=state.settings.include_defects;
-  $('#depth-samples').value=state.settings.depth_samples?String(state.settings.depth_samples):'';refreshROI();
+  $('#path-model').value=state.settings.path_model || VOXEL_PATHS;$('#depth-samples').value=state.settings.depth_samples?String(state.settings.depth_samples):'';refreshROI();
 }
 function setTwin(twin, presetId, preserve=false) {
   const previousSettings=state.settings,previousResult=state.result;
@@ -231,13 +238,13 @@ function refreshROI() {
   $('#roi-controls').hidden=!state.twin?.hbm_assemblies?.length && !roi;
   $('#roi-site').disabled=state.busy || !state.twin?.hbm_assemblies?.length;$('#roi-stack').disabled=state.busy || !state.twin?.hbm_assemblies?.length;
   $('#roi-summary').textContent=roi?`x ${roi[0].toFixed(4)}–${roi[2].toFixed(4)} / y ${roi[1].toFixed(4)}–${roi[3].toFixed(4)} mm · full depth`:'Full specimen · depth retained';
-  $('#roi-angle-hint').hidden=!roi;$('#angle').disabled=state.busy || Boolean(roi);
+  $('#roi-angle-hint').hidden=!roi;$('#angle').disabled=state.busy || Boolean(roi);refreshPathControls();
 }
 function selectROI(assembly,selection) {
   if(!state.twin || state.busy)return;
-  if(assembly){const [x,y]=assembly.center_xy_mm,[w,h]=assembly.footprint_mm;state.settings.roi_mm=[x-w/2,y-h/2,x+w/2,y+h/2];state.settings.probe_x_mm=x;state.settings.probe_y_mm=y;state.settings.angle_deg=0;if(!state.settings.depth_samples){state.settings.depth_samples=1024;$('#depth-samples').value='1024';}$('#angle').value='0';$('#roi-site').value=assembly.id;}
+  if(assembly){const [x,y]=assembly.center_xy_mm,[w,h]=assembly.footprint_mm;state.settings.roi_mm=[x-w/2,y-h/2,x+w/2,y+h/2];state.settings.probe_x_mm=x;state.settings.probe_y_mm=y;state.settings.angle_deg=0;if(!state.settings.depth_samples&&state.settings.path_model!==CONTINUOUS_PATHS){state.settings.depth_samples=1024;$('#depth-samples').value='1024';}$('#angle').value='0';$('#roi-site').value=assembly.id;}
   else delete state.settings.roi_mm;
-  if(assembly&&selection?.bounds_mm){state.settings.roi_mm=[...selection.bounds_mm];const [x0,y0,x1,y1]=selection.bounds_mm;state.settings.probe_x_mm=selection.probe_mm?.[0] ?? (x0+x1)/2;state.settings.probe_y_mm=selection.probe_mm?.[1] ?? (y0+y1)/2;if(selection.microstructure){state.settings.resolution=64;state.settings.depth_samples=1024;state.settings.frequency_mhz=100;syncSettingsControls();}}
+  if(assembly&&selection?.bounds_mm){state.settings.roi_mm=[...selection.bounds_mm];const [x0,y0,x1,y1]=selection.bounds_mm;state.settings.probe_x_mm=selection.probe_mm?.[0] ?? (x0+x1)/2;state.settings.probe_y_mm=selection.probe_mm?.[1] ?? (y0+y1)/2;if(selection.microstructure){state.settings.resolution=64;if(state.settings.path_model!==CONTINUOUS_PATHS)state.settings.depth_samples=1024;state.settings.frequency_mhz=100;syncSettingsControls();}}
   refreshROI();refreshLabels();refreshViewer();markStale();
 }
 function renderResultDetails() {
@@ -245,7 +252,11 @@ function renderResultDetails() {
   $('#xray-settings').textContent=`${settings.energy_kev} keV · ${settings.angle_deg}° incidence · ${settings.noise?'Poisson noise':'noise off'}`;
   $('#sam-settings').textContent=`${settings.frequency_mhz} MHz · gate ${settings.gate_start_us.toFixed(2)}–${settings.gate_end_us.toFixed(2)} µs`;
   $('#xray-mean').textContent=`${(result.xray.mean_transmission*100).toFixed(1)}%`;$('#sam-peak').textContent=Number(result.sam.peak_amplitude).toFixed(3);
-  $('#result-details').textContent=`${settings.resolution} × ${settings.resolution} pixels · ${pitch.map(v=>Number(v.toFixed(1))).join(' × ')} µm pitch · ${settings.depth_samples || settings.resolution*2} depth samples · ${(meta.runtime_ms/1000).toFixed(2)} s · seed ${meta.seed}`;
+  const model=meta.path_model ?? settings.path_model ?? VOXEL_PATHS,continuous=model===CONTINUOUS_PATHS;
+  const lateral=Array.isArray(pitch)&&pitch.length>=2&&pitch.every(Number.isFinite)?`${pitch.map(v=>Number(v.toFixed(2))).join(' × ')} µm XY pitch`:'XY pitch unavailable';
+  const depth=continuous?'Z voxel grid inactive':`${settings.depth_samples || settings.resolution*2} depth samples`;
+  $('#result-details').textContent=`${pathModelLabel(model)} · ${settings.resolution} × ${settings.resolution} pixels · ${lateral} · ${depth} · ${(meta.runtime_ms/1000).toFixed(2)} s · seed ${meta.seed}`;
+  $('#result-details').dataset.pathModel=model;
 }
 function acquiredSettings() { return state.result?.settings || state.settings; }
 function drawAll() {
@@ -330,14 +341,14 @@ for(const id of ['xray-map','sam-map']){
     p[0]=Math.min(x1-dx/2,Math.max(x0+dx/2,p[0]));p[1]=Math.min(y1-dy/2,Math.max(y0+dy/2,p[1]));inspect(p);
   });
 }
-for(const id of ['energy','angle','photons','noise','frequency','gate-start','gate-end','focus','resolution','include-defects']){
+for(const id of ['path-model','energy','angle','photons','noise','frequency','gate-start','gate-end','focus','resolution','include-defects']){
   $(`#${id}`).addEventListener('input',()=>{state.settings=settingsFromControls();refreshLabels();markStale();if(id==='include-defects')refreshViewer();if(id==='gate-start'||id==='gate-end')$('#gate-hint').textContent='Custom time gate';});
 }
 $('#run-btn').addEventListener('click',acquire);
 $('#depth-samples').addEventListener('change',()=>{if($('#depth-samples').value)state.settings.depth_samples=Number($('#depth-samples').value);else delete state.settings.depth_samples;markStale();});
 $('#roi-stack').addEventListener('click',()=>selectROI(state.twin?.hbm_assemblies?.find(item=>item.id===$('#roi-site').value)));
 $('#roi-full').addEventListener('click',()=>selectROI(null));
-hbmEditor=new HBMEditor({request,getTwin:()=>state.twin,onApply:twin=>{setTwin(twin,undefined,true);const picker=$('#example-picker');picker.querySelector('option[value="__edited"]')?.remove();const option=document.createElement('option');option.value='__edited';option.textContent=`Edited: ${twin.name}`;picker.append(option);picker.value='__edited';},onSelectROI:selectROI,onSelectSite:id=>{$('#roi-site').value=id;},getIncludeDefects:()=>state.settings.include_defects,onFocusPatch:summary=>{state.microstructure=summary;state.exploded=false;$('#explode-btn').setAttribute('aria-pressed','false');$('#explode-btn').classList.remove('active');refreshViewer();viewer?.focusMicrostructure(summary);$('#twin-view').scrollIntoView({block:'center'});}});
+hbmEditor=new HBMEditor({request,getTwin:()=>state.twin,onApply:twin=>{setTwin(twin,undefined,true);const picker=$('#example-picker');picker.querySelector('option[value="__edited"]')?.remove();const option=document.createElement('option');option.value='__edited';option.textContent=`Edited: ${twin.name}`;picker.append(option);picker.value='__edited';},onSelectROI:selectROI,getPathModel:()=>state.settings.path_model,onSelectSite:id=>{$('#roi-site').value=id;},getIncludeDefects:()=>state.settings.include_defects,onFocusPatch:summary=>{state.microstructure=summary;state.exploded=false;$('#explode-btn').setAttribute('aria-pressed','false');$('#explode-btn').classList.remove('active');refreshViewer();viewer?.focusMicrostructure(summary);$('#twin-view').scrollIntoView({block:'center'});}});
 const volumeWorkspace=new VolumeWorkspace({request,getSnapshot:()=>({twin:state.twin,settings:settingsFromControls()})});
 $('#volumes-btn').addEventListener('click',()=>volumeWorkspace.open());
 let xrayWorkspacePromise;
@@ -372,7 +383,7 @@ function downloadJSON(value,filename) {
 }
 const safeName=name=>String(name).replace(/[^a-z0-9_-]+/gi,'-').replace(/^-|-$/g,'').slice(0,75)||'specimen';
 $('#export-twin').addEventListener('click',()=>{if(state.twin)downloadJSON(state.twin,`${safeName(state.twin.name)}.json`);});
-$('#export-results').addEventListener('click',()=>{if(state.result)downloadJSON({...state.result,export_metadata:{application:'Virtual microscopy workbench',version:'0.7.0',exported_at:new Date().toISOString(),display_windows:{xray:[0,1],sam:[0,state.samCeiling],bscan:[0,1]},settings_changed_since_acquisition:state.stale}},`${safeName(state.result.twin.name)}-acquisition-${safeName(state.result.run_id || new Date().toISOString())}.json`);});
+$('#export-results').addEventListener('click',()=>{if(state.result)downloadJSON({...state.result,export_metadata:{application:'Virtual microscopy workbench',version:'0.8.0',exported_at:new Date().toISOString(),display_windows:{xray:[0,1],sam:[0,state.samCeiling],bscan:[0,1]},settings_changed_since_acquisition:state.stale}},`${safeName(state.result.twin.name)}-acquisition-${safeName(state.result.run_id || new Date().toISOString())}.json`);});
 $('#assumptions-btn').addEventListener('click',()=>$('#assumptions-dialog').showModal());
 $('#specimen-reference-btn').addEventListener('click',()=>$('#specimen-reference-dialog').showModal());
 $('#close-specimen-reference').addEventListener('click',()=>$('#specimen-reference-dialog').close());

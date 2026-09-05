@@ -1,4 +1,4 @@
-# Virtual microscopy 0.7 integration contract (compatible twin schema 1)
+# Virtual microscopy 0.8 integration contract (compatible twin schema 1)
 
 Local application: Python FastAPI serves a Vite/vanilla JS + Three.js client. Source in `virtual_microscopy/` and `web/`. Physical dimensions use millimetres. Coordinates x right, y down in image, z depth from specimen top; surrounding material is water for SAM and air for X-ray. Later primitives replace earlier ones. This is a reduced-order synthetic forward simulator, not experimentally validated or coupled full-wave multiphysics.
 
@@ -36,7 +36,7 @@ defects follow their assembly; global defects preserve existing coordinates.
 
 ## API
 
-- GET /api/health -> {status:'ok',version:'0.7.0'}
+- GET /api/health -> {status:'ok',version:'0.8.0'}
 - GET /api/examples -> [{id,name,description,twin}]
 - GET /api/materials -> list of material dicts with id,name,color,density_g_cm3,sound_speed_m_s,impedance_mrayl and provenance; extra properties permitted.
 - POST /api/validate -> twin body -> {valid:true,twin:normalized twin,warnings:[]}; errors HTTP 422.
@@ -44,6 +44,22 @@ defects follow their assembly; global defects preserve existing coordinates.
 - POST /api/probe same body/settings -> `{ascan:...,bscan:...}`; synthesizes a local strip. All runs bounded by dimensions, primitive counts and RF work budget.
 
 Optional acquisition `roi_mm` is `[xmin,ymin,xmax,ymax]` in global millimetres with at least 0.05 mm width/height. ROI and probe must fit the specimen; probes must also fit the ROI. ROI acquisition requires angle_deg=0. Optional `depth_samples` accepts 128/256/512/1024 independently of the lateral raster; omission retains nz=2×resolution. The image extent is `[xmin,xmax,ymin,ymax]`. The sampled grid includes the complete specimen depth and a clipped 4-sigma lateral context for both Gaussian PSFs. Geometry allocation is capped at 64 million cells, in addition to the existing RF work budget. Missing optional settings are omitted from acquisition snapshots.
+
+Preview Settings and saved SamVolumeSettings additionally accept strict
+`path_model:'voxel_centers_v1'|'continuous_columns_v1'`, defaulting to voxel
+paths. Continuous preview requires angle_deg=0 even without an ROI. The authored
+`depth_samples` value remains valid and frozen but is computationally inactive
+in continuous mode. No continuous choice is added to saved full-angle X-ray.
+Continuous metadata reports `path_model`, `path_contract_version`,
+`depth_samples_used:false`, `grid_shape:null`, `voxel_depth_um:null`,
+`padded_shape_yx`, global origin/extent, actual XY pitch, candidate/event/RF work,
+estimated workspace and path diagnostics. Saved signals/axes retain their
+existing formats. The scalar material paths span the complete specimen and
+retain surrounding lateral response context; see [COLUMN_PATHS.md](docs/COLUMN_PATHS.md).
+
+Saved-SAM compact catalog entries and detail responses expose the frozen
+`path_model`. A missing historical method is interpreted as voxel paths in the
+response without inserting a field into the stored request or manifest.
 
 - POST /api/hbm/compose -> `{twin,assembly_id,parameters:partial HBM parameters}` -> `{twin,warnings}`. Invalid or null patch values return 422. The input snapshot is not mutated. Geometry updates preserve unrelated objects and fixed-coordinate defects; updated objects stay before those defects.
 - POST /api/hbm/section -> `{twin,assembly_id,axis:'xz'|'yz',resolution:128|256|512,include_defects?:boolean}` -> material `image` labels, `materials` legend, `extent_mm:[u0,u1,z0,z1]`, axis, fixed_coordinate_mm, pixel_pitch_um and warnings. Section sampling includes intersecting package geometry. `mode:'material_geometry'` distinguishes it from microscope/reconstruction output.

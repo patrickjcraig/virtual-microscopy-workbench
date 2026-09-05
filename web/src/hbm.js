@@ -1,3 +1,4 @@
+import { CONTINUOUS_PATHS } from './path-model.js';
 const $=selector=>document.querySelector(selector);
 const microFields=['columns','rows','pitch_x_um','pitch_y_um','bump_diameter_um','tsv_diameter_um'];
 const defaultMicro=()=>({model_version:'hbm-explicit-patch-1',enabled:false,center_offset_xy_um:[0,0],columns:2,rows:3,pitch_x_um:50,pitch_y_um:50,bump_diameter_um:25,tsv_diameter_um:10,evidence:'Synthetic, uncalibrated geometry assumptions.',source_note:'Chosen simulation defaults; not measured from the supplied image or claimed H100 dimensions.',defects:[]});
@@ -5,8 +6,8 @@ const parameters=['die_count','die_thickness_um','gap_um','base_thickness_um','c
 
 // This panel edits the twin, while the instrument keeps its previous acquisition snapshot.
 export class HBMEditor {
-  constructor({request,getTwin,onApply,onSelectROI,onFocusPatch,getIncludeDefects,onSelectSite}) {
-    Object.assign(this,{request,getTwin,onApply,onSelectROI,onFocusPatch,getIncludeDefects,onSelectSite});this.sequence=0;this.section=null;
+  constructor({request,getTwin,onApply,onSelectROI,onFocusPatch,getIncludeDefects,onSelectSite,getPathModel}) {
+    Object.assign(this,{request,getTwin,onApply,onSelectROI,onFocusPatch,getIncludeDefects,onSelectSite,getPathModel});this.sequence=0;this.section=null;
     document.body.insertAdjacentHTML('beforeend',`
       <dialog id="hbm-dialog" aria-labelledby="hbm-title" aria-describedby="hbm-intro">
         <div class="dialog-header"><div><h2 id="hbm-title">HBM assembly laboratory</h2><p id="hbm-intro">Six physical sites. Editable layers. Electrical state stored separately.</p></div><button id="hbm-close" class="quiet" aria-label="Close HBM editor">✕</button></div>
@@ -54,7 +55,7 @@ export class HBMEditor {
             <div class="hbm-section-wrap"><canvas id="hbm-section" role="img" aria-label="Material cross-section through selected HBM stack"></canvas><p id="hbm-section-loading" role="status">Loading material section…</p></div>
             <p id="hbm-section-description" class="hbm-section-description"></p><div id="hbm-materials" class="material-key"></div>
             <p id="hbm-section-warnings" class="gate-hint"></p>
-            <div class="hbm-inspect-actions"><button type="button" id="hbm-scan-selected" class="small">Set this stack as scan ROI</button><button type="button" id="hbm-scan-micro" class="small" disabled>Scan microstructure ROI</button><button type="button" id="hbm-focus-micro" class="small" disabled>Focus patch in 3D</button></div>
+            <div class="hbm-inspect-actions"><button type="button" id="hbm-scan-selected" class="small">Set this stack as scan ROI</button><button type="button" id="hbm-scan-micro" class="small" disabled>Scan microstructure ROI</button><button type="button" id="hbm-scan-continuous-roi" class="small" hidden disabled>Use 0.15 × 0.25 mm preview ROI</button><button type="button" id="hbm-focus-micro" class="small" disabled>Focus patch in 3D</button></div>
             <p id="hbm-micro-applied" class="hbm-micro-applied">No explicit patch is applied to this site.</p><p id="hbm-micro-roi-note" class="gate-hint"></p>
             <details id="hbm-reference"><summary>Supplied X-ray cross-section reference</summary><p id="hbm-reference-status">Loading local reference image…</p><img id="hbm-reference-image" hidden alt="User-supplied X-ray cross-section showing stacked interconnect rows and larger package joints"/><p id="hbm-reference-scale" class="gate-hint"></p><p id="hbm-reference-source" class="gate-hint"></p></details>
           </div>
@@ -74,6 +75,7 @@ export class HBMEditor {
     $('#hbm-feature').addEventListener('change',()=>this.loadSection());
     $('#hbm-section-defects').addEventListener('change',()=>this.loadSection());
     $('#hbm-scan-micro').addEventListener('click',()=>{const summary=this.microSummary,assembly=this.assembly();if(!summary?.roi_mm||!assembly)return;const feature=summary.features.find(f=>f.id===$('#hbm-feature').value);this.onSelectROI(assembly,{bounds_mm:summary.roi_mm,probe_mm:feature?.center_mm,microstructure:true});$('#hbm-dialog').close();});
+    $('#hbm-scan-continuous-roi').addEventListener('click',()=>{const bounds=this.continuousPreviewROI(),assembly=this.assembly();if(!bounds||!assembly)return;this.onSelectROI(assembly,{bounds_mm:bounds,microstructure:true});$('#hbm-dialog').close();});
     $('#hbm-focus-micro').addEventListener('click',()=>{if(!this.microSummary?.feature_bounds_mm)return;this.onFocusPatch?.(this.microSummary);$('#hbm-dialog').close();});
     new ResizeObserver(()=>this.drawSection()).observe($('#hbm-section-wrap') || $('.hbm-section-wrap'));
   }
@@ -129,10 +131,16 @@ export class HBMEditor {
     try{const result=await this.request('/api/hbm/microstructure',{twin,assembly_id:assembly.id},controller.signal);if(controller!==this.summaryController||twin!==this.getTwin()||assembly.id!==this.assembly()?.id)return;this.showSummary(result.microstructure);}
     catch(error){if(error.name!=='AbortError'&&controller===this.summaryController)$('#hbm-micro-applied').textContent=`Applied patch summary unavailable: ${error.message}`;}
   }
+  continuousPreviewROI(){
+    const bounds=this.microSummary?.feature_bounds_mm;if(!bounds)return null;const x=(bounds[0]+bounds[3])/2,y=(bounds[1]+bounds[4])/2,roi=[x-.075,y-.125,x+.075,y+.125],size=this.getTwin().size_mm;
+    return roi[0]>=0&&roi[1]>=0&&roi[2]<=size[0]&&roi[3]<=size[1]?roi:null;
+  }
   showSummary(summary){
     this.microSummary=summary;const active=Boolean(summary?.enabled && summary?.features?.length);$('#hbm-scan-micro').disabled=!active;$('#hbm-focus-micro').disabled=!active;$('#hbm-feature-kind').querySelectorAll('option').forEach(option=>option.disabled=Boolean(option.value)&&!active);
     $('#hbm-micro-applied').textContent=active?`Applied patch: ${summary.nominal_feature_count} nominal features, ${summary.defect_count} enabled defect overlays. Geometry is assumed; material sections show the actual ordered occupancy.`:'No explicit patch is applied to this site.';
-    $('#hbm-micro-roi-note').textContent=active?'Scan microstructure ROI selects 64 × 64 lateral samples, 1,024 depth planes, 100 MHz and a normal X-ray beam. Full specimen depth is retained. Sample pitch is not imaging resolution. Saved angular X-ray volumes still use a whole-specimen material grid.':'';
+    $('#hbm-micro-roi-note').textContent=active?`Scan microstructure ROI selects 64 × 64 lateral samples, 100 MHz and a normal X-ray beam. ${this.getPathModel?.()===CONTINUOUS_PATHS?'The current continuous path method uses no Z voxel grid; the stored depth-sample setting stays inactive.':'Voxel-center acquisition uses 1,024 depth planes.'} Full specimen depth is retained. Sample pitch is not imaging resolution. Saved angular X-ray volumes still use a whole-specimen material grid.`:'';
+    const continuous=this.getPathModel?.()===CONTINUOUS_PATHS;$('#hbm-scan-continuous-roi').hidden=!active||!continuous;$('#hbm-scan-continuous-roi').disabled=!this.continuousPreviewROI();
+    if(active&&continuous)$('#hbm-micro-roi-note').textContent+=' The compact ROI may exceed continuous preview memory limits. The separate 0.15 × 0.25 mm button selects a larger preview rectangle explicitly; it does not change the specimen.';
     this.populateFeatures();
   }
   populateFeatures(){
@@ -167,7 +175,7 @@ export class HBMEditor {
       const section=await this.request('/api/hbm/section',{twin,assembly_id:assembly.id,axis,resolution:512,include_defects:$('#hbm-section-defects').checked,...($('#hbm-feature').value?{feature_id:$('#hbm-feature').value}:{})},controller.signal);
       if(controller!==this.sectionController || twin!==this.getTwin() || assembly.id!==this.assembly()?.id)return;
       this.section=section;$('#hbm-section-loading').hidden=true;this.drawSection();
-      $('#hbm-section-description').textContent=`${axis.toUpperCase()} through ${assembly.name || assembly.id}; ${axis==='xz'?'y':'x'} = ${Number(section.fixed_coordinate_mm).toFixed(5)} mm${section.feature?`; ${section.feature.id}`:''}. This is material geometry, not an X-ray reconstruction.`;
+      $('#hbm-section-description').textContent=`${axis.toUpperCase()} through ${assembly.name || assembly.id}; ${axis==='xz'?'y':'x'} = ${Number(section.fixed_coordinate_mm).toFixed(5)} mm${section.feature?`; ${section.feature.id}`:''}. This 2D material raster is independent of the acquisition path method; it is not an X-ray reconstruction.`;
       $('#hbm-section-warnings').textContent=(section.warnings || []).join(' ');
       $('#hbm-materials').replaceChildren();for(const material of section.materials){const span=document.createElement('span');span.className='material-item';const dot=document.createElement('i');if(/^#[\da-f]{6}$/i.test(material.color))dot.style.background=material.color;span.append(dot,document.createTextNode(material.name || material.id));$('#hbm-materials').append(span);}
     }catch(error){if(error.name==='AbortError'||controller!==this.sectionController)return;$('#hbm-section-loading').textContent=`Section unavailable: ${error.message}`;}
