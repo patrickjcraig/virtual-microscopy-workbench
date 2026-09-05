@@ -98,15 +98,22 @@ The shared background worker preserves historical acquisition identities and
 batch controls. This is an explicit discrete filter; focus, lens geometry,
 diffraction, material losses and measured beam calibration remain unimplemented.
 
-The next bounded increment is compatible comparison of these saved derived
-observations. It should require identical actual coordinates, stencil/phase and
-supported excitation semantics; propagate each source's published total bounds
-through signed subtraction; retain separate ordinary diagnostic gate statistics;
-and preserve source-free historical reports. The existing independent-column
-comparison kind must keep its current guards. After that, investigate an explicit
-causal material-loss law with independent analytic/passivity/time-domain checks
-before introducing its controls into saved acquisitions. Frequency-dependent
-X-ray spectra and calibrated source/detector effects remain separate physics work.
+Version 0.16 implements [compatible comparisons of the saved derived observations](OBSERVATION_COMPARISONS.md).
+Exact retained and full support coordinates, stencil/phase, excitation and
+numerical contracts are checked before comparison. Distinct complex and magnitude
+source bounds propagate into six residual-bound maps. Immutable reports preserve
+ordinary gate statistics, linked initial views and complete deduplicated source
+snapshots. The existing independent-column comparison retains its original guards.
+
+The next bounded increment is an explicit causal material-loss law, starting in
+the standalone layered instrument with independent analytic, passivity and
+time-domain checks before introducing controls into saved acquisitions. Define
+the constitutive model, admissible parameters, causal frequency continuation and
+applicable inversion bounds before using it in the existing certified response.
+An empirical attenuation curve alone is not a causal transfer model. Preserve
+lossless/zero-loss controls and existing saved identities; label assumed material
+parameters separately from measured data. Frequency-dependent X-ray spectra and
+calibrated source/detector effects remain separate physics work.
 
 ## 1. Correct the specimen and preserve the image evidence
 
@@ -303,14 +310,13 @@ Version 0.13 also implements the first
 [saved causal column-response ROI](CAUSAL_SAM_VOLUMES.md), using explicit identity
 observation and verified typed row/certificate storage. Version 0.14 adds controlled
 comparisons of compatible saved causal data with separate source and subtraction
-bounds. Continue with a separately defined finite coherent lateral observation
-model. It requires complete lateral support, explicit stored weights and phase,
-signed complex mixing, and propagated source and arithmetic bounds before taking
-magnitude. An interior derivation from saved data must reject a footprint that
-extends outside its available support; a padded acquisition must compute its full
-context. Neither may silently extend edge values or reuse primary-echo depth
-focusing. Preserve historical data, distinguish excitation/observation changes,
-and keep ordinary unique-depth mapping unavailable for repeated returns.
+bounds. Versions 0.15–0.16 add the separately defined finite coherent lateral
+observation and its compatible saved comparisons. Their complete support,
+explicit weights/phase, complex mixing and distinct pressure/magnitude bounds
+are documented above. Continue with the causal material-loss model and its
+independent controls before expanding saved propagation. Preserve historical
+data and numerical identities, distinguish excitation/observation changes, and
+keep ordinary unique-depth mapping unavailable for repeated returns.
 
 Then extend richer propagation and acquisition response.
 Extend material data before spectrum controls. Optional GPU/cone/laminography

@@ -473,3 +473,30 @@ require only the verified derived dataset. Resume requires the matching parent
 source and implementation. Historical verification explicitly distinguishes
 rechecking saved bound composition from reconstructing source-dependent
 component conversion maxima.
+
+## Saved observation comparisons (0.16)
+
+The separate `sam_observation_comparison` kind uses
+`/api/v2/observation-comparisons`: POST to create; GET to list or read `/{id}`;
+`/{id}/view` for the frozen initial or source-backed explicit cursor; and
+`/{id}/export?format=json|csv` for lossless report exports. Requests contain
+reference/candidate dataset IDs, finite ordered recording gate endpoints,
+optional name/cursor, and fixed `same_observation_and_excitation_v1` policy.
+Only completed supported finite coherent observation volumes are admitted.
+
+Compatibility includes exact retained and full surrounding coordinates,
+extents/indices/neighbor offsets, array units/axes, operator weights/order/phase,
+supported numerical contracts and frozen nested excitation/time/exterior media.
+Six `[y,x]` bound maps separate `complex_source_sum`, `magnitude_source_sum`,
+`complex_arithmetic`, `complex_total`, `magnitude_arithmetic`, `magnitude_total`.
+Full-record and gated metrics remain ordinary diagnostics. No new jobs are made.
+
+Complete source manifests appear once in `source_snapshots`, keyed by canonical
+SHA-256; lightweight `source_reference`/`source_candidate` reference those hashes.
+Self comparisons deduplicate the exact snapshot. Each includes its complete
+nested causal provenance. Historical report reads, initial views and exports
+require no source arrays; new cursors require matching observation data.
+Source limits are 16 MiB serialized/64 MiB expanded, reports 64/192 MiB, with
+512 MiB owned-workspace admission and at most three million complex positions.
+Publication is exclusive and atomic. Existing source-free observation certificate
+limitations are retained. See [OBSERVATION_COMPARISONS.md](docs/OBSERVATION_COMPARISONS.md).

@@ -2,6 +2,110 @@
 
 This record concerns the first local implementation in `E:\git\Dissertation`. It establishes software and analytical-model behavior, not experimental imaging accuracy.
 
+## Version 0.16 — saved coherent observation comparisons
+
+The complete Windows suite passed **1,460 tests in 425.72 seconds**, with the
+same two third-party deprecation warnings. The 173 added cases comprise 48
+numerical, 91 report-store and 34 source/core/API tests. Evidence is
+`artifacts/v016-final-pytest.log`. Locked dependency synchronization and lock
+verification passed. All earlier observation/acquisition fingerprint files
+were checked byte-for-byte against the preceding release and remain unchanged.
+
+Independent rational controls exercise six separate bound maps, unequal complex
+and saved-magnitude certificates, subnormals, outward sums of published
+components, overflow rejection, phase reversal and zero residuals. The unchanged
+causal subtraction/diagnostic tests also pass. Analytic uniform-slab comparisons
+check retained complex residuals against an independent slab oracle; full and
+gated metrics retain exact saved time coordinates and conservative source bounds.
+
+Source/API tests reject one-ULP coordinate differences, equal interiors with
+different surrounding support, changed phase/weights/contracts, shifted time
+references, unsupported units/material semantics, incompatible excitation,
+invalid gates/indices and primary causal inputs. They permit and disclose
+numerical tolerance/implementation differences, verify rows again during
+inspection, reject fresh typed-byte corruption and preserve source data.
+Creation works without original causal parent arrays; frozen initial views and
+JSON/CSV reports reopen after the observation sources become unavailable.
+
+The new report store tests bounded parsing before decode, source limits of
+16/64 MiB, duplicate/nonfinite JSON, exact source snapshot hashes and summary
+provenance, self-comparison deduplication, exclusive publication/collision/crash
+behavior, path/link/junction guards, resource/disk rejection and stable bounded
+catalogs. Historical reads trap imports of current numerical/source code and
+FLINT. A real stored 14 × 14 × 121 observation also passes report creation,
+changed-cursor and source-independent history/export checks.
+
+The delivery instance uses port **8768** and the isolated
+`artifacts/volumes-v016` root. Before launching it, **10,763 dataset/report files
+totaling 527,702,518 bytes** were copied and SHA-256 checked against the prior
+root. The idle catalog used SQLite's online backup; runtime locks were excluded.
+The original port8767 instance and `volumes-v07` data remain untouched. This
+avoids running two managers against a shared root. The operational copy receipt
+is `artifacts/v016-isolated-instance-copy.json`; it is not a new acquisition.
+
+The production browser build passed in **1.28 seconds**; the existing main-chunk
+size advisory remains. Native verification created two uniform-slab self reports
+with different gates. Recovery reused those exact reports and passed in
+**28.619 seconds**, with no page errors, source/catalog changes, extra reports,
+acquisitions or derived jobs. The evidence is
+`web/test-artifacts/observation-comparisons-1788642606537/verification.json`, with
+the original creation record linked inside. Two verifier-only checks needed
+correction: a nullable link readiness predicate and a POST allowlist that omitted
+the initial read-only HBM microstructure preview. Neither required a product fix.
+
+Native checks cover shared A/B and symmetric residual scales, all three products,
+all six bound maps, actual-time linked cursors, ordinary gates, immutable history,
+JSON/CSV and source Zarr exports, the saved-observation compare action, old-kind
+isolation, reload and 390 px layouts. Injected source-cursor and source-catalog
+404 responses preserve the accepted view, frozen initial view and report history.
+Those browser injections do not remove real data; separate API tests exercise
+actual source absence in temporary test directories.
+
+The concrete HBM delivery created exactly **three comparison reports** from the
+two existing **62 × 30 × 1,601** coherent observations. It created no acquisitions
+or observation jobs. Full-record and gated comparisons retain the same six
+full-time bound maps. The selected gate is **0.32–0.40 µs**, inclusive of 65 saved
+centers; the full recording is **0–2 µs**.
+
+| Report | ID | Observed creation time |
+| --- | --- | ---: |
+| Controlled missing bump, selected gate | `ad1d5805-36a6-4f92-8eb8-edac49a0b632` | 10.672 s |
+| Same-source zero control | `1c75b38e-5031-4483-92da-74220e516542` | 6.487 s |
+| Controlled missing bump, full recording | `9e71e8d6-05f8-4d3a-8b42-4665e8b9dded` | 12.219 s |
+
+An independent Fraction oracle checked all six maps and **667,617 component
+subtractions** across the three reports. It uses full waveform and separate
+complex/magnitude-bound identities to prove equivalence for all **1,860 columns**
+per report: 51 distinct pairs for each defect report and 37 for the zero control.
+The full-record maximum absolute real-pressure difference is
+**0.27842071575148486**; all self-comparison residual components are exactly zero.
+Maximum complex and saved-magnitude residual bounds are respectively
+**9.994271696109786e-8** and **9.994271703726208e-8**. These bound numerical model
+residuals, without certifying physical contrast or detectability.
+
+Delivery also checks independent ordinary metrics, gate products and deterministic
+maxima; exact linked-view samples; complete deduplicated snapshots; lossless
+source ZIP and report JSON/CSV exports; and source-free historical reads with
+current-kernel traps. The two job catalogs and **10,765 pre-existing dataset/report
+files** remained unchanged, including both native reports, the 524 previously
+delivered acquisition files, all causal/observation volumes and 19 layered reports.
+The run passed in **151.173 seconds**, including all oracles, exports and
+preservation checks. Full evidence is
+`artifacts/v016-observation-comparison-delivery/verification-report.json`.
+
+The final read-only HBM browser reopening passed at output **x8/y41/t265**, mapping
+to original **x9/y42** at **0.33125 µs**. Its selected signed RF difference is
+**−0.19698976408247132**, complex total bound **9.994271685544949e-8**, and
+saved-magnitude total bound **9.994271694864668e-8**. The report, both source
+manifests and both job catalogs remained unchanged; there were no POSTs after
+the initial specimen preview and no page errors. Evidence is
+`web/test-artifacts/observation-comparison-delivery-1788642892125/verification.json`.
+The visually inspected [workspace screenshot](images/observation-comparison-workspace.png)
+is **1600 × 1550**, 254,201 bytes, SHA-256
+`7583eb83d2e64641d44a9348472b457f4eb5a95536cd37fc85fe3c8129794292`.
+It includes all six bound rows and full recording traces; the private supplied
+reference image is excluded. The 390 px map and bound-table views also passed.
+
 ## Version 0.15 — finite coherent spatial observations
 
 The complete final Windows suite passed **1,287 tests in 351.66 seconds**, with

@@ -217,6 +217,15 @@ rounding allowances are separately bounded. The filter's finite support is
 defined in sampled positions and does not establish a lens, focus, diffraction
 model or physical resolution. Its gate statistics remain ordinary diagnostics.
 
+Version 0.16 adds [comparisons of these saved observations](OBSERVATION_COMPARISONS.md).
+Identical full support, exact sample coordinates, operator and excitation are
+required. The complex residual propagates the two `complex_total` source maps;
+the difference of saved magnitudes propagates the two `magnitude_total` maps.
+Each has its own outward source sum, subtraction allowance and composed total.
+The six maps bound samplewise numerical residuals under the declared discrete
+model. Gate products, aggregate metrics and synthetic locality findings remain
+ordinary diagnostics. No propagation or original observation calculation occurs.
+
 Version 0.9 adds controlled acquisition cases and comparisons of saved signals,
 without changing the forward propagation equations. Its B−A metrics, inclusive
 gates and exact coordinate requirements are documented in

@@ -175,6 +175,8 @@ app.include_router(xray_comparison_router)
 app.include_router(causal_comparison_router)
 from .observation_api import router as observation_router
 app.include_router(observation_router)
+from .observation_comparison_api import router as observation_comparison_router
+app.include_router(observation_comparison_router)
 app.include_router(layered_router)
 
 dist = ROOT / "web" / "dist"
