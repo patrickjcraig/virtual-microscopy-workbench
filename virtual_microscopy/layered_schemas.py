@@ -1,7 +1,7 @@
 """Bounded, explicit scalar layered-acoustic experiments, separate from SAM volumes."""
 from typing import Literal
 
-from pydantic import Field, StrictFloat, model_validator
+from pydantic import Field, StrictFloat, field_validator, model_validator
 
 from .schemas import StrictModel, Twin
 
@@ -76,17 +76,49 @@ class SlabPulseSettings(StrictModel):
         return self
 
 
+class CausalGammaPulseSettings(StrictModel):
+    center_frequency_mhz: StrictFloat = Field(default=50, ge=10, le=150)
+    fractional_bandwidth: StrictFloat = Field(default=.5, ge=.2, le=1)
+    sample_rate_mhz: StrictFloat = Field(default=400, gt=0, le=2400)
+    record_start_us: StrictFloat = Field(default=0, ge=0, le=12)
+    record_duration_us: StrictFloat = Field(default=2, ge=.05, le=12)
+    surface_standoff_mm: StrictFloat = Field(default=0, ge=0, le=5)
+    absolute_tolerance: StrictFloat = Field(default=1e-7, ge=1e-12, le=1e-3)
+    gamma_order: int = Field(default=12, ge=4, le=24, strict=True)
+    precision_bits: Literal[64, 96, 128, 192, 256] = 128
+
+    @field_validator("precision_bits", mode="before")
+    @classmethod
+    def exact_precision(cls, value):
+        if type(value) is not int:
+            raise ValueError("Precision must be an integer bit count.")
+        return value
+
+    @model_validator(mode="after")
+    def sampling(self):
+        if self.record_start_us + self.record_duration_us > 12 + 1e-12:
+            raise ValueError("The causal pulse recording must end at or before 12 us.")
+        if self.sample_rate_mhz < 8*self.center_frequency_mhz:
+            raise ValueError("Causal RF requires at least eight samples per carrier period.")
+        if int(self.record_duration_us*self.sample_rate_mhz + 1e-9) + 1 > 2049:
+            raise ValueError("Causal RF supports at most 2,049 recorded samples.")
+        return self
+
+
 class LayeredAnalysisRequest(StrictModel):
     name: str = Field(min_length=1, max_length=160)
     stack: LayeredStack
     spectrum: LayeredSpectrumSettings = Field(default_factory=LayeredSpectrumSettings)
     pulse: SlabPulseSettings | None = None
+    causal_pulse: CausalGammaPulseSettings | None = None
     source_column: LayeredColumnRequest | None = None
 
     @model_validator(mode="after")
     def supported_pulse(self):
         if not self.name.strip():
             raise ValueError("Name cannot be blank.")
+        if self.pulse is not None and self.causal_pulse is not None:
+            raise ValueError("Choose either the Gaussian slab pulse or the causal gamma pulse for one report.")
         if self.pulse is not None and (len(self.stack.layers) != 1 or self.stack.layers[0].thickness_mm <= 0):
-            raise ValueError("Certified causal RF currently requires exactly one positive-thickness finite layer. Multilayer stacks provide frequency response only.")
+            raise ValueError("Gaussian slab RF requires exactly one positive-thickness finite layer. Choose the causal gamma pulse for a multilayer response.")
         return self

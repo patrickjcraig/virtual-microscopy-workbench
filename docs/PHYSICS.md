@@ -190,9 +190,12 @@ Version 0.11 adds a separate [layered-acoustics instrument](LAYERED_ACOUSTICS.md
 with a stable backward scattering recurrence, explicit constant pressure loss,
 full coherent energy accounting and causal single-slab echo/RF synthesis with a
 global omitted-amplitude bound. It extracts complete columns and preserves source
-assumptions but does not alter the existing saved SAM solver. General multilayer
-RF, elastic/focused response and measured material or instrument calibration
-remain planned. The linked guide specifies the actual equations and bounds.
+assumptions but does not alter the existing saved SAM solver. Version 0.12 adds
+[general-column causal RF](CAUSAL_LAYERED_RF.md) for an explicitly defined gamma
+pulse, using an analytically bounded carrier-centred Laplace inverse and Arb
+arithmetic enclosures. Saved ROI integration, elastic/focused response and
+measured material or instrument calibration remain planned. The linked guides
+specify the actual equations and bounds.
 
 Version 0.9 adds controlled acquisition cases and comparisons of saved signals,
 without changing the forward propagation equations. Its B−A metrics, inclusive

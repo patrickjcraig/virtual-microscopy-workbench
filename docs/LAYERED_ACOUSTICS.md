@@ -1,5 +1,10 @@
 # Layered acoustics instrument — version 0.11
 
+Version 0.12 extends this instrument with a separately selected [causal
+multilayer gamma-pulse response](CAUSAL_LAYERED_RF.md), including full HBM column
+RF and a combined analytic/arithmetic certificate. The original spectra and
+Gaussian single-slab behavior documented below remain available.
+
 This standalone instrument compares primary reflections with coherent repeated
 reflections through an explicit stack. It provides complex pressure spectra for
 many layers and a certified causal echo series and RF trace for one finite slab.
@@ -172,8 +177,9 @@ uv run python -m tools.verify_layered_acoustics --help
 
 See [VERIFICATION.md](VERIFICATION.md) for the executed analytical, persistence,
 live browser and source-preservation checks. [LAYERED_ACOUSTICS_SPEC.md](LAYERED_ACOUSTICS_SPEC.md)
-retains the wider target: a certified general multilayer time response followed
-by opt-in saved SAM ROI acquisition. That integration remains planned. Passivity
+retains the wider target of opt-in saved SAM ROI acquisition. Version 0.12 adds
+the certified general-column time response for its distinct gamma excitation;
+the saved ROI integration remains planned. Passivity
 alone cannot bound an IFFT ringing tail, and multiplying branching paths through
 many high-contrast layers can exceed practical computation. Focused elastic
 propagation, oblique incidence, shear conversion, measured pulses and material

@@ -1,4 +1,4 @@
-"""One-column layered spectra and certified slab RF; no SAM volume acquisition."""
+"""One-column spectra and distinct certified pulse models; no SAM acquisition."""
 from copy import deepcopy
 from math import floor
 
@@ -11,7 +11,7 @@ from .layered_schemas import LayeredAnalysisRequest, LayeredColumnRequest
 from .materials import MATERIALS, WATER_IMPEDANCE_MRAYL, WATER_SOUND_SPEED_M_S
 from .recipes import _json_differences
 
-PROCESSING_VERSION = "layered-analysis-0.11.0"
+PROCESSING_VERSION = "layered-analysis-0.12.0"
 MAX_PEAK_BYTES = 256*1024**2
 MAX_REPORT_BYTES = 16*1024**2
 MAX_REPORT_EXPANDED_BYTES = 64*1024**2
@@ -67,6 +67,11 @@ def _pulse_series(request):
                                max_echoes=pulse.max_echoes)
 
 
+def _record_time(settings):
+    count = floor(settings.record_duration_us*settings.sample_rate_mhz+1e-9)+1
+    return settings.record_start_us+np.arange(count, dtype=np.float64)/settings.sample_rate_mhz
+
+
 def estimate_layered(request):
     request = request if isinstance(request, LayeredAnalysisRequest) else LayeredAnalysisRequest.model_validate(request)
     frozen = request.model_dump(mode="json")
@@ -77,6 +82,7 @@ def estimate_layered(request):
     if spectrum_work > MAX_SPECTRUM_WORK:
         raise ValueError("Layered spectrum exceeds five million layer-frequency units. Reduce requested samples or layers.")
     nt = echoes = rf_work = 0
+    causal_estimate = None
     series = None
     if request.pulse is not None:
         nt = floor(request.pulse.record_duration_us*request.pulse.sample_rate_mhz+1e-9)+1
@@ -87,12 +93,20 @@ def estimate_layered(request):
         rf_work = nt*(echoes+2)  # Also synthesize the independent primary baseline.
         if rf_work > MAX_RF_WORK:
             raise ValueError("Certified slab RF exceeds 25 million echo-sample units. Shorten the record or relax its explicit tail tolerance; echoes were not silently dropped.")
+    elif request.causal_pulse is not None:
+        from .layered_time import estimate_causal_gamma
+        time = _record_time(request.causal_pulse)
+        nt = len(time)
+        causal_estimate = estimate_causal_gamma(frozen["stack"], time.tolist(), frozen["causal_pulse"])
+        rf_work = causal_estimate["inverse_work_units"]
     # All four complex responses retain real, imaginary, magnitude and phase;
     # the spectrum also retains its frequency and three energy arrays.
-    cells = 20*nf + 5*nt + 2*echoes
+    cells = 20*nf + (4 if causal_estimate is not None else 5)*nt + 2*echoes
     serialized = 4*input_bytes + 32*cells + 128*1024
     expanded = 4*input_workspace + 512*cells + 1024*1024
     peak = 2*expanded + 4*input_workspace + nf*384 + nt*128 + echoes*64 + 32*1024**2
+    if causal_estimate is not None:
+        peak += causal_estimate["estimated_peak_bytes"]
     if serialized > MAX_REPORT_BYTES or expanded > MAX_REPORT_EXPANDED_BYTES:
         raise ValueError("Layered report exceeds its 16 MiB serialized / 64 MiB expanded budget. Reduce frequency or time samples; the selected physical stack was not changed.")
     if peak > MAX_PEAK_BYTES:
@@ -101,8 +115,9 @@ def estimate_layered(request):
             "spectrum_work_units": spectrum_work, "time_samples": nt, "impulse_echo_count": echoes,
             "estimated_rf_work_units": rf_work, "estimated_report_bytes": serialized,
             "estimated_report_expanded_bytes": expanded, "estimated_peak_bytes": peak,
+            "causal_pulse": causal_estimate,
             "slab_tail_certificate": None if series is None else series.diagnostics,
-            "workspace_definition": "Conservative Python/JSON report copies, one frequency vector per recurrence operation and direct slab pulse scratch; not total process RSS."}
+            "workspace_definition": "Conservative Python/JSON report copies, spectrum and pulse scratch; causal mode also includes the bounded Arb coefficient/polynomial workspace. Not total process RSS."}
 
 
 def _response(values):
@@ -137,7 +152,7 @@ def analyze_layered(request):
     pulse = None
     if request.pulse is not None:
         p = request.pulse
-        time = p.record_start_us + np.arange(estimate["time_samples"], dtype=np.float64)/p.sample_rate_mhz
+        time = _record_time(p)
         surface_time = 2000*p.surface_standoff_mm/request.stack.incident.sound_speed_m_s
         result = slab_rf_response(thickness[0], impedance, speed[0], time, p.center_frequency_mhz,
                                  p.fractional_bandwidth, loss[0], absolute_tolerance=p.absolute_tolerance,
@@ -147,23 +162,35 @@ def analyze_layered(request):
                              "amplitudes": result.series.amplitudes.tolist()}, diagnostics=result.diagnostics,
                      surface_time_us=surface_time,
                      time_definition="Absolute time from the transducer reference; standoff is a lossless incident-medium round trip with a nonreflecting receiver. Later multiples do not identify unique depths.")
+    causal_pulse = None
+    if request.causal_pulse is not None:
+        from .layered_time import causal_gamma_response
+        causal_pulse = causal_gamma_response(stack, _record_time(request.causal_pulse).tolist(), frozen["causal_pulse"])
     warnings = ["Synthetic scalar normal-incidence pressure response with explicit positive real impedances; no shear, oblique beam, lateral scattering, focusing or calibrated instrument response.",
                 "Primary reflection and direct transmission are approximation baselines. Energy conservation/passivity applies to the full coherent response only.",
                 "Constant per-layer pressure loss is an explicitly assumed nondispersive model, not the material library's frequency-dependent attenuation law.",
                 "Discrete frequency samples do not certify resolution of narrow resonances. Refine sampling independently when inspecting spectra.",
-                "General multilayer RF/SAM volume synthesis is not enabled: energy passivity alone does not certify an IFFT ringing-tail error."]
+                "This is a standalone normal-incidence column instrument; saved SAM volumes retain their existing primary-interface response."]
     if source:
         warnings.extend(source["assumptions"])
     if differences:
         warnings.append("The edited layer stack differs from its extracted source column; results use the explicit edited assumptions.")
     if pulse:
         warnings.append("The finite-support Gaussian pulse is an assumed excitation. Its omitted-echo certificate is distinct from pulse support truncation and experimental accuracy.")
+    if causal_pulse:
+        warnings.extend([
+            "The causal gamma excitation has an order-dependent delay to its peak and an infinite future tail; it is a different waveform from the finite Gaussian slab pulse.",
+            "The causal response error bound combines analytic alias and frequency omission with validated arithmetic and output rounding. It bounds the declared synthetic model, not measured device accuracy.",
+            "Later reverberations do not identify unique physical depths. No primary RF baseline or time-to-depth mapping is supplied for this causal response."])
     return {"processing_version": PROCESSING_VERSION, "name": request.name, "stack": stack,
             "source_status": status, "source_column": source, "stack_differences": differences,
-            "spectrum": spectrum, "pulse": pulse, "resources": estimate, "warnings": warnings,
+            "spectrum": spectrum, "pulse": pulse, "causal_pulse": causal_pulse, "resources": estimate, "warnings": warnings,
             "provenance": {"request_sha256": json_sha256(frozen),
                 "materials": deepcopy(MATERIALS) if source else None,
                 "equation_sources": [
                     "https://live.ocw.mit.edu/courses/6-013-electromagnetics-and-applications-spring-2009/d3be4ea78b036a6362230fb41780cf54_MIT6_013S09_notes.pdf#page=406",
-                    "https://publications-cnrc.canada.ca/eng/view/object/?id=056a54bb-ab25-4f71-8161-43b193d53a23"],
+                    "https://publications-cnrc.canada.ca/eng/view/object/?id=056a54bb-ab25-4f71-8161-43b193d53a23"] + ([
+                    "https://dlmf.nist.gov/5.9.E1",
+                    "https://www.columbia.edu/~ww2040/IEOR3106F06/ExtraCreditLectureLT.pdf",
+                    "https://flintlib.org/doc/using.html"] if causal_pulse is not None else []),
                 "evidence_status": "Assumed numerical model; no experimental calibration or accuracy claim."}}

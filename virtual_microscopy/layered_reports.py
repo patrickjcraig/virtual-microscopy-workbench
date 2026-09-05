@@ -27,7 +27,7 @@ MAX_NUMERICAL_BYTES = 256*1024**2
 MAX_LIST_REPORTS = 1000
 IMPLEMENTATION_FILES = (
     "layered_reports.py", "layered_api.py", "layered_analysis.py", "layered_schemas.py",
-    "layered_acoustics.py", "column_paths.py", "materials.py", "schemas.py", "hbm.py",
+    "layered_acoustics.py", "layered_time.py", "column_paths.py", "materials.py", "schemas.py", "hbm.py",
     "datasets.py", "comparisons.py", "recipes.py",
 )
 
@@ -62,6 +62,16 @@ def bounded_payload(value):
 def _source_fingerprints():
     return {name: hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest()
             for name in IMPLEMENTATION_FILES}
+
+
+def _numerical_packages(causal):
+    packages = {"numpy": version("numpy"), "python": platform.python_version()}
+    if causal:
+        import flint
+        packages.update({"python-flint": version("python-flint"),
+            "flint": getattr(flint, "__FLINT_VERSION__", "unavailable"),
+            "flint_release": getattr(flint, "__FLINT_RELEASE__", "unavailable")})
+    return packages
 
 
 def _admit_estimate(estimate):
@@ -113,7 +123,7 @@ class LayeredReportStore:
             "report_id": identifier, "created_at": now_iso(), "request": normalized,
             "request_sha256": hashlib.sha256(request_payload).hexdigest(), "estimate": estimate,
             "provenance": {**analysis.get("provenance", {}), "implementation_sha256": _source_fingerprints(),
-                           "numerical_packages": {"numpy": version("numpy"), "python": platform.python_version()}}}
+                           "numerical_packages": _numerical_packages(normalized.get("causal_pulse") is not None)}}
         # Bound before hashing too: json_sha256 otherwise serializes a complete
         # unchecked object. The stored checksum excludes only its own field.
         report["report_sha256"] = hashlib.sha256(bounded_payload(report)).hexdigest()
@@ -167,7 +177,8 @@ class LayeredReportStore:
                 "created_at": report["created_at"], "report_sha256": report["report_sha256"],
                 "name": report["request"].get("name", "Layered acoustic response"),
                 "source_status": report.get("source_status"), "layer_count": estimate.get("layer_count"),
-                "frequency_samples": estimate.get("frequency_samples"), "pulse_available": report.get("pulse") is not None})
+                "frequency_samples": estimate.get("frequency_samples"), "pulse_available": report.get("pulse") is not None,
+                **({"causal_pulse_available": True} if report.get("causal_pulse") is not None else {})})
         return sorted(reports, key=lambda item: (item["created_at"], item["id"]), reverse=True)
 
 

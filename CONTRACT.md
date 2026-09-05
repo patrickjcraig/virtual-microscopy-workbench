@@ -344,4 +344,19 @@ optional RF/echo arrays, provenance and source-difference status. Phase is null
 below pressure magnitude 1e-12. See [LAYERED_ACOUSTICS.md](docs/LAYERED_ACOUSTICS.md)
 for units, limits, reference planes, coefficients and immutable CSV conventions.
 
+Version 0.12 extends `LayeredAnalysisRequest` with optional
+`causal_pulse:CausalGammaPulseSettings`, mutually exclusive with Gaussian slab
+`pulse`. It permits all valid finite stacks, including empty/zero-thickness
+stacks. Controls are carrier/bandwidth, gamma order (4–24), recording/standoff,
+absolute tolerance (1e-12–1e-3) and precision (64/96/128/192/256 bits). It retains
+at most 2,049 actual time centers. The response's `causal_pulse` contains
+`time_us`, `rf`, `imaginary`, `envelope` and diagnostics with separate
+`analytic_alias_bound`, `frequency_cutoff_bound`, `arithmetic_complex_bound`,
+`arithmetic_envelope_bound`, and the accepted `total_error_bound`. Preflight
+exposes its independent contour/work estimate under `causal_pulse`; successful
+preflight does not guarantee that synthesis will close the arithmetic bound.
+Historical JSON reports retain their original fields and hashes. New causal
+reports record python-flint and native FLINT versions. No saved volume schema,
+job semantics or depth-mapping contract changes in this release.
+
 `npm run build` emits `web/dist`; Vite development proxies `/api` to `127.0.0.1:8765`. The app fetches examples and simulates the selected twin; `?specimen=<example-id>` selects a specific initial example. A validated recommended preset takes precedence over generic initial controls. Imports are validated before replacing the twin. Imported labels/references are rendered as text, with HTTP(S) links only. Geometry and acquired data are drawn with Three.js and canvas; acquisition values remain distinct from display windowing and exploded-view spacing.

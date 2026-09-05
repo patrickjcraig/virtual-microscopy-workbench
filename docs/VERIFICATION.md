@@ -2,6 +2,73 @@
 
 This record concerns the first local implementation in `E:\git\Dissertation`. It establishes software and analytical-model behavior, not experimental imaging accuracy.
 
+## Version 0.12 — causal multilayer reflected RF
+
+The complete Windows suite passed **871 tests in 185.19 seconds**, retaining the
+same two third-party deprecation warnings. The 82 new cases comprise 57 causal
+kernel checks and 25 request/report/API checks. Locked environment synchronization,
+lock verification and the frontend production build passed. Existing saved SAM
+and X-ray solvers, product schemas and historical report bytes are unchanged.
+
+The new excitation is an explicitly selected causal complex gamma pulse. Its
+reflection includes coherent internal returns from the complete scalar stack.
+Independent direct-interface, slab and two-layer propagation-event fixtures
+check signed complex pressure and envelope against the reported combined
+aliasing, frequency-cutoff and arithmetic bounds. Tests also cover exact actual
+time centers, rejected contradictory recording metadata, nonuniform core inputs,
+standoff, strong loss, high contrast, subdivision, zero-thickness collapse,
+record-window consistency, precision rejection, and admission before expensive
+allocation. The certificate includes conversion to the actual returned binary64
+values; Arb radius alone is not used as their rounding-error bound.
+
+The live `tools/verify_causal_layered_rf.py` delivery passed in **12.66 seconds**
+at `http://127.0.0.1:8767`. Its evidence is saved in
+`artifacts/v012-causal-delivery/verification-report.json`. Every report uses
+1,001 identical time centers over 0–2.5 µs at 400 MHz, a 50 MHz carrier, 0.5
+fractional bandwidth and gamma order 12. The independently selected spectrum
+plot has 1,025 samples; it does not set the causal inversion grid.
+
+| Saved experiment | Observed numerical evidence |
+| --- | --- |
+| Analytic 100 µm water/silicon/water slab | Direct sum of 106 causally contributing echo candidates; maximum complex and envelope difference 1.750e-10, within the 4.988e-8 accepted bound |
+| HBM6 bump column at X=49.475, Y=39.95 mm | Complete 26-layer, 2.65 mm stack; 4,091 inversion terms, 128-bit arithmetic; bound 4.988e-8 for requested 1e-7 |
+| Nearby column shifted +20 µm in X | Maximum signed RF difference 0.300563 from the bump column; explicitly a change of modeled column |
+| Bump column with all solder pressure loss set to 3 dB/mm | Maximum signed RF difference 0.0231647; the assumed property changes are recorded |
+| Same bump with requested tolerance 1e-9 and 192-bit arithmetic | 6,607 inversion terms; accepted bound 4.996e-10; complex difference from the ordinary calculation 2.460e-10, within the combined bounds of 5.038e-8 |
+
+The slab oracle is a direct analytic causal-pulse echo sum, not a second call to
+the production frequency recurrence. The delivery harness separately recomputes
+the analytic bounds in Arb, verifies the exact requested time centers and source
+assumptions, and reconstructs JSON/CSV exports exactly. These are numerical-model
+checks and declared sensitivity experiments, not measured ground truth or defect
+detection accuracy.
+
+**All 524 files across 12 prior acquisition datasets and all 14 preexisting
+layered report files remained byte-identical.** Exactly five standalone reports
+were added and zero volume jobs were created. Historical reads passed with both
+old and new numerical entry points blocked. A repeated invocation rejected the
+existing output directory before contacting the API, preserving its evidence.
+The completed evidence directory contains 46 files totaling 13,208,333 bytes.
+
+Native Chrome `verify:causal-acoustics` and the legacy `verify:layered-acoustics`
+regression passed, with reports in
+`web/test-artifacts/causal-acoustics-1788623938017/verification.json` and
+`web/test-artifacts/layered-acoustics-1788624125710/verification.json`.
+The checks exercise mode switching with retained independent settings, actual
+controls, signed RF and optional quadrature, amplitude-only display changes,
+bound components, invalid requests, saved reports, exports and desktop/390 px
+layouts. The independent interface check differed by at most 1.253e-10 from the
+analytic response, within its 4.916e-8 bound. No page errors occurred.
+
+The delivered HBM report `db62c814-16a8-4ab1-ad0d-ea8daa235308` was then reopened
+read-only. Its hash and catalog counts stayed unchanged; no POSTs occurred. The
+[generated application screenshot](images/causal-layered-rf-workspace.png)
+(1600 × 1700) and mobile view were visually inspected. This release supplies a
+standalone time-response report. Opt-in saved SAM ROI integration, an explicit
+observation model for those volumes, and experimental calibration remain future
+work. Later internal returns do not identify unique geometric depths. See
+[CAUSAL_LAYERED_RF.md](CAUSAL_LAYERED_RF.md) for the equations and limits.
+
 ## Version 0.11 — layered-acoustics instrument
 
 The full Windows suite passed **789 tests in 176.32 seconds**, with the same two

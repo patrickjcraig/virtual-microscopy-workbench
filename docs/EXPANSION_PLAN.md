@@ -57,6 +57,17 @@ independent tail/window and sampling checks, followed by opt-in saved SAM ROI
 integration. Existing SAM volume propagation and time-to-depth semantics are
 unchanged; spectral passivity alone is insufficient to certify reverberant RF.
 
+Version 0.12 resolves that standalone time-response dependency for an explicitly
+declared causal gamma excitation. It uses carrier-centred Laplace inversion with
+separate analytic alias/cutoff bounds and Arb arithmetic enclosures, including
+the exact returned numeric values. Full HBM column RF, quadrature and envelope
+are inspectable with pulse/record/tolerance/precision controls and immutable
+reports. See [CAUSAL_LAYERED_RF.md](CAUSAL_LAYERED_RF.md). The new gamma waveform
+does not replace the original Gaussian slab excitation. The next milestone is
+opt-in saved SAM ROI integration with explicit observation/focus/standoff
+semantics, complete lateral context, resource bounds, original solver identities,
+and rejection of ordinary unique-depth interpretation of multiple reflections.
+
 Implementation loops now continue without waiting for another user prompt.
 Each loop must finish a bounded working increment, exercise its numerical and
 browser behavior, update these records, and publish verified code to the existing

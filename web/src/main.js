@@ -393,7 +393,7 @@ function downloadJSON(value,filename) {
 }
 const safeName=name=>String(name).replace(/[^a-z0-9_-]+/gi,'-').replace(/^-|-$/g,'').slice(0,75)||'specimen';
 $('#export-twin').addEventListener('click',()=>{if(state.twin)downloadJSON(state.twin,`${safeName(state.twin.name)}.json`);});
-$('#export-results').addEventListener('click',()=>{if(state.result)downloadJSON({...state.result,export_metadata:{application:'Virtual microscopy workbench',version:'0.11.0',exported_at:new Date().toISOString(),display_windows:{xray:[0,1],sam:[0,state.samCeiling],bscan:[0,1]},settings_changed_since_acquisition:state.stale}},`${safeName(state.result.twin.name)}-acquisition-${safeName(state.result.run_id || new Date().toISOString())}.json`);});
+$('#export-results').addEventListener('click',()=>{if(state.result)downloadJSON({...state.result,export_metadata:{application:'Virtual microscopy workbench',version:'0.12.0',exported_at:new Date().toISOString(),display_windows:{xray:[0,1],sam:[0,state.samCeiling],bscan:[0,1]},settings_changed_since_acquisition:state.stale}},`${safeName(state.result.twin.name)}-acquisition-${safeName(state.result.run_id || new Date().toISOString())}.json`);});
 $('#assumptions-btn').addEventListener('click',()=>$('#assumptions-dialog').showModal());
 $('#specimen-reference-btn').addEventListener('click',()=>$('#specimen-reference-dialog').showModal());
 $('#close-specimen-reference').addEventListener('click',()=>$('#specimen-reference-dialog').close());
