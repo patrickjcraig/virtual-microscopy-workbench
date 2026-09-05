@@ -162,9 +162,9 @@ def solver_identity(model_version: str, kind: str = "sam_rf_volume") -> dict:
     source_root = Path(__file__).resolve().parent
     source_hashes = {}
     if kind == "sam_rf_volume":
-        filenames = ("sam_volume.py", "volume_schemas.py", "physics.py", "schemas.py", "materials.py")
+        filenames = ("sam_volume.py", "volume_schemas.py", "physics.py", "schemas.py", "hbm.py", "materials.py")
     elif kind == "xray_projection_volume":
-        filenames = ("xray_volume.py", "xray_schemas.py", "physics.py", "schemas.py", "materials.py")
+        filenames = ("xray_volume.py", "xray_schemas.py", "physics.py", "schemas.py", "hbm.py", "materials.py")
     elif kind == "xray_reconstruction":
         filenames = ("reconstruction.py", "reconstruction_schemas.py")
     elif kind == "sam_depth_volume":

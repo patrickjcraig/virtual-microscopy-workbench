@@ -57,7 +57,7 @@ app.innerHTML = `
     <div class="instrument" id="instrument">
       <div class="notice" id="notice" role="status">${icon('info')}<p></p><button aria-label="Dismiss notification">${icon('close')}</button></div>
       <section class="panel twin-panel">
-        <div class="panel-header"><div class="panel-heading">${icon('cube')}<div><h2 id="model-title">Digital twin</h2><p class="panel-subtitle">Shared geometry for both virtual instruments</p></div></div><div class="view-toolbar"><button class="small" id="explode-btn" aria-pressed="false">${icon('layers')}Explode</button><button class="small" id="reset-view">${icon('reset')}Reset view</button></div></div>
+        <div class="panel-header"><div class="panel-heading">${icon('cube')}<div><h2 id="model-title">Digital twin</h2><p class="panel-subtitle">Shared geometry for both virtual instruments</p></div></div><div class="view-toolbar"><button class="small" id="explode-btn" aria-pressed="false">${icon('layers')}Explode</button><button class="small" id="return-package" hidden>Return to package</button><button class="small" id="reset-view">${icon('reset')}Reset view</button></div></div>
         <div class="twin-body"><div class="scene-container" id="twin-view"><div class="scene-overline"><span>3D specimen</span><span id="scene-mode">Epoxy translucent for inspection</span></div><span class="scene-hint">Drag to orbit · scroll to zoom · R to reset</span><span class="axis-label">x / y in mm · depth from top</span></div>
           <div class="twin-info" tabindex="0" role="region" aria-label="Specimen dimensions and material key"><h3>Specimen dimensions</h3><div class="dimension" id="dimensions">— <span>mm</span></div><div class="twin-details" id="primitive-count">Primitive digital twin</div><h3>Material key</h3><div class="material-key" id="material-key"></div><p class="defect-note" id="defect-note">Amber highlights identify modeled defects in the 3D view.</p></div>
         </div>
@@ -126,7 +126,15 @@ function markStale() {
   state.stale=Boolean(state.result);$('#instrument').classList.toggle('stale-result',state.stale);
   $('#run-help').textContent='Settings ready. Run to update the images.';status(state.stale?'Settings changed':'Ready to acquire',state.stale?'stale':'ready');
 }
-function refreshViewer() { if(state.twin && viewer){viewer.setTwin(state.twin,state.materials,state.settings.include_defects,state.exploded);viewer.setProbe(state.settings.probe_x_mm,state.settings.probe_y_mm);viewer.setROI(state.settings.roi_mm);} }
+function refreshViewer() { if(state.twin && viewer){viewer.setTwin(state.twin,state.materials,state.settings.include_defects,state.exploded,state.microstructure);viewer.setProbe(state.settings.probe_x_mm,state.settings.probe_y_mm);viewer.setROI(state.settings.roi_mm);} }
+let microController;
+async function refreshMicrostructure(twin){
+  microController?.abort();state.microstructure=null;const assembly=twin.hbm_assemblies?.find(a=>a.microstructure?.enabled);if(!assembly)return;
+  const controller=microController=new AbortController();
+  try{const response=await request('/api/hbm/microstructure',{twin,assembly_id:assembly.id},controller.signal);if(controller!==microController||twin!==state.twin)return;state.microstructure=response.microstructure;refreshViewer();}
+  catch(error){if(error.name!=='AbortError'&&twin===state.twin)notify(`Microstructure display metadata unavailable: ${error.message}`,true);}
+}
+if(viewer)viewer.onViewMode=focused=>{$('#return-package').hidden=!focused;$('#twin-view').classList.toggle('microstructure-focus',focused);$('#scene-mode').textContent=focused?'Explicit patch only · surrounding layers hidden':state.exploded?'Exploded display · simulation geometry unchanged':'Epoxy translucent for inspection';$('#twin-view .axis-label').textContent=focused?'Air spheres are void markers, not mesh subtraction':'x / y in mm · depth from top';};
 function referenceLink(source) {
   const link=document.createElement('a');
   try {
@@ -194,11 +202,11 @@ function setTwin(twin, presetId, preserve=false) {
   $('#gate-hint').textContent=twin.recommended_settings?'Specimen preset · synthetic inspection gate':presetId?'Die-attach inspection gate':'Adjust to the interfaces in your specimen';
   $('#focus').max=twin.size_mm[2];$('#depth-max').textContent=`${twin.size_mm[2].toFixed(2)} mm`;syncSettingsControls();
   updateSpecimenReference(twin);setSpecimenURL(presetId);
-  hbmEditor?.setTwin(twin);updateROISites(twin);
+  refreshMicrostructure(twin);hbmEditor?.setTwin(twin);updateROISites(twin,preserve);
   $('#model-title').textContent=twin.name;$('#specimen-description').textContent=twin.description || 'Imported primitive digital twin.';
   $('#dimensions').replaceChildren(document.createTextNode(twin.size_mm.map(n=>Number(n.toFixed(2))).join(' × ')+' '));const unit=document.createElement('span');unit.textContent='mm';$('#dimensions').append(unit);
   $('#primitive-count').textContent=`${twin.objects.length} primitives · ${new Set(twin.objects.map(o=>o.material)).size} materials`;
-  const count=twin.objects.filter(o=>o.role==='defect').length;$('#defect-count').textContent=count;$('#defect-note').textContent=count?`${count} modeled defect${count===1?'':'s'}, shown in amber. Translucency and exploded spacing affect only this view.`:'No defects in this specimen. Translucency and exploded spacing affect only this view.';
+  const count=twin.objects.filter(o=>o.role==='defect').length;$('#defect-count').textContent=count;$('#defect-note').textContent=count?`${count} modeled defect${count===1?'':'s'}. Amber air spheres mark voids; missing bumps use epoxy replacements. Translucency and exploded spacing affect only this view.`:'No defects in this specimen. Translucency and exploded spacing affect only this view.';
   const key=$('#material-key');key.replaceChildren();
   for(const mat of state.materials.filter(m=>twin.objects.some(o=>o.material===m.id))) {
     const item=document.createElement('span');item.className='material-item';const dot=document.createElement('i');if(/^#[\da-f]{6}$/i.test(mat.color))dot.style.background=mat.color;const label=document.createElement('span');label.textContent=mat.name || mat.id;item.append(dot,label);key.append(item);
@@ -211,8 +219,9 @@ function setTwin(twin, presetId, preserve=false) {
   if(preserve && previousResult){state.result=previousResult;$('#export-results').disabled=false;['#xray-empty','#sam-empty'].forEach(id=>$(id).classList.add('hidden'));renderResultDetails();updateProbeLabels();updateAssumptions();drawAll();markStale();$('#run-help').textContent='HBM geometry changed. Run to acquire the edited specimen.';}
 }
 
-function updateROISites(twin) {
-  const selected=$('#roi-site').value;$('#roi-site').replaceChildren();
+function updateROISites(twin,preserve=false) {
+  const active=!preserve && twin.hbm_assemblies?.find(assembly=>assembly.microstructure?.enabled);
+  const selected=active?.id || $('#roi-site').value;$('#roi-site').replaceChildren();
   for(const assembly of twin.hbm_assemblies || []){const option=document.createElement('option');option.value=assembly.id;option.textContent=assembly.name || assembly.id;$('#roi-site').append(option);}
   if([...$('#roi-site').options].some(option=>option.value===selected))$('#roi-site').value=selected;
   $('#hbm-editor-btn').hidden=!twin.hbm_assemblies?.length;refreshROI();
@@ -221,13 +230,14 @@ function refreshROI() {
   const roi=state.settings.roi_mm;
   $('#roi-controls').hidden=!state.twin?.hbm_assemblies?.length && !roi;
   $('#roi-site').disabled=state.busy || !state.twin?.hbm_assemblies?.length;$('#roi-stack').disabled=state.busy || !state.twin?.hbm_assemblies?.length;
-  $('#roi-summary').textContent=roi?`x ${roi[0].toFixed(2)}–${roi[2].toFixed(2)} / y ${roi[1].toFixed(2)}–${roi[3].toFixed(2)} mm · full depth`:'Full specimen · depth retained';
+  $('#roi-summary').textContent=roi?`x ${roi[0].toFixed(4)}–${roi[2].toFixed(4)} / y ${roi[1].toFixed(4)}–${roi[3].toFixed(4)} mm · full depth`:'Full specimen · depth retained';
   $('#roi-angle-hint').hidden=!roi;$('#angle').disabled=state.busy || Boolean(roi);
 }
-function selectROI(assembly) {
+function selectROI(assembly,selection) {
   if(!state.twin || state.busy)return;
   if(assembly){const [x,y]=assembly.center_xy_mm,[w,h]=assembly.footprint_mm;state.settings.roi_mm=[x-w/2,y-h/2,x+w/2,y+h/2];state.settings.probe_x_mm=x;state.settings.probe_y_mm=y;state.settings.angle_deg=0;if(!state.settings.depth_samples){state.settings.depth_samples=1024;$('#depth-samples').value='1024';}$('#angle').value='0';$('#roi-site').value=assembly.id;}
   else delete state.settings.roi_mm;
+  if(assembly&&selection?.bounds_mm){state.settings.roi_mm=[...selection.bounds_mm];const [x0,y0,x1,y1]=selection.bounds_mm;state.settings.probe_x_mm=selection.probe_mm?.[0] ?? (x0+x1)/2;state.settings.probe_y_mm=selection.probe_mm?.[1] ?? (y0+y1)/2;if(selection.microstructure){state.settings.resolution=64;state.settings.depth_samples=1024;state.settings.frequency_mhz=100;syncSettingsControls();}}
   refreshROI();refreshLabels();refreshViewer();markStale();
 }
 function renderResultDetails() {
@@ -327,7 +337,7 @@ $('#run-btn').addEventListener('click',acquire);
 $('#depth-samples').addEventListener('change',()=>{if($('#depth-samples').value)state.settings.depth_samples=Number($('#depth-samples').value);else delete state.settings.depth_samples;markStale();});
 $('#roi-stack').addEventListener('click',()=>selectROI(state.twin?.hbm_assemblies?.find(item=>item.id===$('#roi-site').value)));
 $('#roi-full').addEventListener('click',()=>selectROI(null));
-hbmEditor=new HBMEditor({request,getTwin:()=>state.twin,onApply:twin=>{setTwin(twin,undefined,true);const picker=$('#example-picker');picker.querySelector('option[value="__edited"]')?.remove();const option=document.createElement('option');option.value='__edited';option.textContent=`Edited: ${twin.name}`;picker.append(option);picker.value='__edited';},onSelectROI:selectROI});
+hbmEditor=new HBMEditor({request,getTwin:()=>state.twin,onApply:twin=>{setTwin(twin,undefined,true);const picker=$('#example-picker');picker.querySelector('option[value="__edited"]')?.remove();const option=document.createElement('option');option.value='__edited';option.textContent=`Edited: ${twin.name}`;picker.append(option);picker.value='__edited';},onSelectROI:selectROI,onSelectSite:id=>{$('#roi-site').value=id;},getIncludeDefects:()=>state.settings.include_defects,onFocusPatch:summary=>{state.microstructure=summary;state.exploded=false;$('#explode-btn').setAttribute('aria-pressed','false');$('#explode-btn').classList.remove('active');refreshViewer();viewer?.focusMicrostructure(summary);$('#twin-view').scrollIntoView({block:'center'});}});
 const volumeWorkspace=new VolumeWorkspace({request,getSnapshot:()=>({twin:state.twin,settings:settingsFromControls()})});
 $('#volumes-btn').addEventListener('click',()=>volumeWorkspace.open());
 let xrayWorkspacePromise;
@@ -338,6 +348,7 @@ let depthWorkspacePromise;
 $('#sam-depth-btn').addEventListener('click',async()=>{try{depthWorkspacePromise ||= import('./depth.js').then(({DepthWorkspace})=>new DepthWorkspace({request}));(await depthWorkspacePromise).open();}catch(error){depthWorkspacePromise=null;notify(`Unable to open SAM depth mapping: ${error.message}`,true);}});
 $('#hbm-editor-btn').addEventListener('click',()=>hbmEditor.open($('#roi-site').value));
 $('#sam-window').addEventListener('change',event=>{state.samCeiling=Number(event.target.value);$('#sam-ceiling-label').textContent=state.samCeiling.toFixed(2);drawAll();});
+$('#return-package').addEventListener('click',()=>viewer?.reset());
 $('#reset-view').addEventListener('click',()=>viewer?.reset());
 $('#explode-btn').addEventListener('click',()=>{state.exploded=!state.exploded;$('#explode-btn').setAttribute('aria-pressed',String(state.exploded));$('#explode-btn').classList.toggle('active',state.exploded);$('#scene-mode').textContent=state.exploded?'Exploded display · simulation geometry unchanged':'Epoxy translucent for inspection';refreshViewer();});
 $('#example-picker').addEventListener('change',async event=>{const example=state.examples.find(e=>e.id===event.target.value);if(example){setTwin(structuredClone(example.twin),example.id);await acquire();}});
@@ -361,7 +372,7 @@ function downloadJSON(value,filename) {
 }
 const safeName=name=>String(name).replace(/[^a-z0-9_-]+/gi,'-').replace(/^-|-$/g,'').slice(0,75)||'specimen';
 $('#export-twin').addEventListener('click',()=>{if(state.twin)downloadJSON(state.twin,`${safeName(state.twin.name)}.json`);});
-$('#export-results').addEventListener('click',()=>{if(state.result)downloadJSON({...state.result,export_metadata:{application:'Virtual microscopy workbench',version:'0.6.0',exported_at:new Date().toISOString(),display_windows:{xray:[0,1],sam:[0,state.samCeiling],bscan:[0,1]},settings_changed_since_acquisition:state.stale}},`${safeName(state.result.twin.name)}-acquisition-${safeName(state.result.run_id || new Date().toISOString())}.json`);});
+$('#export-results').addEventListener('click',()=>{if(state.result)downloadJSON({...state.result,export_metadata:{application:'Virtual microscopy workbench',version:'0.7.0',exported_at:new Date().toISOString(),display_windows:{xray:[0,1],sam:[0,state.samCeiling],bscan:[0,1]},settings_changed_since_acquisition:state.stale}},`${safeName(state.result.twin.name)}-acquisition-${safeName(state.result.run_id || new Date().toISOString())}.json`);});
 $('#assumptions-btn').addEventListener('click',()=>$('#assumptions-dialog').showModal());
 $('#specimen-reference-btn').addEventListener('click',()=>$('#specimen-reference-dialog').showModal());
 $('#close-specimen-reference').addEventListener('click',()=>$('#specimen-reference-dialog').close());

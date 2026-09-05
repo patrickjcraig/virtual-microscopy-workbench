@@ -22,7 +22,7 @@ def request():
 def test_examples_are_valid_and_have_named_truth():
     assert client.get("/api/health").json()["status"] == "ok"
     examples = client.get("/api/examples").json()
-    assert {item["id"] for item in examples} == {"flip-chip-bga", "power-die", "nvidia-h100-sxm"}
+    assert {item["id"] for item in examples} == {"flip-chip-bga", "power-die", "nvidia-h100-sxm", "nvidia-h100-hbm6-microstructure"}
     for ex in examples:
         response = client.post("/api/validate", json=ex["twin"])
         assert response.status_code == 200, response.text

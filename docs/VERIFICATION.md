@@ -2,6 +2,115 @@
 
 This record concerns the first local implementation in `E:\git\Dissertation`. It establishes software and analytical-model behavior, not experimental imaging accuracy.
 
+## Version 0.7 — explicit HBM bumps, TSVs and local defects
+
+The complete Windows suite passed **398 tests in 87.76 seconds**, with the same
+two third-party deprecation warnings. The 83 new cases comprise 39 geometry,
+22 section/API, 18 saved-SAM microstructure and four preview tests. The locked
+Python environment also synchronizes successfully.
+
+The default HBM6 patch adds 48 solder-proxy bumps and 54 copper TSV cylinders to
+the six-site H100 twin, for **574 primitives**. Geometry tests verify canonical
+ordering, stable identities, local translations, strict imports, partial edits,
+disabled-parameter retention, restoration of absent sites, primitive limits and
+rejected overlaps or orphaned defects. Missing bumps replace solder with epoxy;
+voids are contained air spheres. These dimensions and materials are assumptions.
+
+Sections are checked against asymmetric global coordinates and independently
+selected feature centers. The tests cover XZ/YZ planes, explicit bounds, fixed
+planes, excluded defects and invalid selections. A 0.1 µm void deliberately falls
+between display samples: the image is unchanged but warns that the included
+defect is undersampled. Removing that defect from the view removes its warning.
+
+Saved-SAM resource tests compare the conservative column-interface bound with
+actual voxel transitions and generated echoes, including random primitive
+overlaps, edge columns and response halos. They verify unchanged hard budgets,
+target-specific sampling warnings, actual missing-bump RF changes, nominal
+restoration when defects are excluded, and byte-identical resumed output.
+The geometry compiler is now part of SAM/X-ray forward-source fingerprints.
+Previously completed SAM, projection, CT and depth datasets all pass integrity
+verification with current code in the new local catalog.
+
+Fine-ROI previews now tile only visible output rows while retaining full spatial
+halos and the original RF time record. An independent direct pulse calculation
+matches the returned C-scan, A-scan and B-scan, including halo-only sources,
+pulses centered outside both gate boundaries and a later out-of-gate echo.
+Separate tests reject both hard work limits before complex RF allocation.
+Independent code review found no coordinate, halo, gate or budget regression.
+The ready 64 × 64 × 1,024, 100 MHz preset used 16-row cores, at most **6,884,136**
+work cells per tile and **27,536,544** aggregate work cells. Its full trace has
+1,051 samples ending at 1.3125 µs despite the 0.26–0.7 µs gate. One fresh-process
+measurement took **1.676 seconds**, with **452,222,976 bytes** peak working set;
+this observation is not a runtime or process-memory guarantee.
+
+`tools/verify_microstructure_xray.py` compares voxel projections with an
+independent continuous vertical-ray oracle through ordered primitive intervals.
+The selected gap-4 missing bump changes the continuous 80 keV transmission from
+0.3454153 to 0.3569677. The expected log-transmission ratio is **0.032897805**;
+sampled ratios at 256/512/1,024 depth planes are **0.0454058 / 0.0340544 /
+0.0283786**. The finest result still has approximately **13.7% relative error in
+this contrast**, and refinement is nonmonotonic. The oracle separately confirms
+0.0768032 optical depth from material outside the chosen HBM assembly. The
+experiment retains the surrounding package and disables noise/detector blur;
+it does not establish instrument observability. Arrays and report are local in
+`artifacts/v07-xray-independent/`.
+
+`tools/verify_microstructure_sam.py` records a separate 0.12 × 0.18 mm ROI at
+64 × 64 lateral positions, 100 MHz carrier and 800 MHz time sampling over
+0.2–0.7 µs. Its gap-8, row-3, column-2 missing bump changes the finest-grid RF
+by **3.54% relative L2**, with maximum absolute RF difference **0.0813** and
+envelope difference **0.0728** in relative units. Intact 256/512-plane RF differs
+from the 1,024-plane comparison by approximately **183% / 82% relative L2**.
+The finest grid is a comparison reference, not converged truth: voxel boundary
+motion strongly affects coherent phase. Full signed RF/envelope arrays, exact
+requests, resource measurements and reports are retained in
+`artifacts/m7-microstructure-sam-validation/`. These numerical signal changes
+do not establish physical resolution, calibrated accuracy or defect detectability.
+The next increment is continuous material-path timing and its independent tests.
+
+Native Chrome `verify:microstructure` passed 16 workflow checks: loading the
+ready preset, atomic patch edits, all six sites, asymmetric XZ/YZ sections,
+missing-bump/void occupancy, defect exclusion, authored disabled records, close
+3D view and return, rejected-edit retention, actual fine-ROI preview, saved
+signed SAM RF with frozen patch provenance, post hoc gating, ZIP download,
+reload, twin import/export and 390-pixel layout. The native `verify:hbm` and
+`verify:volumes` regressions also passed sequentially. These checks found and
+fixed a site-selection reset when reopening the editor. No uncaught page errors
+occurred in the passing workflows. Browser reports and downloads remain local in
+`web/test-artifacts/`.
+
+The final production frontend build passes. Additional focused native checks
+verify the revised close-view labels at 390 pixels, three local-defect markers,
+hidden nominal missing-bump mesh and restoration of all seven package labels.
+The inspected [editor](images/hbm-microstructure-editor.png) and
+[close-view](images/hbm-microstructure-focus.png) screenshots show generated
+geometry; the supplied reference pane is closed and its image is excluded.
+
+The delivered comparison pair is saved in the active local catalog at
+`http://127.0.0.1:8767`, using the ready preset's **0.125 × 0.175 mm** ROI.
+Both datasets contain **64 × 64 × 401** signed RF/envelope samples over
+0.2–0.7 µs at 800 MHz, with 100 MHz carrier, 0.5 fractional bandwidth, 0.55 mm
+focus, zero external standoff and 1,024 material depth planes. This ROI differs
+from the standalone SAM experiment above and samples different lateral rays.
+
+| Saved case | Dataset ID | ZIP bytes |
+| --- | --- | ---: |
+| H100 HBM6 / intact explicit patch | `3f5a1694-987a-489a-886a-c6803264f3a9` | 6,265,269 |
+| H100 HBM6 / missing bump gap8 r3 c2 | `7fb0140d-a602-4fbb-be11-a6df5e83e088` | 9,663,688 |
+
+Each stores **13,144,200 uncompressed array/coordinate bytes**. All committed
+coordinates/chunks and archive CRCs pass verification; exporting leaves every
+dataset file byte-identical. X/Y/time coordinates match across the pair. The
+reopened API views reproduce all 401 saved RF/envelope/time samples exactly at
+the largest-difference location, with every dataset file still unchanged. The
+RF relative L2 difference is **6.417%**, maximum absolute RF difference is
+**0.013512**, and envelope difference is **0.012174**. The corresponding actual
+X-ray previews, with the normal detector response and noise disabled, differ by
+at most **0.009847 transmission**. Full preview snapshots, signed differences,
+ZIP archives and the numerical report are retained locally in
+`artifacts/v07-hbm6-delivery/`. No measured reference image or generated volume
+is included in Git. These values characterize this synthetic configuration only.
+
 ## Version 0.6 — SAM time-to-depth estimates
 
 The complete Windows suite passed **315 tests in 86.83 seconds**, including

@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 
 from . import __version__
 from .schemas import Twin, SimulationRequest, HBMUpdateRequest
-from .inspection import HBMSectionRequest, material_section
+from .inspection import HBMMicrostructureRequest, HBMSectionRequest, material_section, microstructure_details
 
 ROOT = Path(__file__).resolve().parents[1]
 _compute_lock = threading.Lock()
@@ -87,7 +87,16 @@ def hbm_compose(request: HBMUpdateRequest):
                            request.parameters.model_dump(mode="json", exclude_unset=True))
     except ValueError as exc:
         raise HTTPException(422, str(exc)) from exc
-    return {"twin": twin, "warnings": ["HBM dimensions and layer construction are modeling assumptions."]}
+    return {"twin": twin, **microstructure_details(Twin.model_validate(twin), request.assembly_id),
+            "warnings": ["HBM dimensions and layer construction are modeling assumptions."]}
+
+
+@app.post("/api/hbm/microstructure")
+def hbm_microstructure(request: HBMMicrostructureRequest):
+    try:
+        return microstructure_details(request.twin, request.assembly_id)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
 
 
 @app.post("/api/hbm/section")

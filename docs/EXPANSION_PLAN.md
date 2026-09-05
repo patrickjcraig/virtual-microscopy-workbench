@@ -20,8 +20,10 @@ provides linked spatial slices with original-time readouts. See
 The current app has a six-site H100 package, editable layered HBM regions, saved
 X-ray projections and reconstructed attenuation volumes, saved acoustic RF and
 derived depth estimates, and independently controlled acquisition parameters.
-The next increment adds explicit local HBM microstructure, as scoped in
-[HBM_MICROSTRUCTURE_SPEC.md](HBM_MICROSTRUCTURE_SPEC.md). The sections below
+Version 0.7 implements the first explicit local HBM microstructure increment:
+48 bumps, 54 TSVs, targeted local defects, feature-centered sections, close views,
+fine full-depth ROI previews and saved SAM signals. See
+[HBM_MICROSTRUCTURE.md](HBM_MICROSTRUCTURE.md). The sections below
 retain the broader expansion design; the milestone table distinguishes shipped
 baselines from future fidelity work.
 
@@ -207,7 +209,7 @@ Never silently lower the requested sampling. Offer a smaller ROI, fewer views, s
 | M4 — X-ray projection volume (delivered in 0.4) | Full-angle CPU parallel projector, independent detector/material sampling, source/detector/rotation controls, saved poses and counts/transmission/log/mask arrays, view/sinogram browser | Analytical lengths at 0°, 90° and oblique views; no angle singularities; asymmetric orientation tests; seeded noise statistics, byte-identical resume and preserved legacy SAM datasets |
 | M5 — Reconstruction (CPU baseline delivered in 0.5) | CPU parallel FBP from saved projections, linked spatial slices, filter/bounds controls, coverage masks and source provenance; GPU cone CT and iterative laminography remain future | Independent analytical ellipse scale/orientation, detector-sampling convergence, held-out projection residuals, 180°/360° weighting, invalid/truncated/limited-angle handling, byte-preserving resume and source independence after completion |
 | SAM depth extension (delivered in 0.6) | Declared homogeneous/layered velocity, source-water or explicit surface time, independent RF/envelope mapping, spatial slices, support masks and frozen source provenance | Known reflector depths, velocity/reference sensitivity, layered travel times, nonzero recordings, preserved signed RF/X/Y, out-of-model/record masks, resumable byte-identical data and read-only reopened views |
-| M6 — HBM microstructure | Explicit local bumps/TSVs/defects, layered acoustic echoes, spectrum/detector response and parameter sweeps | Feature/mesh convergence; surrounding-package contributions preserved; analytical or independent layered-wave comparisons; defect observability reported per instrument/configuration |
+| M6 — HBM microstructure (first patch delivered in 0.7) | Explicit local bumps/TSVs/defects and inspection delivered; improved path sampling, layered acoustic echoes, spectrum/detector response and parameter sweeps follow | Feature/mesh sensitivity; surrounding-package contributions preserved; analytical or independent layered-wave comparisons; defect observability reported per instrument/configuration |
 | M7 — Wave physics and calibration | Bounded elastic ROI, measured instrument responses, measured-data import/comparison | Time/grid/domain convergence, interface/transmission/mode checks, matched acquisition geometry, held-out measurement agreement and uncertainty |
 | M8 — Coupled multiphysics | Temperature/deformation/stress fields driving material and geometry updates between acquisitions | First validate one-way coupling and unit/coordinate transfer, then introduce validated feedback loops if the research requires them |
 
@@ -217,13 +219,22 @@ Keep the existing regression suite, then add tests that measure the new scientif
 
 ## Recommended next release
 
-The first M1–M5 increments and the SAM depth extension are delivered. Next
-implement the [first M6 local HBM microstructure increment](HBM_MICROSTRUCTURE_SPEC.md):
-one editable 2×3 patch with 48 inter-die bumps and 54 TSVs, targeted defects,
-feature-centered inspection and fine ROI sampling with surrounding package paths
-retained. Parameter sweeps and richer propagation follow this bounded patch. Extend
-material data before spectrum controls. Optional GPU/cone/laminography backends
-can build on the saved-source reconstruction interface independently of this
-microstructure work. Reuse job, provenance and dataset foundations throughout.
+The first M1–M5 increments, SAM depth extension, and bounded M6 bump/TSV patch
+are delivered. The microstructure grid study exposes substantial voxel-center
+phase sensitivity in SAM, so the next loop should first improve and independently
+validate material-path timing for the existing normal-incidence model. A bounded
+continuous column-intersection path for selected fine ROIs is a candidate; retain
+the current solver as an explicit comparison and preserve immutable historic data.
+Do not label the current 1,024-depth grid converged merely because it is finest.
+The proposed [continuous-column specification](COLUMN_PATH_SPEC.md) defines
+the opt-in contract, ordered geometry, resource limits and independent acceptance
+tests for the next autonomous loop. That backend is not implemented in 0.7.
+
+Then add reproducible parameter sweeps with frozen geometry, per-case resource
+admission and comparison of signed RF, envelopes and X-ray transmission. Richer
+propagation follows those numerical foundations. Extend material data before
+spectrum controls. Optional GPU/cone/laminography backends and refined all-angle
+local X-ray integration remain separate extensions. Reuse job, provenance and
+dataset foundations throughout.
 
 Before assigning specimen-specific dimensions, resolve the original image scale/resizing history, image type and orientation, H100 revision, HBM vendor/stack construction and instrument settings as information becomes available. Those unknowns do not block the architecture, generic generators or synthetic volume work.

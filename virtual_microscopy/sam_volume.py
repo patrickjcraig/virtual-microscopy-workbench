@@ -16,7 +16,7 @@ from .materials import WATER_ATTENUATION_DB_MM_AT_50MHZ, WATER_SOUND_SPEED_M_S
 from .physics import MaterialGrid, SAM_F_NUMBER, acoustic_echoes, voxelize
 from .volume_schemas import SamVolumeRequest
 
-MODEL_VERSION = "sam-volume-0.3.0"
+MODEL_VERSION = "sam-volume-0.7.0"
 MAX_VOLUME_BYTES = 512 * 1024 ** 2
 MAX_PEAK_BYTES = 512 * 1024 ** 2
 MAX_RF_WORK_CELLS = 180_000_000
@@ -61,6 +61,71 @@ def _layout(request):
                 nt_work=nt + 2 * half)
 
 
+def _interface_bound_map(request: SamVolumeRequest, layout: dict) -> np.ndarray:
+    """Conservatively bound vertical interfaces at each padded XY sample.
+
+    Each supported primitive is convex along z, so contributes at most two
+    interval boundaries to a sampled column. Ordered overlaps can hide those
+    boundaries, never create additional ones. XY boxes deliberately overbound
+    sphere and cylinder occupancy. Coordinate arithmetic matches voxelize().
+    """
+    a, p = request.acquisition, layout
+    origin = np.array([p["roi"][0] - p["before_x"] * p["dx"],
+                       p["roi"][1] - p["before_y"] * p["dy"], 0.])
+    pitch = np.array([p["dx"], p["dy"], request.twin.size_mm[2] / a.depth_samples])
+    shape_xyz = np.array([p["nx"], p["ny"], a.depth_samples])
+    upper = origin + pitch * shape_xyz
+    x = origin[0] + (np.arange(p["nx"]) + .5) * pitch[0]
+    y = origin[1] + (np.arange(p["ny"]) + .5) * pitch[1]
+    z = (np.arange(a.depth_samples) + .5) * pitch[2]
+    # At most 600 primitives yield 1200 boundaries before clipping to nz+1.
+    bound = np.zeros((p["ny"], p["nx"]), dtype=np.uint16)
+    for obj in request.twin.objects:
+        if not a.include_defects and obj.role == "defect":
+            continue
+        center, extent = np.asarray(obj.center_mm), np.asarray(obj.size_mm)
+        low, high = center - extent / 2, center + extent / 2
+        if np.any(high <= origin) or np.any(low >= upper):
+            continue
+        x0, x1 = np.searchsorted(x, low[0], side="left"), np.searchsorted(x, high[0], side="right")
+        y0, y1 = np.searchsorted(y, low[1], side="left"), np.searchsorted(y, high[1], side="right")
+        z0, z1 = np.searchsorted(z, low[2], side="left"), np.searchsorted(z, high[2], side="right")
+        if x0 < x1 and y0 < y1 and z0 < z1:
+            bound[y0:y1, x0:x1] += 2
+    np.minimum(bound, a.depth_samples + 1, out=bound)
+    return bound
+
+
+def _microfeature_sampling(request: SamVolumeRequest, layout: dict) -> tuple[list[dict], list[str]]:
+    """Describe primitive extents in grid samples, without a resolution claim."""
+    a, p = request.acquisition, layout
+    pitch = np.array([p["dx"], p["dy"], request.twin.size_mm[2] / a.depth_samples])
+    roi_low = np.array([p["roi"][0], p["roi"][1], 0.])
+    roi_high = np.array([p["roi"][2], p["roi"][3], request.twin.size_mm[2]])
+    grid_low = roi_low - np.array([p["before_x"] * pitch[0], p["before_y"] * pitch[1], 0.])
+    grid_high = grid_low + pitch * [p["nx"], p["ny"], a.depth_samples]
+    features, warnings = [], []
+    for obj in request.twin.objects:
+        if obj.layer_role not in ("microbump", "tsv"):
+            continue
+        size = np.asarray(obj.size_mm)
+        low, high = np.asarray(obj.center_mm) - size / 2, np.asarray(obj.center_mm) + size / 2
+        counts = size / pitch
+        axes = [axis for axis, count in zip(("x", "y", "z"), counts) if count < 2]
+        included = a.include_defects or obj.role != "defect"
+        overlap = bool(np.all(high > grid_low) and np.all(low < grid_high))
+        features.append({"id": obj.id, "assembly_id": obj.assembly_id,
+            "layer_role": obj.layer_role, "role": obj.role, "shape": obj.shape,
+            "size_um": (size * 1000).tolist(), "samples_xyz": counts.tolist(),
+            "included": included, "intersects_roi": bool(np.all(high > roi_low) and np.all(low < roi_high)),
+            "intersects_geometry_domain": overlap, "undersampled_axes": axes})
+        if included and overlap and axes:
+            detail = ", ".join(f"{axis}={count:.3g}" for axis, count in zip(("x", "y", "z"), counts) if count < 2)
+            warnings.append(f"Microfeature {obj.id} ({obj.layer_role}, {obj.role}) has fewer than two samples "
+                            f"across {detail}; sampled occupancy can be inaccurate or disappear. Sampling is not acoustic resolution.")
+    return features, warnings
+
+
 def estimate_sam(request: SamVolumeRequest | dict) -> dict:
     """Reject impractical requests before allocating geometry, echoes or RF cubes.
 
@@ -82,22 +147,24 @@ It excludes interpreter, HTTP and disk compression implementation overhead.
     total_bytes = 2 * rf_bytes + coordinate_bytes
     if total_bytes > MAX_VOLUME_BYTES:
         raise ValueError("RF and envelope exceed the 512 MiB saved-volume budget. Reduce raster size, duration or sample rate.")
-    # Every primitive has at most two intersections along any vertical column.
-    # A sampled column also cannot contain more than nz+1 material interfaces.
     objects = [o for o in request.twin.objects if a.include_defects or o.role != "defect"]
-    max_interfaces = min(a.depth_samples + 1, 2 * len(objects))
+    interface_bound = _interface_bound_map(request, p)
+    # Include the bound map and its transient coordinate vectors in the peak
+    # allowance even though they are released before geometry is allocated.
+    bound_workspace = interface_bound.nbytes + (nx + ny + a.depth_samples) * 8
     tile_rows = 8
     while True:
-        row_counts = []
+        row_counts, tile_interfaces = [], []
         for start in range(0, a.scan_ny, tile_rows):
             low = max(0, p["before_y"] + start - p["halo_y"])
             high = min(ny, p["before_y"] + min(start + tile_rows, a.scan_ny) + p["halo_y"])
             row_counts.append(high - low)
+            tile_interfaces.append(int(interface_bound[low:high].sum(dtype=np.uint64)))
         max_tile_cells = max(row_counts) * nx * p["nt_work"]
-        echo_workspace = max(row_counts) * nx * max_interfaces * 160
+        echo_workspace = max(tile_interfaces) * 160
         # 96 B/work cell covers FFT length padding, complex inputs/outputs and
         # filtering temporaries, with separate returned RF/envelope allocations.
-        peak = (grid_cells + max_tile_cells * 96 + echo_workspace +
+        peak = (grid_cells + bound_workspace + max_tile_cells * 96 + echo_workspace +
                 tile_rows * a.scan_nx * nt * 8 + coordinate_bytes + 16 * 1024 ** 2)
         if peak <= MAX_PEAK_BYTES or tile_rows == 1:
             break
@@ -107,7 +174,7 @@ It excludes interpreter, HTTP and disk compression implementation overhead.
     work_cells = sum(row_counts) * nx * p["nt_work"]
     if work_cells > MAX_RF_WORK_CELLS:
         raise ValueError("SAM acquisition exceeds the local RF computation budget including tile halos. Reduce raster, duration or sample rate, or enlarge a small ROI.")
-    warnings = []
+    features, warnings = _microfeature_sampling(request, p)
     if max(p["dx"], p["dy"]) > p["lateral_fwhm"] / 2:
         warnings.append("The scan pitch undersamples the modeled focal spot; scan pitch is not acoustic resolution.")
     return {
@@ -118,6 +185,14 @@ It excludes interpreter, HTTP and disk compression implementation overhead.
         "envelope_bytes": rf_bytes, "coordinate_bytes": coordinate_bytes,
         "total_bytes": total_bytes, "estimated_peak_bytes": peak,
         "rf_work_cells": work_cells, "geometry_cells": grid_cells,
+        "primitive_count": len(request.twin.objects), "included_primitive_count": len(objects),
+        "interface_bound_map_bytes": int(interface_bound.nbytes),
+        "interface_bound_workspace_bytes": int(bound_workspace),
+        "maximum_column_interfaces": int(interface_bound.max()),
+        "maximum_tile_interfaces": max(tile_interfaces), "echo_workspace_bytes": echo_workspace,
+        "interface_bound_definition": "At most two z boundaries per included primitive covering each sampled XY bounding box, capped at depth_samples+1; summed over each canonical tile and its complete acoustic halo.",
+        "microfeature_sampling": features,
+        "microfeature_sampling_definition": "Compiled primitive extents divided by geometry pitch in x,y,z; these ratios are sampling, not measured resolution or a guarantee of occupied voxel centers.",
         "grid_shape": [ny, nx, a.depth_samples],
         "grid_origin_mm": [p["roi"][0] - p["before_x"] * p["dx"],
                            p["roi"][1] - p["before_y"] * p["dy"], 0.0],

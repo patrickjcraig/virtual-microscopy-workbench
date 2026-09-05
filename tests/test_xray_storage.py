@@ -102,8 +102,9 @@ def test_xray_storage_axes_units_and_coordinate_pose_identity(tmp_path):
     assert manifest["axis_order"] == ["view", "v", "u"]
     assert manifest["arrays"]["counts"]["units"] == "observed photon counts per detector pixel"
     assert "only marks" in manifest["arrays"]["valid_mask"]["note"]
-    assert set(manifest["solver"]["source_sha256"]) == {"xray_volume.py", "xray_schemas.py", "physics.py", "schemas.py", "materials.py"}
+    assert set(manifest["solver"]["source_sha256"]) == {"xray_volume.py", "xray_schemas.py", "physics.py", "schemas.py", "hbm.py", "materials.py"}
     assert "sam_volume.py" in solver_identity("sam-test")["source_sha256"]
+    assert "hbm.py" in solver_identity("sam-test")["source_sha256"]
     group = store.open_arrays(identifier)
     for name in store.signal_units:
         assert group[name].shape == (3, 4, 5)

@@ -1,4 +1,4 @@
-# Virtual microscopy 0.6 integration contract (compatible twin schema 1)
+# Virtual microscopy 0.7 integration contract (compatible twin schema 1)
 
 Local application: Python FastAPI serves a Vite/vanilla JS + Three.js client. Source in `virtual_microscopy/` and `web/`. Physical dimensions use millimetres. Coordinates x right, y down in image, z depth from specimen top; surrounding material is water for SAM and air for X-ray. Later primitives replace earlier ones. This is a reduced-order synthetic forward simulator, not experimentally validated or coupled full-wave multiphysics.
 
@@ -18,9 +18,25 @@ Compiled primitives use `assembly_id` and `layer_role` (base_die/dram_die/interd
 
 Optional `image_reference` contains SHA-256, raster width/height, pixel_size_um, scale_status (user_estimate/calibrated), title and source_note. Declared calibration is metadata supplied by the importer, not a server certification. Image bytes and filesystem paths are not carried in exported twins.
 
+Optional assembly `microstructure` adds `model_version:'hbm-explicit-patch-1'`,
+`enabled`, signed `center_offset_xy_um`, `columns`, `rows` (1–8), positive
+`pitch_x_um`, `pitch_y_um`, `bump_diameter_um`, `tsv_diameter_um`, `evidence`,
+`source_note`, and at most four `defects`. Only one enabled patch is allowed in
+the twin; total primitives remain capped at 600. Defaults are 2 columns, 3 rows,
+50 µm pitches, 25 µm bumps and 10 µm TSVs. Cylinder height comes from its host gap
+or die. New compiled layer roles are `microbump` and `tsv`.
+
+Each defect has `id` (letter-led ASCII letters/digits/underscore/hyphen, max 20),
+`kind:'missing_bump'|'bump_void'|'tsv_void'`, `row`, `column` (one-based),
+`layer_index` (bump gaps 1..D; TSV base 0/dies 1..D), `enabled`, and
+`void_diameter_um` for voids. Missing bumps replace solder with epoxy; voids are
+contained air spheres. Duplicate enabled targets, orphaned dormant targets,
+overlapping nominal cylinders and out-of-footprint patches are rejected. Local
+defects follow their assembly; global defects preserve existing coordinates.
+
 ## API
 
-- GET /api/health -> {status:'ok',version:'0.6.0'}
+- GET /api/health -> {status:'ok',version:'0.7.0'}
 - GET /api/examples -> [{id,name,description,twin}]
 - GET /api/materials -> list of material dicts with id,name,color,density_g_cm3,sound_speed_m_s,impedance_mrayl and provenance; extra properties permitted.
 - POST /api/validate -> twin body -> {valid:true,twin:normalized twin,warnings:[]}; errors HTTP 422.
@@ -31,6 +47,8 @@ Optional acquisition `roi_mm` is `[xmin,ymin,xmax,ymax]` in global millimetres w
 
 - POST /api/hbm/compose -> `{twin,assembly_id,parameters:partial HBM parameters}` -> `{twin,warnings}`. Invalid or null patch values return 422. The input snapshot is not mutated. Geometry updates preserve unrelated objects and fixed-coordinate defects; updated objects stay before those defects.
 - POST /api/hbm/section -> `{twin,assembly_id,axis:'xz'|'yz',resolution:128|256|512,include_defects?:boolean}` -> material `image` labels, `materials` legend, `extent_mm:[u0,u1,z0,z1]`, axis, fixed_coordinate_mm, pixel_pitch_um and warnings. Section sampling includes intersecting package geometry. `mode:'material_geometry'` distinguishes it from microscope/reconstruction output.
+- POST /api/hbm/microstructure -> `{twin,assembly_id}` -> `{microstructure,primitive_count,remaining_primitives}`. The same fields accompany compose responses. Summary contains enabled/model_version, nominal_feature_count/defect_count, feature_bounds_mm `[x0,y0,z0,x1,y1,z1]`, roi_mm `[x0,y0,x1,y1]`, canonical features `{id,kind,row,column,layer_index,center_mm,size_mm}` and authored defect identity mappings `{id,kind,target_id,primitive_id,enabled}`. Disabled patches have no active features or ROI. Nested compose patches merge with authored microstructure parameters.
+- HBM section additionally accepts `feature_id` for an active nominal bump/TSV, `bounds_mm:[u0,u1,z0,z1]`, or `fixed_coordinate_mm`. Feature and explicit fixed coordinate are mutually exclusive. Bounds lie within the specimen with positive spans. The response includes the selected `feature` or null, plus sampling warnings for included local features/defects, including those falling between sample centers.
 - GET /api/reference-image -> the locally installed user image (PNG) or 404. Its identity is returned as `X-Reference-SHA256`. The client compares it to the selected twin before display; the endpoint serves only the fixed local reference and accepts no arbitrary file path.
 
 ## Python engine callable
@@ -246,7 +264,7 @@ exported independently of source-directory availability. `/export` returns
   sam:{image:[[float]],unit:'relative echo amplitude',extent_mm:[0,x,0,y],min:float,max:float,peak_amplitude:float},
   ascan:{time_us:[float],amplitude:[float],envelope:[float],probe_mm:[x,y]},
   bscan:{image:[[float]],extent:[0,x,0,time_max_us],unit:'relative echo amplitude',y_mm:float},
-  metadata:{runtime_ms:float,grid_shape:[ny,nx,nz],grid_origin_mm:[x,y,0],acquisition_shape:[n,n],roi_mm:null|[xmin,ymin,xmax,ymax],pixel_pitch_um:[dx*1000,dy*1000],voxel_depth_um:float,seed:42,model_version:'0.2.0',warnings:[string],assumptions:[string]}
+  metadata:{runtime_ms:float,grid_shape:[ny,nx,nz],grid_origin_mm:[x,y,0],acquisition_shape:[n,n],roi_mm:null|[xmin,ymin,xmax,ymax],pixel_pitch_um:[dx*1000,dy*1000],voxel_depth_um:float,seed:42,model_version:'0.7.0',rf_tile_rows:int,rf_max_tile_work_cells:int,rf_work_cells:int,warnings:[string],assumptions:[string]}
 }
 ```
 

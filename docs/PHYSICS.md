@@ -35,6 +35,16 @@ problem or establish calibrated depth accuracy. See [SAM depth](SAM_DEPTH.md).
 
 ## Digital-twin interpretation and units
 
+Version 0.7's explicit HBM patch expands into existing vertical cylinders and
+ordered material overlays. It changes sampled occupancy without adding new
+material properties or a new propagation model. Missing bumps use epoxy
+replacements; contained voids use air. Per-column interval bounds make SAM
+resource admission practical for small ROIs while retaining all surrounding
+Gaussian context. Independent continuous vertical-ray and RF grid-sensitivity
+experiments are described in [HBM microstructure](HBM_MICROSTRUCTURE.md).
+Fine voxel spacing is not sufficient evidence of convergence: discrete layer
+boundaries can move between grids and substantially change coherent RF phase.
+
 The v1 JSON twin contains a bounded volume and ordered boxes, spheres and vertical cylinders. Object positions and full extents use **millimetres**. The x axis points right, y increases down the image and z increases from the specimen top into its thickness. Later objects replace earlier objects wherever they overlap. A void is therefore an air object placed after the solid it removes. Excluding defects skips objects with `role: "defect"`, exposing the underlying structures.
 
 This is a material geometry model, not an electrical netlist or automatic CAD interpretation. Silicon, copper, solder, epoxy, FR4 and air labels select fixed property presets. Primitive geometry is sampled onto a finite material grid for the forward calculation. Features smaller than grid spacing can disappear, change apparent thickness or shift when the grid changes. The 3D viewer can show a thin primitive even when the acquisition grid cannot represent it reliably.

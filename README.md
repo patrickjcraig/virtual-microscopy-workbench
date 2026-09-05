@@ -92,13 +92,32 @@ Open the **HBM assembly laboratory** to select any of the six sites, switch betw
 
 ![Editable HBM layers and the material YZ section of a 12-high template](docs/images/hbm-layer-editor.png)
 
-Use **Set this stack as scan ROI** to scan its footprint with global coordinates and the complete specimen depth. When depth sampling was automatic, stack selection uses 1,024 material planes; the depth count can also be controlled independently from lateral sampling. Neighboring material is sampled in a numerical halo for detector/acoustic blur. ROI X-ray scans currently require 0° incidence; full-specimen scans retain the existing tilt control. Explicit TSVs and true microbump arrays remain future work.
+Use **Set this stack as scan ROI** to scan its footprint with global coordinates and the complete specimen depth. When depth sampling was automatic, stack selection uses 1,024 material planes; the depth count can also be controlled independently from lateral sampling. Neighboring material is sampled in a numerical halo for detector/acoustic blur. ROI X-ray scans currently require 0° incidence; full-specimen scans retain the existing tilt control.
+
+**New in 0.7: explicit HBM microstructure.** Choose **NVIDIA H100 SXM / HBM6
+explicit patch**, or enable a patch in the HBM editor. Its 2×3 synthetic lattice
+adds 48 inter-die solder-proxy bumps and 54 copper TSVs while retaining all six
+physical sites. Edit pitch, diameters and local offsets; add epoxy-filled missing
+bumps or contained air voids. Feature-centered XZ/YZ sections show actual material
+replacement, and **Focus patch** provides a close 3D view. Scan the selected patch
+using its fine global ROI with full package depth and response context.
+
+The default patch is 574 primitives, leaving 26 under the existing 600-object
+limit. Its 0.125 × 0.175 mm ROI at 64 × 64 × 1,024 has approximately
+1.95 / 2.73 / 2.59 µm sampling; these are not resolution or calibrated dimensions.
+Saved SAM preflight reports feature sampling and conservatively counts intersecting
+material columns. See [HBM_MICROSTRUCTURE.md](docs/HBM_MICROSTRUCTURE.md) for
+controls, defect semantics, numerical checks and current limits.
+
+![Feature-centered HBM6 section with copper TSVs and a local air void](docs/images/hbm-microstructure-editor.png)
+
+![Close 3D view of the explicit HBM bump and TSV patch with labeled local defects](docs/images/hbm-microstructure-focus.png)
 
 The supplied reference has a provisional user estimate of approximately 4.6 µm/pixel, with unconfirmed instrument calibration and resizing history. The app only shows the local image when its SHA-256 matches the imported twin's reference. Clones without that image retain all editing and simulation features.
 
 ## Numerical exports and headless execution
 
-**New in 0.6: SAM depth estimates.** Open **SAM depth** and select a completed
+**SAM depth estimates (0.6 onward).** Open **SAM depth** and select a completed
 acoustic recording. Set a homogeneous speed or an explicit layer table, choose
 the surface-time reference, and map the saved signed RF and analytic envelope to
 a spatial depth grid. X/Y sampling stays identical to the source. The selected
@@ -207,12 +226,15 @@ Run `npm.cmd run verify:depth` for the saved-source SAM depth workflow and
 resumption of the same dataset. Run browser volume checks sequentially: the
 shared worker intentionally defers previews while a saved job is active.
 
-The next increment is an editable local bump/TSV patch with targeted defects,
-feature-centered inspection, and fine ROI acquisition. Its concrete scope and
-acceptance checks are in [HBM_MICROSTRUCTURE_SPEC.md](docs/HBM_MICROSTRUCTURE_SPEC.md).
+Run `npm.cmd run verify:microstructure` for patch editing, defect sections,
+close viewing, fine ROI preview and saved acoustic acquisition. Set
+`MICROSCOPY_URL` when using a server port other than 8765.
+
+The first local bump/TSV patch is delivered. The next work improves material-path
+sampling and repeatable parameter comparisons before richer propagation models.
 GPU cone CT and iterative laminography remain separate future extensions. See
 [EXPANSION_PLAN.md](docs/EXPANSION_PLAN.md) for the sequence and acceptance gates.
-Version 0.6 retains raw SAM RF and X-ray projections alongside derived CT and
+Version 0.7 retains raw SAM RF and X-ray projections alongside derived CT and
 SAM depth volumes.
 
 The implementation is separated into `virtual_microscopy/physics.py` and `materials.py`, strict schemas and local API, `web/` UI, reproducible example geometry, and tests. This leaves room for higher-fidelity solvers and CAD/voxel import while keeping the current demo runnable.

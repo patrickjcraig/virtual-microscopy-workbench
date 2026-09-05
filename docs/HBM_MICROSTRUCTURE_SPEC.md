@@ -1,6 +1,6 @@
 # Next increment: explicit HBM microstructure in a bounded ROI
 
-Status: implementation specification, prepared 4 September 2026 against the v0.6 working tree. This document does not report implemented microstructure or experimentally validated dimensions. It narrows the next autonomous build loop from the broader [expansion plan](EXPANSION_PLAN.md).
+Status: design specification prepared 4 September 2026 against v0.6; the first bounded increment is implemented in v0.7. The [implementation guide](HBM_MICROSTRUCTURE.md) and [verification record](VERIFICATION.md) describe delivered behavior and executed checks. This specification does not establish experimentally validated dimensions.
 
 ## Recommended deliverable
 

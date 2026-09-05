@@ -56,9 +56,10 @@ export class TwinViewer {
       group.remove(child);
     }
   }
-  setTwin(twin, materials, includeDefects, explode = false) {
+  setTwin(twin, materials, includeDefects, explode = false, microstructure = null) {
     const changed = this.twin !== twin;
-    this.twin = twin; this.exploded = explode;
+    this.twin = twin; this.exploded = explode;this.includeDefects=includeDefects;this.microstructure=microstructure;
+    const focus=this.microFocus&&!changed&&!explode;
     this.labels = []; this.labelLayer.replaceChildren();
     this.renderer.domElement.setAttribute('aria-label', `${twin.name}. Interactive digital twin. Drag to orbit, scroll to zoom.`);
     this.element.closest('.twin-panel').classList.toggle('reference-twin', Boolean(twin.reference));
@@ -67,28 +68,33 @@ export class TwinViewer {
     this.span = Math.max(sx, sy, sz * 2);
     const materialColors = Object.fromEntries(materials.map(m => [m.id, m.color]));
     const defaults = { silicon:'#384c6c', copper:'#b97644', solder:'#aebaca', epoxy:'#90a9c6', fr4:'#52786d', air:'#ed935b' };
-    const structures = twin.objects.filter(o => includeDefects || o.role !== 'defect');
+    const localDefects=new Map((microstructure?.defects || []).filter(d=>d.enabled).map(d=>[d.primitive_id,d]));
+    const missing=new Set(includeDefects?(microstructure?.defects || []).filter(d=>d.enabled&&d.kind==='missing_bump').map(d=>d.target_id):[]);
+    const structures = twin.objects.filter(o => (includeDefects || o.role !== 'defect')&&!missing.has(o.id));
+    this.renderer.domElement.dataset.hiddenMissingBumps=String(missing.size);
+    this.renderer.domElement.dataset.voidMarkers=String(includeDefects?[...localDefects.values()].filter(d=>d.kind!=='missing_bump').length:0);
     for (const item of structures) {
       let geometry;
       const [x, y, z] = item.size_mm;
       if (item.shape === 'sphere') geometry = new THREE.SphereGeometry(x / 2, 22, 14);
       else if (item.shape === 'cylinder') geometry = new THREE.CylinderGeometry(x / 2, x / 2, z, 24);
       else geometry = new THREE.BoxGeometry(x, z, y);
-      const isDefect = item.role === 'defect';
+      const isDefect = item.role === 'defect',localDefect=localDefects.get(item.id),voidMarker=Boolean(localDefect&&localDefect.kind!=='missing_bump');
       const transparent = item.material === 'epoxy' || item.material === 'air';
       const surface = new THREE.MeshStandardMaterial({
-        color: isDefect ? '#f59b52' : materialColors[item.material] || defaults[item.material] || '#879ab1',
+        color: isDefect && localDefect?.kind!=='missing_bump' ? '#f59b52' : materialColors[item.material] || defaults[item.material] || '#879ab1',
         metalness: ['copper', 'solder'].includes(item.material) ? .55 : .1,
         roughness: .43,
         transparent,
         opacity: isDefect ? .78 : transparent ? .17 : 1,
         depthWrite: !transparent,
+        wireframe:voidMarker,
         side: THREE.DoubleSide,
       });
       const mesh = new THREE.Mesh(geometry, surface);
       const offset = explode ? (sz / 2 - item.center_mm[2]) * 2.7 : 0;
       mesh.position.set(item.center_mm[0] - sx / 2, sz / 2 - item.center_mm[2] + offset, item.center_mm[1] - sy / 2);
-      mesh.userData.object = item;
+      mesh.userData.object = item;mesh.userData.localDefect=localDefect;
       mesh.renderOrder = transparent ? 2 : 0;
       this.model.add(mesh);
       if (item.display_label && (explode || (!isDefect && item.id !== 'interposer'))) {
@@ -99,7 +105,10 @@ export class TwinViewer {
         this.labelLayer.append(leader, label);
         this.labels.push({ mesh, label, leader, height:z });
       }
-      if (item.shape === 'box' || isDefect) {
+      if(localDefect){
+        const label=document.createElement('span'),leader=document.createElement('i');label.className='scene-feature-label';label.textContent=voidMarker?`Air void marker · ${localDefect.id}`:`Epoxy replacement · ${localDefect.id}`;label.dataset.objectId=item.id;label.setAttribute('role','listitem');leader.className='scene-part-leader';leader.setAttribute('aria-hidden','true');this.labelLayer.append(leader,label);this.labels.push({mesh,label,leader,height:z,microOnly:true});
+      }
+      if (item.shape === 'box' || (isDefect&&!localDefect)) {
         const edge = new THREE.LineSegments(new THREE.EdgesGeometry(geometry), new THREE.LineBasicMaterial({ color:isDefect ? '#ad4b18' : transparent ? '#6d89ac' : '#273e55', transparent:true, opacity:transparent ? .28 : .19 }));
         mesh.add(edge);
       }
@@ -108,7 +117,7 @@ export class TwinViewer {
     grid.position.y = -sz / 2 - .025 - (explode ? sz * 1.35 : 0);
     this.floor.add(grid);
     this.controls.minDistance = this.span * .45; this.controls.maxDistance = this.span * 6;
-    if (changed) this.reset();
+    if(focus)this.focusMicrostructure(microstructure);else if(changed||this.microFocus)this.reset();
     this.render();
   }
   setProbe(x, y) {
@@ -128,7 +137,22 @@ export class TwinViewer {
     const points=[[x0,y0],[x1,y0],[x1,y1],[x0,y1],[x0,y0]].map(([x,y])=>new THREE.Vector3(x-sx/2,h,y-sy/2));
     const outline=new THREE.Line(new THREE.BufferGeometry().setFromPoints(points),new THREE.LineBasicMaterial({color:0xb86b27,depthTest:false}));outline.renderOrder=9;this.roi.add(outline);this.render();
   }
+  focusMicrostructure(summary=this.microstructure) {
+    if(!this.twin || !summary?.feature_bounds_mm)return;
+    this.microFocus=true;this.microstructure=summary;const ids=new Set(summary.features.map(f=>f.id));if(this.includeDefects)for(const defect of summary.defects || [])if(defect.enabled)ids.add(defect.primitive_id);
+    for(const mesh of this.model.children){mesh.visible=ids.has(mesh.userData.object.id);if(mesh.userData.localDefect&&mesh.material.wireframe){mesh.material.depthTest=false;mesh.renderOrder=10;}}
+    this.floor.visible=false;this.probe.visible=false;this.roi.visible=false;
+    const [x0,y0,z0,x1,y1,z1]=summary.feature_bounds_mm,[sx,sy,sz]=this.twin.size_mm;
+    const target=new THREE.Vector3((x0+x1-sx)/2,(sz-z0-z1)/2,(y0+y1-sy)/2);this.focusSpan=Math.max(x1-x0,y1-y0,z1-z0);
+    this.camera.near=Math.max(.000001,this.focusSpan/10000);this.camera.updateProjectionMatrix();this.controls.minDistance=Math.max(.001,this.focusSpan*.035);this.controls.maxDistance=this.focusSpan*12;
+    this.controls.target.copy(target);this.camera.position.copy(target).add(new THREE.Vector3(.9,.25,1.4).normalize().multiplyScalar(this.focusSpan*2.2));this.controls.update();
+    this.renderer.domElement.dataset.viewMode='microstructure';this.renderer.domElement.dataset.visibleFeatureCount=String(this.model.children.filter(mesh=>mesh.visible&&!mesh.userData.localDefect).length);this.onViewMode?.(true);this.render();
+  }
   reset() {
+    this.microFocus=false;this.floor.visible=true;this.probe.visible=true;this.roi.visible=true;
+    for(const mesh of this.model.children){mesh.visible=true;if(mesh.material)mesh.material.depthTest=true;}
+    this.camera.near=.01;this.camera.updateProjectionMatrix();this.controls.minDistance=(this.span||6)*.45;this.controls.maxDistance=(this.span||6)*6;
+    this.renderer.domElement.dataset.viewMode='package';this.onViewMode?.(false);
     const span = this.span || 6;
     if(this.labels.length) {
       const bounds=new THREE.Box3().setFromObject(this.model),corners=[];
@@ -147,9 +171,9 @@ export class TwinViewer {
   render() {
     this.renderer.render(this.scene, this.camera);
     const width=this.element.clientWidth,height=this.element.clientHeight,placed=[];
-    for(const {mesh,label,leader,height:partHeight} of this.labels) {
-      const point=mesh.position.clone();point.y+=partHeight / 2 + this.span * .012;point.project(this.camera);
-      const visible=point.z>=-1 && point.z<=1 && Math.abs(point.x)<1.1 && Math.abs(point.y)<1.1;
+    for(const {mesh,label,leader,height:partHeight,microOnly} of this.labels) {
+      const point=mesh.position.clone();point.y+=partHeight / 2 + (this.microFocus?this.focusSpan:this.span) * .012;point.project(this.camera);
+      const visible=mesh.visible && (microOnly?this.microFocus:!this.microFocus) && point.z>=-1 && point.z<=1 && Math.abs(point.x)<1.1 && Math.abs(point.y)<1.1;
       label.hidden=!visible;leader.hidden=!visible;if(!visible)continue;
       const anchorX=(point.x + 1) * width / 2,anchorY=(1 - point.y) * height / 2;
       const labelWidth=label.offsetWidth,labelHeight=label.offsetHeight,candidates=[];
@@ -157,7 +181,7 @@ export class TwinViewer {
       candidates.sort((a,b)=>a.cost-b.cost);
       let x,y,rectangle;
       for(const candidate of candidates) {
-        x=Math.max(labelWidth/2+7,Math.min(width-labelWidth/2-7,anchorX+candidate.dx));
+        x=Math.max(labelWidth/2+7,Math.min(width-labelWidth/2-7,anchorX+candidate.dx+(microOnly?120:0)));
         y=Math.max(43+labelHeight,Math.min(height-35,anchorY-12+candidate.dy));
         rectangle={left:x-labelWidth/2,top:y-labelHeight,right:x+labelWidth/2,bottom:y};
         if(!placed.some(box=>rectangle.left<box.right+5 && rectangle.right>box.left-5 && rectangle.top<box.bottom+5 && rectangle.bottom>box.top-5))break;

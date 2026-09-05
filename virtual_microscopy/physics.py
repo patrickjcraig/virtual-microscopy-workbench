@@ -285,14 +285,20 @@ def _sam_signals(grid: MaterialGrid, settings: dict, full_image: bool) -> dict:
         # A mathematically narrower-than-one-sample gate is evaluated at its
         # nearest sample and called out in metadata, instead of an empty max.
         gate[np.argmin(abs(time - (settings["gate_start_us"] + settings["gate_end_us"]) / 2))] = True
-    # Keep the complex tile below approximately 20 MiB before FFT workspace.
-    chunk = max(1, min(16, int(20_000_000 / (nx * nt_work * 8)) - 2 * halo))
-    starts = range(0, ny, chunk) if full_image else [py]
-    tile_cells = []
-    for start in starts:
-        stop = min(start + chunk, ny) if full_image else py + 1
-        tile_cells.append((min(ny, stop + halo) - max(0, start - halo)) * nx * nt_work)
-    if max(tile_cells) > 8_000_000 or sum(tile_cells) > 180_000_000:
+    # Compute only returned scan rows, while retaining the complete spatial
+    # halo for every tile. A soft tile-size target can otherwise force one-row
+    # cores when the halo alone exceeds it, repeating that halo excessively.
+    # Choose the largest bounded core under the existing hard work limits;
+    # the full RF time record and pulse support are unchanged.
+    for chunk in range(min(16, scan_y.stop - scan_y.start) if full_image else 1, 0, -1):
+        starts = range(scan_y.start, scan_y.stop, chunk) if full_image else [py]
+        tile_cells = []
+        for start in starts:
+            stop = min(start + chunk, scan_y.stop) if full_image else py + 1
+            tile_cells.append((min(ny, stop + halo) - max(0, start - halo)) * nx * nt_work)
+        if max(tile_cells) <= 8_000_000 and sum(tile_cells) <= 180_000_000:
+            break
+    else:
         raise ValueError(
             "This specimen/acquisition exceeds the local RF computation budget. "
             "Reduce resolution, shorten the gate end, or reduce acoustic frequency; "
@@ -301,7 +307,7 @@ def _sam_signals(grid: MaterialGrid, settings: dict, full_image: bool) -> dict:
         )
     ascan = bscan = None
     for start in starts:
-        stop = min(start + chunk, ny) if full_image else py + 1
+        stop = min(start + chunk, scan_y.stop) if full_image else py + 1
         lo, hi = max(0, start - halo), min(ny, stop + halo)
         cube = np.zeros((hi - lo, nx, nt_work), dtype=np.complex64)
         chosen = ((echoes.rows >= lo) & (echoes.rows < hi) &
@@ -349,7 +355,9 @@ def _sam_signals(grid: MaterialGrid, settings: dict, full_image: bool) -> dict:
     if max(dx, dy) > lateral_fwhm / 2:
         warnings.append("The lateral grid undersamples the modeled acoustic focal spot; pixel pitch limits resolved detail.")
     return {"image": cscan, "ascan": ascan, "bscan": bscan, "warnings": warnings,
-            "rf_sample_interval_us": dt, "acoustic_lateral_fwhm_mm": lateral_fwhm}
+            "rf_sample_interval_us": dt, "acoustic_lateral_fwhm_mm": lateral_fwhm,
+            "rf_tile_rows": chunk, "rf_max_tile_work_cells": max(tile_cells),
+            "rf_work_cells": sum(tile_cells)}
 
 
 def _image_result(image: np.ndarray, unit: str, extent) -> dict:
@@ -385,8 +393,11 @@ def simulate(twin: dict, settings: dict) -> dict:
             "roi_mm": settings.get("roi_mm"),
             "pixel_pitch_um": (grid.pitch_mm[:2] * 1000).tolist(),
             "voxel_depth_um": float(grid.pitch_mm[2] * 1000),
-            "seed": settings["seed"], "model_version": "0.2.0", "warnings": warnings,
+            "seed": settings["seed"], "model_version": "0.7.0", "warnings": warnings,
             "rf_sample_interval_us": sam["rf_sample_interval_us"],
+            "rf_tile_rows": sam["rf_tile_rows"],
+            "rf_max_tile_work_cells": sam["rf_max_tile_work_cells"],
+            "rf_work_cells": sam["rf_work_cells"],
             "acoustic_lateral_fwhm_mm": sam["acoustic_lateral_fwhm_mm"],
             "xray_detector_fwhm_mm": DETECTOR_FWHM_MM,
             "assumptions": [

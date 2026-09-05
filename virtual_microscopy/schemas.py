@@ -23,7 +23,7 @@ class Primitive(StrictModel):
     role: Literal["structure", "defect"] = "structure"
     display_label: str | None = Field(default=None, max_length=48)
     assembly_id: str | None = Field(default=None, min_length=1, max_length=64)
-    layer_role: Literal["base_die", "dram_die", "interdie_gap", "cap", "underfill", "contact"] | None = None
+    layer_role: Literal["base_die", "dram_die", "interdie_gap", "cap", "underfill", "contact", "microbump", "tsv"] | None = None
 
     @model_validator(mode="after")
     def check_shape(self):
@@ -97,6 +97,65 @@ class SpecimenReference(StrictModel):
         return self
 
 
+class HBMMicrostructureDefect(StrictModel):
+    """A deliberately authored defect attached to one indexed local feature."""
+
+    id: str = Field(pattern=r"^[A-Za-z][A-Za-z0-9_-]*$", max_length=20)
+    kind: Literal["missing_bump", "bump_void", "tsv_void"]
+    row: int = Field(ge=1, le=8, strict=True)
+    column: int = Field(ge=1, le=8, strict=True)
+    layer_index: int = Field(ge=0, le=12, strict=True)
+    enabled: bool = Field(default=True, strict=True)
+    void_diameter_um: float | None = Field(default=None, gt=0, le=100000)
+
+    @model_validator(mode="after")
+    def check_void_parameter(self):
+        if self.kind == "missing_bump":
+            if "void_diameter_um" in self.model_fields_set and self.void_diameter_um is not None:
+                raise ValueError("Missing-bump defects must omit void_diameter_um.")
+        elif self.void_diameter_um is None:
+            raise ValueError("Void defects require void_diameter_um.")
+        return self
+
+
+class HBMMicrostructure(StrictModel):
+    """Bounded explicit patch; dimensions and materials remain assumptions."""
+
+    model_version: Literal["hbm-explicit-patch-1"] = "hbm-explicit-patch-1"
+    enabled: bool = Field(default=True, strict=True)
+    center_offset_xy_um: tuple[float, float] = (0, 0)
+    columns: int = Field(default=2, ge=1, le=8, strict=True)
+    rows: int = Field(default=3, ge=1, le=8, strict=True)
+    pitch_x_um: float = Field(default=50, gt=0, le=100000)
+    pitch_y_um: float = Field(default=50, gt=0, le=100000)
+    bump_diameter_um: float = Field(default=25, gt=0, le=100000)
+    tsv_diameter_um: float = Field(default=10, gt=0, le=100000)
+    evidence: str = Field(default="Assumed synthetic bump and TSV cylinders; not measured H100 or HBM3 geometry.", min_length=1, max_length=1000)
+    source_note: str = Field(default="Chosen simulation dimensions, independent of the provisional user-supplied image scale.", min_length=1, max_length=2000)
+    defects: list[HBMMicrostructureDefect] = Field(default_factory=list, max_length=4)
+
+    @model_validator(mode="after")
+    def check_lattice_and_targets(self):
+        if max(self.bump_diameter_um, self.tsv_diameter_um) >= min(self.pitch_x_um, self.pitch_y_um):
+            raise ValueError("Bump and TSV diameters must be strictly smaller than both lattice pitches.")
+        identifiers = [item.id for item in self.defects]
+        if len(identifiers) != len(set(identifiers)):
+            raise ValueError("Local microstructure defect ids must be unique.")
+        enabled_targets = set()
+        for defect in self.defects:
+            if defect.row > self.rows or defect.column > self.columns:
+                raise ValueError("Local defect row/column must identify an authored lattice feature, including disabled defects.")
+            family = "tsv" if defect.kind == "tsv_void" else "microbump"
+            if family == "microbump" and defect.layer_index < 1:
+                raise ValueError("Bump layer_index starts at gap 1; TSV layer 0 is the base die.")
+            target = (family, defect.layer_index, defect.row, defect.column)
+            if defect.enabled and target in enabled_targets:
+                raise ValueError("Enabled local defects must target distinct features.")
+            if defect.enabled:
+                enabled_targets.add(target)
+        return self
+
+
 class HBMParameters(StrictModel):
     """Assumed layered geometry; z increases downwards from the exposed surface."""
 
@@ -111,18 +170,62 @@ class HBMParameters(StrictModel):
     functional_state: Literal["enabled", "disabled", "unknown"] = "unknown"
     physical_present: bool = True
     evidence: str = Field(default="Assumed layered construction; not specimen-specific measured geometry.", min_length=1, max_length=1000)
+    microstructure: HBMMicrostructure | None = None
 
     @model_validator(mode="after")
     def check_stack_height(self):
         height = (self.base_thickness_um + self.die_count * (self.die_thickness_um + self.gap_um) + self.cap_thickness_um) / 1000
         if height > self.bottom_z_mm + 1e-8:
             raise ValueError("HBM stack height extends above the specimen surface.")
+        micro = self.microstructure
+        if micro is not None:
+            if micro.enabled and not self.physical_present:
+                raise ValueError("An enabled microstructure patch requires a physically present HBM assembly.")
+            if min(self.footprint_mm) < 0.05:
+                raise ValueError("An explicit microstructure patch requires a footprint of at least 0.05 mm per axis.")
+            diameter = max(micro.bump_diameter_um, micro.tsv_diameter_um)
+            spans_um = ((micro.columns - 1) * micro.pitch_x_um + diameter,
+                        (micro.rows - 1) * micro.pitch_y_um + diameter)
+            for offset, span, bound in zip(micro.center_offset_xy_um, spans_um, self.footprint_mm):
+                if abs(offset) + span / 2 > bound * 500 + 1e-8:
+                    raise ValueError("Microstructure lattice extends beyond its HBM footprint.")
+            for defect in micro.defects:
+                if defect.layer_index > self.die_count:
+                    raise ValueError("Local defect layer_index must exist in the HBM stack, including disabled defects.")
+                if defect.kind != "missing_bump":
+                    diameter = micro.tsv_diameter_um if defect.kind == "tsv_void" else micro.bump_diameter_um
+                    thickness = (self.base_thickness_um if defect.layer_index == 0 else self.die_thickness_um) if defect.kind == "tsv_void" else self.gap_um
+                    if defect.void_diameter_um >= min(diameter, thickness):
+                        raise ValueError("A local void must be strictly contained inside its target cylinder diameter and height.")
         return self
 
 
 class HBMStack(HBMParameters):
     id: str = Field(pattern=r"^hbm-[1-9][0-9]*$", max_length=64)
     name: str = Field(min_length=1, max_length=120)
+
+
+class HBMMicrostructureUpdate(StrictModel):
+    """Partial patch, validated against the complete authored stack after merge."""
+
+    model_version: Literal["hbm-explicit-patch-1"] | None = None
+    enabled: bool | None = Field(default=None, strict=True)
+    center_offset_xy_um: tuple[float, float] | None = None
+    columns: int | None = Field(default=None, ge=1, le=8, strict=True)
+    rows: int | None = Field(default=None, ge=1, le=8, strict=True)
+    pitch_x_um: float | None = Field(default=None, gt=0, le=100000)
+    pitch_y_um: float | None = Field(default=None, gt=0, le=100000)
+    bump_diameter_um: float | None = Field(default=None, gt=0, le=100000)
+    tsv_diameter_um: float | None = Field(default=None, gt=0, le=100000)
+    evidence: str | None = Field(default=None, min_length=1, max_length=1000)
+    source_note: str | None = Field(default=None, min_length=1, max_length=2000)
+    defects: list[HBMMicrostructureDefect] | None = Field(default=None, max_length=4)
+
+    @model_validator(mode="after")
+    def check_no_explicit_nulls(self):
+        if any(getattr(self, field) is None for field in self.model_fields_set):
+            raise ValueError("Microstructure parameter patches cannot contain null values.")
+        return self
 
 
 class HBMParameterUpdate(StrictModel):
@@ -137,6 +240,7 @@ class HBMParameterUpdate(StrictModel):
     functional_state: Literal["enabled", "disabled", "unknown"] | None = None
     physical_present: bool | None = None
     evidence: str | None = Field(default=None, min_length=1, max_length=1000)
+    microstructure: HBMMicrostructureUpdate | None = None
 
     @model_validator(mode="after")
     def check_no_explicit_nulls(self):

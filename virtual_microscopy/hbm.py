@@ -1,8 +1,8 @@
 """Deterministic compilation of editable, assumed layered HBM assemblies.
 
-Layered silicon and epoxy represent interfaces. Aggregate attachment contacts
-remain explicitly coarse: this compiler does not invent resolved microbumps or
-TSVs. Functional state is metadata and never controls material occupancy.
+Layered silicon and epoxy represent interfaces. An optional bounded patch adds
+assumed explicit bump/TSV cylinders and local synthetic defects. Package-level
+attachment contacts remain coarse. Electrical state never controls occupancy.
 """
 
 from __future__ import annotations
@@ -32,7 +32,7 @@ def compile_hbm_stack(stack: dict) -> list[dict]:
             "layer_role": role,
         }
         if label is not None:
-            item["display_label"] = label
+            item["display_label"] = label[:48]
         parts.append(item)
 
     # Attachment is a fixed 180 um coarse package-level surrogate. It follows
@@ -58,7 +58,99 @@ def compile_hbm_stack(stack: dict) -> list[dict]:
         layer(f"gap-{index:02}", "interdie_gap", "epoxy", stack["gap_um"])
         layer(f"dram-{index:02}", "dram_die", "silicon", stack["die_thickness_um"])
     layer("cap", "cap", "epoxy", stack["cap_thickness_um"], label=name)
+    micro_parts, _, _ = _microstructure_geometry(stack, parts)
+    parts.extend(micro_parts)
     return parts
+
+
+def _feature_id(identifier: str, family: str, layer: int, row: int, column: int) -> str:
+    prefix = "mb" if family == "microbump" else "tsv"
+    return f"{identifier}-{prefix}-{layer:02}-r{row:02}-c{column:02}"
+
+
+def _microstructure_geometry(stack: dict, layers: list[dict]) -> tuple[list, list, list]:
+    """One canonical generator supplies primitives and public feature identity."""
+    micro = stack.get("microstructure")
+    if not micro:
+        return [], [], []
+    identifier, name = stack["id"], stack["name"]
+    defects = [{"id": defect["id"], "kind": defect["kind"],
+                "target_id": _feature_id(identifier, "tsv" if defect["kind"] == "tsv_void" else "microbump",
+                                         defect["layer_index"], defect["row"], defect["column"]),
+                "primitive_id": f"{identifier}-defect-{defect['id']}", "enabled": defect["enabled"]}
+               for defect in micro["defects"]]
+    if not micro["enabled"]:
+        return [], [], defects
+    layer_by_id = {part["id"]: part for part in layers}
+    parts, features = [], []
+    for index in range(stack["die_count"] + 1):
+        families = ("tsv",) if index == 0 else ("microbump", "tsv")
+        for family in families:
+            suffix = ("base" if index == 0 else f"dram-{index:02}") if family == "tsv" else f"gap-{index:02}"
+            layer = layer_by_id[f"{identifier}-{suffix}"]
+            diameter = micro["tsv_diameter_um" if family == "tsv" else "bump_diameter_um"] / 1000
+            for row in range(1, micro["rows"] + 1):
+                for column in range(1, micro["columns"] + 1):
+                    x = stack["center_xy_mm"][0] + (micro["center_offset_xy_um"][0] + (column - (micro["columns"] + 1) / 2) * micro["pitch_x_um"]) / 1000
+                    y = stack["center_xy_mm"][1] + (micro["center_offset_xy_um"][1] + (row - (micro["rows"] + 1) / 2) * micro["pitch_y_um"]) / 1000
+                    feature_id = _feature_id(identifier, family, index, row, column)
+                    center = [round(x, 12), round(y, 12), layer["center_mm"][2]]
+                    size = [diameter, diameter, layer["size_mm"][2]]
+                    features.append({"id": feature_id, "kind": family, "row": row, "column": column,
+                                     "layer_index": index, "center_mm": center, "size_mm": size})
+                    parts.append({"id": feature_id, "name": f"{name} / {feature_id[len(identifier)+1:]} (assumed)",
+                                  "shape": "cylinder", "material": "copper" if family == "tsv" else "solder",
+                                  "center_mm": center, "size_mm": size, "role": "structure",
+                                  "assembly_id": identifier, "layer_role": family})
+    targets = {part["id"]: part for part in parts}
+    for authored, descriptor in zip(micro["defects"], defects):
+        if not authored["enabled"]:
+            continue
+        target = targets[descriptor["target_id"]]
+        missing = authored["kind"] == "missing_bump"
+        diameter = None if missing else authored["void_diameter_um"] / 1000
+        parts.append({"id": descriptor["primitive_id"], "name": f"{name} / defect-{authored['id']} (assumed)",
+                      "shape": "cylinder" if missing else "sphere", "material": "epoxy" if missing else "air",
+                      "center_mm": list(target["center_mm"]),
+                      "size_mm": list(target["size_mm"]) if missing else [diameter] * 3,
+                      "role": "defect", "assembly_id": identifier, "layer_role": target["layer_role"]})
+    return parts, features, defects
+
+
+def microstructure_summary(stack: dict) -> dict:
+    """Describe applied feature centers and a padded global XY scan rectangle.
+
+    Feature bounds use [x0,y0,z0,x1,y1,z1]; ROI uses [x0,y0,x1,y1].
+    Disabled patches retain authored defect identities but have no active geometry.
+    """
+    from .schemas import HBMStack
+
+    stack = HBMStack.model_validate(stack).model_dump(mode="json", exclude_none=True)
+    micro = stack.get("microstructure")
+    parts = compile_hbm_stack(stack)
+    generated, features, defects = _microstructure_geometry(stack, parts)
+    summary = {"enabled": bool(micro and micro["enabled"]),
+               "model_version": micro["model_version"] if micro else None,
+               "nominal_feature_count": len(features), "defect_count": sum(part["role"] == "defect" for part in generated),
+               "feature_bounds_mm": None, "roi_mm": None, "features": features, "defects": defects}
+    if not features:
+        return summary
+    lo = [min(feature["center_mm"][axis] - feature["size_mm"][axis] / 2 for feature in features) for axis in range(3)]
+    hi = [max(feature["center_mm"][axis] + feature["size_mm"][axis] / 2 for feature in features) for axis in range(3)]
+    summary["feature_bounds_mm"] = lo + hi
+    roi_lo, roi_hi = [], []
+    for axis, pitch in enumerate((micro["pitch_x_um"], micro["pitch_y_um"])):
+        margin = max(pitch / 2000, 0.025)
+        minimum = stack["center_xy_mm"][axis] - stack["footprint_mm"][axis] / 2
+        maximum = stack["center_xy_mm"][axis] + stack["footprint_mm"][axis] / 2
+        low, high = max(minimum, lo[axis] - margin), min(maximum, hi[axis] + margin)
+        if high - low < 0.05:
+            low = max(minimum, min((low + high) / 2 - 0.025, maximum - 0.05))
+            high = low + 0.05
+        roi_lo.append(low)
+        roi_hi.append(high)
+    summary["roi_mm"] = roi_lo + roi_hi
+    return summary
 
 
 def validate_hbm_geometry(twin: Twin) -> None:
@@ -69,6 +161,8 @@ def validate_hbm_geometry(twin: Twin) -> None:
     ids = [stack.id for stack in assemblies]
     if len(ids) != len(set(ids)):
         raise ValueError("HBM assembly ids must be unique.")
+    if sum(bool(stack.microstructure and stack.microstructure.enabled) for stack in assemblies) > 1:
+        raise ValueError("Only one enabled explicit microstructure patch is supported per twin.")
     for obj in twin.objects:
         if obj.assembly_id is not None and obj.assembly_id not in ids:
             raise ValueError(f"Object '{obj.id}' names an unknown HBM assembly.")
@@ -99,8 +193,8 @@ def compose_hbm(twin: dict, assembly_id: str, parameters: dict) -> dict:
 
     The targeted contiguous stack block is replaced at its existing position so later defects
     keep their precedence. Restoring a physically absent stack inserts it before
-    the first defect. Unrelated package objects and all defect coordinates remain
-    unchanged: moving an assembly does not silently move a fixed specimen defect.
+    the first global defect. Unrelated package objects and globally positioned
+    defect coordinates remain unchanged; component-local defects follow their assembly.
     """
     from .schemas import HBMParameterUpdate, HBMStack, Twin
 
@@ -111,14 +205,19 @@ def compose_hbm(twin: dict, assembly_id: str, parameters: dict) -> dict:
     index = next((i for i, stack in enumerate(assemblies) if stack["id"] == assembly_id), None)
     if index is None:
         raise ValueError(f"Unknown HBM assembly '{assembly_id}'.")
-    prior = validated.hbm_assemblies[index].model_dump(mode="json")
+    prior = validated.hbm_assemblies[index].model_dump(mode="json", exclude_none=True)
+    if "microstructure" in patch and prior.get("microstructure") is not None:
+        patch["microstructure"] = prior["microstructure"] | patch["microstructure"]
     updated = HBMStack.model_validate(prior | patch)
-    assemblies[index] = updated.model_dump(mode="json")
+    assemblies[index] = updated.model_dump(mode="json", exclude_none=True)
     replacement = compile_hbm_stack(updated.model_dump())
     objects = result["objects"]
     positions = [i for i, obj in enumerate(objects) if obj.get("assembly_id") == assembly_id]
-    insert_at = positions[0] if positions else next((i for i, obj in enumerate(objects) if obj.get("role") == "defect"), len(objects))
+    insert_at = positions[0] if positions else next((i for i, obj in enumerate(objects)
+                                                   if obj.get("role") == "defect" and obj.get("assembly_id") is None), len(objects))
     survivors = [obj for obj in objects if obj.get("assembly_id") != assembly_id]
     result["objects"] = survivors[:insert_at] + replacement + survivors[insert_at:]
+    if len(result["objects"]) > 600:
+        raise ValueError(f"Composed twin has {len(result['objects'])} primitives; the supported limit is 600. Reduce patch rows/columns or disable it.")
     Twin.model_validate(result)
     return result

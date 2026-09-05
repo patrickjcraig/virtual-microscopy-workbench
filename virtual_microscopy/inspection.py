@@ -3,19 +3,52 @@
 from typing import Literal
 
 import numpy as np
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from .materials import MATERIALS
 from .physics import LABELS, MATERIAL_IDS
 from .schemas import StrictModel, Twin
 
 
-class HBMSectionRequest(StrictModel):
+class HBMMicrostructureRequest(StrictModel):
     twin: Twin
     assembly_id: str = Field(min_length=1, max_length=64)
+
+
+class HBMSectionRequest(HBMMicrostructureRequest):
     axis: Literal["xz", "yz"] = "xz"
     resolution: Literal[128, 256, 512] = 512
     include_defects: bool = True
+    feature_id: str | None = Field(default=None, min_length=1, max_length=100)
+    bounds_mm: tuple[float, float, float, float] | None = None
+    fixed_coordinate_mm: float | None = Field(default=None, ge=0, le=100)
+
+    @model_validator(mode="after")
+    def check_section_domain(self):
+        axis = 0 if self.axis == "xz" else 1
+        if self.feature_id is not None and self.fixed_coordinate_mm is not None:
+            raise ValueError("Choose a feature-centered section or an explicit fixed coordinate, not both.")
+        if self.fixed_coordinate_mm is not None and self.fixed_coordinate_mm > self.twin.size_mm[1-axis]:
+            raise ValueError("The fixed section coordinate must lie inside the specimen.")
+        if self.bounds_mm is not None:
+            u0, u1, z0, z1 = self.bounds_mm
+            if (u0 < 0 or z0 < 0 or u1 > self.twin.size_mm[axis] or z1 > self.twin.size_mm[2]
+                    or u1-u0 < 1e-6 or z1-z0 < 1e-6):
+                raise ValueError("Section bounds must be ordered, inside the specimen, and at least 0.001 µm apart.")
+        return self
+
+
+def microstructure_details(twin: Twin, assembly_id: str) -> dict:
+    from .hbm import microstructure_summary
+    stack = next((item for item in twin.hbm_assemblies or [] if item.id == assembly_id), None)
+    if stack is None:
+        raise ValueError(f"Unknown HBM assembly '{assembly_id}'.")
+    return {"microstructure": microstructure_summary(stack.model_dump(mode="json", exclude_none=True)),
+            "primitive_count": len(twin.objects), "remaining_primitives": 600-len(twin.objects)}
+
+
+def _centered_interval(center: float, span: float, maximum: float) -> tuple[float, float]:
+    return max(0., center-span/2), min(maximum, center+span/2)
 
 
 def material_section(request: HBMSectionRequest) -> dict:
@@ -36,17 +69,39 @@ def material_section(request: HBMSectionRequest) -> dict:
     height = (stack.base_thickness_um + stack.die_count * (stack.die_thickness_um + stack.gap_um)
               + stack.cap_thickness_um) / 1000
     z0, z1 = max(0.0, stack.bottom_z_mm - height - .02), min(twin.size_mm[2], stack.bottom_z_mm + .45)
+    feature = None
+    if request.feature_id is not None:
+        feature = next((part for part in twin.objects if part.id == request.feature_id
+                        and part.assembly_id == stack.id and part.layer_role in ("microbump", "tsv")
+                        and part.role == "structure"), None)
+        if feature is None:
+            raise ValueError("The selected feature must be an active nominal bump or TSV in this HBM assembly.")
+        fixed = feature.center_mm[fixed_axis]
+        patch = stack.microstructure
+        pitch = (patch.pitch_x_um if axis == 0 else patch.pitch_y_um)/1000
+        u0, u1 = _centered_interval(feature.center_mm[axis], max(6*feature.size_mm[axis], 3*pitch, .05), twin.size_mm[axis])
+        z0, z1 = _centered_interval(feature.center_mm[2], max(4*feature.size_mm[2], .05), twin.size_mm[2])
+    elif request.fixed_coordinate_mm is not None:
+        fixed = request.fixed_coordinate_mm
+    if request.bounds_mm is not None:
+        u0, u1, z0, z1 = request.bounds_mm
     n = request.resolution
     du, dz = (u1 - u0) / n, (z1 - z0) / n
     u = u0 + (np.arange(n) + .5) * du
     z = z0 + (np.arange(n) + .5) * dz
     labels = np.zeros((n, n), dtype=np.uint8)
+    sampling_warnings = []
     for part in twin.objects:
         if part.role == "defect" and not request.include_defects:
             continue
         c, s = np.asarray(part.center_mm), np.asarray(part.size_mm)
         if abs(fixed - c[fixed_axis]) > s[fixed_axis] / 2:
             continue
+        if (part.layer_role in ("microbump", "tsv") and c[axis]+s[axis]/2 > u0
+                and c[axis]-s[axis]/2 < u1 and c[2]+s[2]/2 > z0 and c[2]-s[2]/2 < z1
+                and (s[axis] < 2*du or s[2] < 2*dz)):
+            sampling_warnings.append(f"Microfeature {part.id} ({part.role}) has an extent below two section samples; "
+                                     "its material occupancy may be inaccurate or disappear.")
         iu = np.flatnonzero(abs(u - c[axis]) <= s[axis] / 2)
         iz = np.flatnonzero(abs(z - c[2]) <= s[2] / 2)
         if not len(iu) or not len(iz):
@@ -65,14 +120,17 @@ def material_section(request: HBMSectionRequest) -> dict:
             region[mask] = LABELS[part.material]
             labels[selection] = region
     warnings = ["Material geometry section; not an X-ray image or acoustic reconstruction.",
-                "Horizontal and depth axes have independent display scales."]
+                "Horizontal and depth axes have independent display scales.", *sampling_warnings]
     if min(stack.die_thickness_um, stack.gap_um, stack.base_thickness_um, stack.cap_thickness_um) < 2 * dz * 1000:
         warnings.append("Some layer thicknesses are below two section samples; increase section resolution.")
     if not stack.physical_present:
         warnings.append("This HBM is physically absent; the section shows remaining package geometry.")
+    if feature is not None and (feature.size_mm[axis] < 2*du or feature.size_mm[2] < 2*dz):
+        warnings.append("The selected feature is below two section samples on at least one displayed axis; its sampled shape may be inaccurate or absent.")
     legend = [{"label": 0, "id": "ambient", "name": "Ambient", "color": "#edf4fa"}]
     legend += [{"label": LABELS[key], "id": key, "name": MATERIALS[key]["name"],
                 "color": MATERIALS[key]["color"]} for key in MATERIAL_IDS]
     return {"image": labels.tolist(), "materials": legend, "extent_mm": [u0, u1, z0, z1],
             "axis": request.axis, "fixed_coordinate_mm": fixed, "pixel_pitch_um": [du * 1000, dz * 1000],
-            "mode": "material_geometry", "assembly_id": stack.id, "warnings": warnings}
+            "mode": "material_geometry", "assembly_id": stack.id, "warnings": warnings,
+            "feature": feature.model_dump(mode="json", exclude_none=True) if feature is not None else None}
