@@ -1,6 +1,6 @@
-# Proposed next loop: SAM recipes, bounded sweeps and saved comparisons
+# Design: SAM recipes, bounded sweeps and saved comparisons
 
-**Status: proposed, unimplemented.** Prepared against the v0.8 continuous-column work on 4 September 2026. This document describes the next increment; its interfaces, controls and tests do not yet exist. All results remain synthetic, uncalibrated relative signals.
+**Status: first implementation delivered in v0.9.** Originally prepared against the v0.8 continuous-column work on 4 September 2026. This design is retained as the implementation rationale; use [ACQUISITION_COMPARISONS.md](ACQUISITION_COMPARISONS.md) for actual interfaces, controls and limits and [VERIFICATION.md](VERIFICATION.md) for executed checks. All results remain synthetic, uncalibrated relative signals. The next proposed extension is [X-ray acquisition comparisons](XRAY_COMPARISONS_SPEC.md).
 
 ## Deliverable
 

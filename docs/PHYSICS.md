@@ -186,6 +186,13 @@ Experimental validation would require independently measured specimens and held-
 
 ## Next modeling upgrades
 
+Version 0.9 adds controlled acquisition cases and comparisons of saved signals,
+without changing the forward propagation equations. Its B−A metrics, inclusive
+gates and exact coordinate requirements are documented in
+[ACQUISITION_COMPARISONS.md](ACQUISITION_COMPARISONS.md). A comparison baseline is
+selected data, not ground truth; numerical parameter sensitivity and synthetic
+defect contrast do not establish experimental resolution or detection accuracy.
+
 The immediate foundation for further work is a stable twin schema, reproducible runs and analytic baselines. After the first interface is reviewed, useful upgrades are an instrument spectrum and detector response for X-ray; measured pulse/beam parameters and multilayer reverberation for SAM; and import of labeled CAD/voxel material geometry with explicit units. These are future options rather than capabilities of this release.
 
 Full-wave acoustics should be introduced only with a suitable solid/fluid model and mesh/time convergence checks. The focused-source study by [Martin, Ling and Treeby (2016), author-hosted accepted manuscript](https://discovery.ucl.ac.uk/id/eprint/1508939/) compares a transducer representation with analytic models and physical measurements; it is a useful validation pattern, not validation of the Gaussian approximation here. Coupling electrical heating, thermomechanical deformation or damage into the twin would be a separate multiphysics extension requiring constitutive laws, boundary conditions and an explicit coupling strategy.

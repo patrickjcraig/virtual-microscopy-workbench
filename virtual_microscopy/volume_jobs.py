@@ -45,6 +45,8 @@ def _init_catalog(root: Path) -> None:
         columns = {row["name"] for row in connection.execute("PRAGMA table_info(jobs)")}
         if "kind" not in columns:
             connection.execute("ALTER TABLE jobs ADD COLUMN kind TEXT NOT NULL DEFAULT 'sam_rf_volume'")
+        from .batch_jobs import init_tables
+        init_tables(connection)
         connection.commit()
 
 
@@ -97,7 +99,8 @@ def _backend(kind: str):
 def _read_job(root: Path, identifier: str) -> dict:
     checked_id(identifier)
     with _connection(root) as connection:
-        row = connection.execute("SELECT * FROM jobs WHERE job_id = ?", (identifier,)).fetchone()
+        row = connection.execute("""SELECT j.*,c.batch_id,c.case_index FROM jobs j
+            LEFT JOIN batch_cases c ON c.job_id=j.job_id WHERE j.job_id=?""", (identifier,)).fetchone()
     if row is None:
         raise KeyError(identifier)
     return _job_dict(row)
@@ -114,7 +117,16 @@ def _update_job(root: Path, identifier: str, state: str, completed_rows: int,
 def _claim_job(root: Path) -> str | None:
     with _connection(root) as connection:
         connection.execute("BEGIN IMMEDIATE")
-        row = connection.execute("SELECT job_id FROM jobs WHERE state = 'queued' ORDER BY created_at, job_id LIMIT 1").fetchone()
+        row = connection.execute("""SELECT j.job_id FROM jobs j
+            LEFT JOIN batch_cases c ON c.job_id=j.job_id
+            LEFT JOIN batches b ON b.batch_id=c.batch_id
+            WHERE j.state='queued' AND (c.batch_id IS NULL OR (
+                b.control='active' AND NOT EXISTS (
+                    SELECT 1 FROM batch_cases prior JOIN jobs p ON p.job_id=prior.job_id
+                    WHERE prior.batch_id=c.batch_id AND
+                        ((prior.case_index<c.case_index AND p.state!='completed')
+                         OR p.state IN ('failed','cancelled','interrupted','cancelling')))))
+            ORDER BY j.created_at,COALESCE(c.case_index,0),j.job_id LIMIT 1""").fetchone()
         if row is None:
             connection.commit()
             return None
@@ -143,6 +155,8 @@ def _run_job(root: Path, identifier: str, stop_event) -> None:
         kind = manifest.get("kind", "sam_rf_volume")
         store = store_for_manifest(root, manifest)
         manifest = store.validate_identity(identifier)
+        from .batch_jobs import check_reservations, validate_case_identity
+        validate_case_identity(root, identifier, manifest)
         if manifest["complete"]:
             _update_job(root, identifier, "completed", manifest["total_rows"])
             return
@@ -163,8 +177,7 @@ def _run_job(root: Path, identifier: str, stop_event) -> None:
             raise ValueError("Acquisition estimate changed; create a new dataset instead of resuming.")
         # Repeat the disk check immediately before preparing potentially large
         # arrays; another queued job or application may have used the space.
-        remaining = estimate["total_bytes"] * (1 - manifest["completed_rows"] / manifest["total_rows"])
-        check_disk_space(root, int(remaining) + estimate.get("estimated_temporary_bytes", estimate.get("workspace_disk_bytes", 0)))
+        check_reservations(root, replacing={identifier: manifest})
         store.set_state(identifier, "running")
         prepared = prepare_acquisition(*acquisition_args)
         if kind == "sam_rf_volume":
@@ -337,6 +350,8 @@ class VolumeJobManager:
                     _update_job(self.root, row["job_id"], "interrupted", manifest["completed_rows"], error)
             except (KeyError, OSError, ValueError) as exc:
                 _update_job(self.root, row["job_id"], "failed", row["completed_rows"], str(exc))
+        from .batch_jobs import recover_staging
+        recover_staging(self.root)
 
     def _spawn(self):
         self._stop_event = self._context.Event()
@@ -404,10 +419,14 @@ class VolumeJobManager:
             else:
                 estimate = estimate_acquisition(request)
                 name = request.twin.name
+            from .batch_jobs import check_reservations
+            check_reservations(self.root, extra_estimates=[estimate])
             identifier = str(uuid4())
             store = store_for_manifest(self.root, {"kind": kind})
             manifest = store.create(identifier, request.model_dump(mode="json", exclude_none=True), estimate)
             with _connection(self.root) as connection:
+                connection.execute("BEGIN IMMEDIATE")
+                check_reservations(self.root, extra_estimates=[estimate], connection=connection)
                 connection.execute("""INSERT INTO jobs
                     (job_id, state, name, created_at, updated_at, completed_rows, total_rows, error, kind)
                     VALUES (?, 'queued', ?, ?, ?, 0, ?, NULL, ?)""",
@@ -421,7 +440,51 @@ class VolumeJobManager:
             if self._started:
                 self._ensure_worker()
             with _connection(self.root) as connection:
-                return [_job_dict(row) for row in connection.execute("SELECT * FROM jobs ORDER BY created_at DESC, job_id DESC")]
+                return [_job_dict(row) for row in connection.execute("""SELECT j.*,c.batch_id,c.case_index
+                    FROM jobs j LEFT JOIN batch_cases c ON c.job_id=j.job_id
+                    ORDER BY j.created_at DESC,j.job_id DESC""")]
+
+    def estimate_batch(self, plan):
+        from .batch_jobs import estimate_batch
+        with self._mutex:
+            return estimate_batch(self, plan)
+
+    def submit_batch(self, plan, idempotency_key):
+        from .batch_jobs import submit_batch
+        with self._mutex:
+            self._ensure_worker()
+            return submit_batch(self, plan, idempotency_key)
+
+    def list_batches(self):
+        from .batch_jobs import list_batches
+        with self._mutex:
+            if self._started:
+                self._ensure_worker()
+            return list_batches(self.root)
+
+    def get_batch(self, identifier):
+        from .batch_jobs import get_batch
+        with self._mutex:
+            if self._started:
+                self._ensure_worker()
+            return get_batch(self.root, identifier)
+
+    def get_batch_by_key(self, key):
+        from .batch_jobs import get_batch_by_key
+        with self._mutex:
+            return get_batch_by_key(self.root, key)
+
+    def cancel_batch(self, identifier):
+        from .batch_jobs import cancel_batch
+        with self._mutex:
+            self._ensure_worker()
+            return cancel_batch(self, identifier)
+
+    def resume_batch(self, identifier):
+        from .batch_jobs import resume_batch
+        with self._mutex:
+            self._ensure_worker()
+            return resume_batch(self, identifier)
 
     def estimate_reconstruction(self, request) -> dict:
         from .reconstruction_datasets import reconstruction_source
@@ -451,6 +514,8 @@ class VolumeJobManager:
         with self._mutex:
             self._ensure_worker()
             checked_id(identifier)
+            from .batch_jobs import reject_individual_control
+            reject_individual_control(self.root, identifier)
             with _connection(self.root) as connection:
                 connection.execute("BEGIN IMMEDIATE")
                 row = connection.execute("SELECT * FROM jobs WHERE job_id = ?", (identifier,)).fetchone()
@@ -469,15 +534,15 @@ class VolumeJobManager:
         with self._mutex:
             self._ensure_worker()
             job = _read_job(self.root, identifier)
+            from .batch_jobs import check_reservations, reject_individual_control
+            reject_individual_control(self.root, identifier)
             if job["state"] not in RESUMABLE_STATES:
                 raise ValueError("Only cancelled, interrupted or failed jobs can be resumed.")
             store = self.get_store(identifier)
             manifest = store.validate_identity(identifier)
             if manifest["complete"]:
                 raise ValueError("Completed datasets are immutable.")
-            remaining = manifest["estimate"]["total_bytes"] * (1 - manifest["completed_rows"] / manifest["total_rows"])
-            estimate = manifest["estimate"]
-            check_disk_space(self.root, int(remaining) + estimate.get("estimated_temporary_bytes", estimate.get("workspace_disk_bytes", 0)))
+            check_reservations(self.root, replacing={identifier: manifest})
             store.set_state(identifier, "queued")
             _update_job(self.root, identifier, "queued", manifest["completed_rows"])
             return _read_job(self.root, identifier)

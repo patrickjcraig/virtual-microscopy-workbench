@@ -164,6 +164,10 @@ def probe_api(request: SimulationRequest):
 
 from .volume_api import router as volume_router
 app.include_router(volume_router)
+from .recipe_api import router as recipe_router
+from .comparison_api import router as comparison_router
+app.include_router(recipe_router)
+app.include_router(comparison_router)
 
 dist = ROOT / "web" / "dist"
 if dist.is_dir():

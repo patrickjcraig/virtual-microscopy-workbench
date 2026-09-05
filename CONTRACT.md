@@ -1,4 +1,4 @@
-# Virtual microscopy 0.8 integration contract (compatible twin schema 1)
+# Virtual microscopy 0.9 integration contract (compatible twin schema 1)
 
 Local application: Python FastAPI serves a Vite/vanilla JS + Three.js client. Source in `virtual_microscopy/` and `web/`. Physical dimensions use millimetres. Coordinates x right, y down in image, z depth from specimen top; surrounding material is water for SAM and air for X-ray. Later primitives replace earlier ones. This is a reduced-order synthetic forward simulator, not experimentally validated or coupled full-wave multiphysics.
 
@@ -36,7 +36,7 @@ defects follow their assembly; global defects preserve existing coordinates.
 
 ## API
 
-- GET /api/health -> {status:'ok',version:'0.8.0'}
+- GET /api/health -> {status:'ok',version:'0.9.0'}
 - GET /api/examples -> [{id,name,description,twin}]
 - GET /api/materials -> list of material dicts with id,name,color,density_g_cm3,sound_speed_m_s,impedance_mrayl and provenance; extra properties permitted.
 - POST /api/validate -> twin body -> {valid:true,twin:normalized twin,warnings:[]}; errors HTTP 422.
@@ -271,6 +271,35 @@ mapping metadata with its checksum. Completed derived data can be inspected and
 exported independently of source-directory availability. `/export` returns
 `sam-depth-{id}.zip`, without duplicating raw-time arrays. See
 [SAM_DEPTH.md](docs/SAM_DEPTH.md) for the scientific interpretation.
+
+## SAM recipes, batches and comparisons (0.9)
+
+The original saved dataset schema and forward solver identities are unchanged.
+New strict models are in `recipe_schemas.py` and `comparison_schemas.py`.
+
+- `POST /api/v2/recipes`: `{name,request:SamVolumeRequest,parent_recipe_id?,default_gate?:{start_us,end_us}}` → immutable recipe record (201).
+- `GET /api/v2/recipes`: `{recipes:[summaries]}`; `GET /recipes/{id}` → exact record; `GET /recipes/{id}/export` → JSON download.
+- `POST /api/v2/recipes/import`: complete original exported JSON → preserved record (201); duplicate identical ID is idempotent, conflicting ID/content fails. Preserve the original JSON text through browser import, including floating-point spelling.
+- `POST /api/v2/recipes/from-dataset`: `{dataset_id,name,default_gate?}` → original completed SAM request and frozen source provenance, without current geometry construction.
+- `POST /api/v2/cases/preview`: `{recipe_id,field,values,assembly_id?,defect_id?}` → recipe, expanded cases, differences relative to case 1, per-case estimates and aggregate disk/workspace admission. Fields: `frequency_mhz`, `focus_mm`, `fractional_bandwidth`, `path_model`, active `depth_samples`, `defect`, or global `include_defects`. Two to four unique values; isolated/global defect pairs use exactly boolean false/true. Isolated pairs require both IDs and active defect participation.
+- `POST /api/v2/batches`: proposal plus `idempotency_key` → transactional batch (202). `GET /batches` → `{batches:[...]}`; `GET /batches/{id}` → frozen plan plus case/job states; `POST /batches/{id}/cancel` and `/resume` preserve completed cases. Job responses identify `batch_id` and `case_index`; use batch controls for those jobs.
+- `POST /api/v2/comparisons`: `{reference_dataset_id,candidate_dataset_id,gate_start_us,gate_end_us,x_index?,y_index?}` → immutable report (201). `GET /comparisons` → `{comparisons:[summaries]}`; `GET /comparisons/{id}` and `/export?format=json|csv` need no sources. `/view?x_index=&y_index=&time_index=` verifies sources and returns synchronized traces/maps. New gate → new report; display changes never alter stored metrics.
+
+Recipe identity includes schema/kind, UUID, parent/name/time, full request, default
+gate, optional complete source provenance, request hash and record hash. Historical
+reads preserve exact JSON. Batch publication stages every case manifest before
+one SQLite transaction exposes jobs. Invalid cases publish no jobs; duplicate
+keys replay frozen results before current numerical admission. All limits and
+original geometry changes remain explicit.
+
+Comparisons require complete SAM arrays, exact shape/X/Y/time coordinates,
+declared units and time reference. The 422 response for incompatible sources
+contains `{message,issues}` with axis/count/max-difference details. RF/envelope
+statistics and gated peak/RMS maps use float64 B−A reductions. Relative L2 is null
+with a reason for a zero reference norm. Reports retain formulas, exact coordinates,
+source manifests/hashes and processing identity. Source arrays are read-only.
+See [ACQUISITION_COMPARISONS.md](docs/ACQUISITION_COMPARISONS.md) for precise metrics,
+resource estimates and the distinction between numerical contrast and accuracy.
 
 ## Simulation response (plain JSON numeric arrays)
 

@@ -2,6 +2,114 @@
 
 This record concerns the first local implementation in `E:\git\Dissertation`. It establishes software and analytical-model behavior, not experimental imaging accuracy.
 
+## Version 0.9 — SAM recipes, transactional batches and saved comparisons
+
+The complete Windows suite passed **591 tests in 127.28 seconds**, with the same
+two third-party deprecation warnings. The 111 new cases comprise 28 recipe/case
+tests, eight independent recipe-review regressions, 24 batch lifecycle cases,
+48 comparison tests and three real worker/API integration tests. Locked Python
+environment synchronization and the production frontend build pass. This release
+does not change the forward propagation equations or saved dataset schema.
+
+Recipe checks cover explicit defaults, immutable revisions, checksums and strict
+import, actual recording-endpoint gates, rejecting text/boolean numeric sweeps,
+unique bounded values, inactive continuous-Z rejection and all-case rejection.
+An isolated missing-bump pair preserves all six HBM sites, every unrelated
+primitive and another authored defect. Historical source recipes retain missing
+method/kind fields and otherwise unsupported old geometry without calling the
+current constructor. New imported requests meet current bounds; path checks
+precede source array access. Existing record bytes are retained across failures.
+
+Batch checks exercise real spawned-worker completion/reopening and injected
+failures in staging, the second SQL case insert, committed-response delivery and
+completion/catalog reconciliation. Invalid admission publishes no jobs;
+same-key replay returns the same batch before re-estimation. Tests verify case
+ordering, cancellation/resume, corrupt partial-chunk repair, retained good chunks,
+byte-identical completed datasets, changed solver/estimate rejection, other-job
+disk reservations, legacy catalog migration and owned staging path guards.
+Unpublished artifacts remain preserved and marked in their ownership journals.
+
+Comparison tests use independently authored stored arrays with sign reversal,
+scaling, offsets, zero references, nonfinite values and asymmetric coordinates.
+They check every global and gate metric, signed B−A maximum and physical locator,
+saved-envelope independence, exact inclusive boundaries, empty-gate rejection,
+one-ULP coordinate mismatches, units/time references, corrupt input and source
+mutation during processing. Instrumented reads remain bounded; report reads and
+JSON/CSV exports work without sources or the forward solver. New views verify
+original source identities. A real two-case API sweep matched direct float64
+calculations from its completed arrays and reopened without creating new jobs.
+
+Independent review found and corrected two comparison admission issues. Queued
+datasets are now rejected as incomplete before array lookup, returning 422 rather
+than a misleading disk error. Serialized JSON length alone undercounted unusual
+metadata containing many empty containers; source/report parsing now uses a
+conservative structural expansion bound, with overlapping verification and
+retained report/provenance included in the published workspace estimate. These
+estimates bound the declared processing components, not total process RSS.
+
+Native Chrome `verify:comparisons` passed complete recipe transfer, save/load/
+revision/import/export, source-derived recipes, invalid-rate/inactive-Z rejection,
+a reviewed two-case sweep, idempotent replay, actual cancellation/resume with the
+same dataset IDs, exact signed trace differences, shared display scales, immutable
+gate revisions, incompatible-axis rejection, all report/source downloads, reload
+and a 390-pixel layout. The passing record is
+`web/test-artifacts/acquisition-comparisons-1788580146530/verification.json`.
+Existing `verify:volumes` passed separately at
+`web/test-artifacts/volumes-1788580190683/verification.json`. Both reported no
+uncaught browser page errors. Browser testing caught and fixed strict recipe
+import losing JSON float spellings and duplicate IDs shared by difference-scale
+inputs and plot canvases. Original file text is now retained through import.
+
+The final read-only HBM report reopening, error-state recovery, source labels,
+linked maximum-RF-difference cursor and desktop/mobile render also passed in
+`reopen-verification.json` beside the native record. The inspected
+[comparison screenshot](images/sam-acquisition-comparison.png) uses generated
+HBM data only and displays the actual common A/B scales, zero-centered residual,
+physical coordinates and complete signed RF plots. Image axes are independently
+scaled for inspection, as the caption states; metrics use unchanged raw arrays.
+
+`tools/verify_acquisition_comparisons.py` delivered three two-case batches through
+the live API, then independently read their six small saved volumes for direct
+float64 oracles. Production comparisons remained streamed. The successful local
+evidence is `artifacts/v09-acquisition-delivery-complete/verification-report.json`.
+
+| Experiment | Shape per source (Y,X,time) | RF relative L2 (B versus A) | Maximum absolute RF difference |
+| --- | --- | ---: | ---: |
+| HBM6, selected missing gap-8 row-3 column-2 bump disabled/enabled | 64 × 64 × 401 | 0.05081944 | 0.01332805 |
+| HBM6 focus 0.45 versus 0.65 mm | 32 × 32 × 401 | 0.67897764 | 0.07511730 |
+| Copper film, 128-plane voxel versus continuous paths | 16 × 16 × 201 | 0.65682295 | 0.17767061 |
+
+The HBM defect pair uses ROI `[49.44,39.91,49.56,40.09]` mm, 100 MHz carrier,
+800 MHz RF sampling, 0.5 fractional bandwidth, 0.55 mm focus, 0.2–0.7 µs record,
+zero external standoff and a shared 0.26–0.7 µs gate. It retains all six HBM sites
+and every unrelated primitive; the only added material primitive is the selected
+epoxy-filled missing-bump overlay. The focus sweep uses the same carrier, rate
+and record with a declared 0.25 × 0.25 mm region. The aligned method pair uses
+a separate 4 × 3 mm copper-film coupon, 50 MHz/400 MHz RF and a 0.1–0.6 µs record.
+These are numerical contrasts under assumed physics, not defect detection rates,
+measured resolution or evidence that two sampling choices establish convergence.
+
+Saved comparison IDs are `b9376e97-6a34-4aee-b0cb-bc4cd23ed8e4` (HBM defect),
+`c71fb2ad-6621-4b30-9d0f-265adce993a2` (focus), and
+`1c53bef6-33ce-473e-84dd-9712cf471673` (method). The HBM source IDs are
+`f3d831bd-cdf1-4654-890d-71229a5413a3` and
+`80a89d79-6cc9-4d3f-8664-3b57332b9c9b`.
+
+Each pair has exactly matching X/Y/time arrays. Global RF/envelope, gated-map
+and signed-maximum/location checks agree with direct calculations; the largest
+scalar metric residual is **1.665 × 10⁻¹⁶**, under declared float64 reduction
+tolerances. All six ZIP CRCs and every payload match **116 unchanged source
+files**. Exported JSON and all CSV fields preserve frozen provenance; source
+views trigger no forward model or acquisition jobs. Reusing an existing output
+directory fails without changing any of the 57 delivered artifact files.
+
+Two earlier verification-tool-only failures remain preserved: an RMS signed
+value differed by 1.735 × 10⁻¹⁸ between summation orders, and Python's default CSV
+field bound rejected a full provenance cell. The tool now uses its stated
+reduction tolerance and an explicit bounded CSV field limit. The first completed
+HBM batch was reused throughout; no completed acquisition was repeated to repair
+these checks. Original source archives and failure evidence remain outside Git.
+
 ## Version 0.8 — continuous normal-incidence paths
 
 The complete Windows suite passed **480 tests in 105.03 seconds**, with the same

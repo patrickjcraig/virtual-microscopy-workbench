@@ -11,8 +11,8 @@ const complete=manifest=>manifest.complete===true || ['complete','completed'].in
 
 /** Saved RF acquisition has its own frozen specimen and settings, independent of preview scans. */
 export class VolumeWorkspace {
-  constructor({request,getSnapshot}) {
-    Object.assign(this,{request,getSnapshot});this.jobs=[];this.datasets=[];this.ceiling=.5;this.cursor={x_index:0,y_index:0,time_index:0};this.gate=null;
+  constructor({request,getSnapshot,onRecipes}) {
+    Object.assign(this,{request,getSnapshot,onRecipes});this.jobs=[];this.datasets=[];this.ceiling=.5;this.cursor={x_index:0,y_index:0,time_index:0};this.gate=null;
     document.body.insertAdjacentHTML('beforeend',`
       <dialog id="vol-dialog" aria-labelledby="vol-title" aria-describedby="vol-intro">
         <div class="vol-header"><div><h2 id="vol-title">Saved acoustic volumes</h2><p id="vol-intro">Synthetic RF across x, y and recording time. Time is not reconstructed depth.</p></div><button id="vol-close" class="quiet" aria-label="Close saved volumes">✕</button></div>
@@ -20,7 +20,7 @@ export class VolumeWorkspace {
           <aside class="vol-acquisition" aria-label="Volume acquisition and saved datasets">
             <details id="vol-acquire-panel" open><summary>New SAM volume</summary>
               <p id="vol-snapshot" class="vol-snapshot"></p><button id="vol-refresh-snapshot" class="small" type="button">Use current specimen & ROI</button>
-              <form id="vol-form"><div class="vol-path-choice"><label for="vol-path_model">Material paths<select id="vol-path_model" aria-describedby="vol-path-note">${pathModelOptions}</select></label><p id="vol-path-note" class="vol-hint"></p></div>
+              <button id="vol-recipes-btn" class="small" type="button">Use these settings in recipes & cases</button><form id="vol-form"><div class="vol-path-choice"><label for="vol-path_model">Material paths<select id="vol-path_model" aria-describedby="vol-path-note">${pathModelOptions}</select></label><p id="vol-path-note" class="vol-hint"></p></div>
                 <fieldset><legend>Spatial sampling</legend><div class="vol-fields">${labelNumber('scan_nx','X positions',64,16,256,1)}${labelNumber('scan_ny','Y positions',64,16,256,1)}<label for="vol-depth_samples">Geometry depth samples <span id="vol-depth-state"></span><select id="vol-depth_samples"><option>128</option><option>256</option><option selected>512</option><option>1024</option></select></label></div><p id="vol-pitch" class="vol-hint"></p></fieldset>
                 <fieldset><legend>Transducer</legend><div class="vol-fields">${labelNumber('frequency_mhz','Frequency (MHz)',50,10,150)}${labelNumber('fractional_bandwidth','Fractional bandwidth',.5,.2,1)}${labelNumber('focus_mm','Focus depth (mm)',.5,0,6)}${labelNumber('water_standoff_mm','Water standoff (mm)',0,0,5)}</div></fieldset>
                 <fieldset><legend>RF recording</legend><div class="vol-fields">${labelNumber('record_start_us','Record start (µs)',0,0,12)}${labelNumber('record_duration_us','Duration (µs)',2,.05,12)}${labelNumber('sample_rate_mhz','Sample rate (MHz)',400,80,2400)}</div><p id="vol-sampling-hint" class="vol-hint">At least eight time samples per carrier period.</p></fieldset>
@@ -37,7 +37,7 @@ export class VolumeWorkspace {
             <div id="vol-empty" class="vol-empty"><svg viewBox="0 0 100 90" fill="none" aria-hidden="true"><path d="m15 31 35-19 35 19-35 19-35-19Zm0 14 35 19 35-19M15 59l35 19 35-19"/><path d="M50 12v66" stroke-dasharray="3 4"/></svg><h3>Keep the complete acoustic signal</h3><p>Start a volume with the current digital twin, or open a saved dataset. Move through recording time and change gates without running the propagation again.</p><p class="vol-hint">The third axis is time in microseconds. These are synthetic, uncalibrated relative amplitudes; they are not a reconstructed depth volume.</p></div>
             <div id="vol-viewer" hidden>
               <div class="vol-dataset-heading"><div><h3 id="vol-dataset-name"></h3><p id="vol-dataset-detail"></p></div><a id="vol-export" class="vol-download" href="#" download>Download Zarr archive</a></div>
-              <p id="vol-path-summary" class="vol-path-summary"></p><div class="vol-cursors"><label for="vol-x">X position <output id="vol-x-value"></output><input id="vol-x" type="range" min="0" max="0" value="0" step="1"></label><label for="vol-y">Y position <output id="vol-y-value"></output><input id="vol-y" type="range" min="0" max="0" value="0" step="1"></label><label for="vol-time">Recording time <output id="vol-time-value"></output><input id="vol-time" type="range" min="0" max="0" value="0" step="1"></label></div>
+              <button id="vol-compare-btn" class="small" type="button">Compare this saved dataset</button><p id="vol-path-summary" class="vol-path-summary"></p><div class="vol-cursors"><label for="vol-x">X position <output id="vol-x-value"></output><input id="vol-x" type="range" min="0" max="0" value="0" step="1"></label><label for="vol-y">Y position <output id="vol-y-value"></output><input id="vol-y" type="range" min="0" max="0" value="0" step="1"></label><label for="vol-time">Recording time <output id="vol-time-value"></output><input id="vol-time" type="range" min="0" max="0" value="0" step="1"></label></div>
               <div class="vol-processing"><form id="vol-gate-form"><label for="vol-gate-start">Gate start (µs)<input id="vol-gate-start" type="number" min="0" step="any" required></label><label for="vol-gate-end">Gate end (µs)<input id="vol-gate-end" type="number" min="0" step="any" required></label><label for="vol-gate-mode">Gate statistic<select id="vol-gate-mode"><option value="peak_envelope">Peak envelope</option><option value="rms_rf">RMS of signed RF</option></select></label><button id="vol-apply-gate" class="small" type="submit">Apply gate</button></form><label class="vol-window" for="vol-window">Display ceiling<select id="vol-window"><option value=".05">0.05</option><option value=".1">0.10</option><option value=".2">0.20</option><option value=".5" selected>0.50</option><option value="1">1.00</option></select></label></div>
               <p id="vol-view-note" class="vol-view-note">Gates read the saved RF/envelope arrays. They do not submit an acquisition.</p>
               <div class="vol-map-grid">
@@ -53,6 +53,8 @@ export class VolumeWorkspace {
         </div>
       </dialog>`);
     $('#vol-close').addEventListener('click',()=>$('#vol-dialog').close());
+    $('#vol-recipes-btn').addEventListener('click',()=>{const draftRequest=this.payload();$('#vol-dialog').close();this.onRecipes?.({draftRequest});});
+    $('#vol-compare-btn').addEventListener('click',()=>{if(!this.manifest)return;const datasetId=this.manifest.dataset_id||this.manifest.id;$('#vol-dialog').close();this.onRecipes?.({datasetId});});
     $('#vol-dialog').addEventListener('close',()=>{clearTimeout(this.pollTimer);clearTimeout(this.estimateTimer);clearTimeout(this.viewTimer);this.catalogController?.abort();this.viewController?.abort();this.estimateController?.abort();this.selectionController?.abort();});
     $('#vol-refresh-snapshot').addEventListener('click',()=>this.capture());
     $('#vol-form').addEventListener('input',()=>this.changed());

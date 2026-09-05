@@ -129,6 +129,18 @@ ROI when the compact patch exceeds resource limits. See
 
 ## Numerical exports and headless execution
 
+**New in 0.9: SAM recipes, batches and comparisons.** Open **Recipes & comparisons**
+to save/load/revise complete acquisition recipes, review two to four explicit
+parameter cases, and run them as one durable batch. Compare saved signed RF and
+envelope volumes with shared physical cursors and amplitude scales, inclusive
+gates, signed difference maps and frozen JSON/CSV reports. Isolated HBM defect
+pairs preserve other sites and defects. Exact coordinate compatibility is
+required; no implicit alignment or normalization is applied. Follow the
+[acquisition comparison guide](docs/ACQUISITION_COMPARISONS.md) for workflow,
+metrics, resource limits and historical-data behavior.
+
+![Saved HBM6 intact and missing-bump comparison with shared-scale gate maps, a localized signed residual and complete RF traces](docs/images/sam-acquisition-comparison.png)
+
 **SAM depth estimates (0.6 onward).** Open **SAM depth** and select a completed
 acoustic recording. Set a homogeneous speed or an explicit layer table, choose
 the surface-time reference, and map the saved signed RF and analytic envelope to
@@ -245,12 +257,16 @@ close viewing, fine ROI preview and saved acoustic acquisition. Set
 Run `npm.cmd run verify:continuous-paths` for explicit method selection, inactive
 Z settings, saved continuous RF, historical data, and the larger HBM preview ROI.
 
-The local bump/TSV patch and continuous material paths are delivered. The next
-work adds saved-SAM recipes, bounded cases and repeatable comparisons before
-richer propagation models.
+Run `npm.cmd run verify:comparisons` for recipe round trips, reviewed cases,
+batch execution/cancellation/resume and saved RF/envelope comparisons. It creates
+synthetic records and datasets; display changes never reacquire the sources.
+
+The local bump/TSV patch, continuous material paths and saved-SAM recipes/batches/
+comparisons are delivered. The next work extends these workflows to saved X-ray
+projections before richer propagation models.
 GPU cone CT and iterative laminography remain separate future extensions. See
 [EXPANSION_PLAN.md](docs/EXPANSION_PLAN.md) for the sequence and acceptance gates.
-Version 0.8 retains raw SAM RF and X-ray projections alongside derived CT and
+Version 0.9 retains raw SAM RF and X-ray projections alongside derived CT and
 SAM depth volumes.
 
 The implementation is separated into `virtual_microscopy/physics.py` and `materials.py`, strict schemas and local API, `web/` UI, reproducible example geometry, and tests. This leaves room for higher-fidelity solvers and CAD/voxel import while keeping the current demo runnable.
