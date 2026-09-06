@@ -1,4 +1,4 @@
-# Virtual microscopy 0.15 integration contract (compatible twin schema 1)
+# Virtual microscopy 0.19 integration contract (compatible twin schema 1)
 
 Local application: Python FastAPI serves a Vite/vanilla JS + Three.js client. Source in `virtual_microscopy/` and `web/`. Physical dimensions use millimetres. Coordinates x right, y down in image, z depth from specimen top; surrounding material is water for SAM and air for X-ray. Later primitives replace earlier ones. This is a reduced-order synthetic forward simulator, not experimentally validated or coupled full-wave multiphysics.
 
@@ -36,7 +36,33 @@ defects follow their assembly; global defects preserve existing coordinates.
 
 ## API
 
-- GET /api/health -> {status:'ok',version:'0.15.0'}
+### Material assignment instrument (0.19)
+
+`/api/v2/material-assignments` owns immutable `sls_material_assignment` documents.
+POST `/estimate` validates the full request and reports coverage/resources; POST
+the collection publishes a document and GET lists documents. GET `/{id}` and
+`/{id}/export` return complete saved JSON. POST `/{id}/columns` with exactly
+`{x_mm,y_mm}` publishes one full-depth `sls_material_column`; GET lists those
+columns, and GET `/{id}/columns/{column_id}` or its `/export` suffix returns the
+complete saved column and deduplicated parent/source closure.
+
+Requests explicitly supply kind, name, Twin, strict include_defects, coverage_scope
+(`all_included` or `selected_materials`), required_material_ids and zero-to-six
+bindings. Each binding has material_id, name, explanatory note and a discriminated
+origin. Manual origins supply density_kg_m3, relaxed_modulus_gpa,
+unrelaxed_modulus_gpa and relaxation_time_us. Report-layer origins supply canonical
+report_id and zero-based layer_index; the server copies exactly four source values.
+Incomplete evidence can be saved, with explicit scope-qualified missing coverage.
+
+Historical exports retain complete compiled twins, source reports, parameter and
+geometry identities. Saved-column reads do not run geometry. New inspection
+requires the supported frozen geometry identity. All results retain
+`propagation_available:false`. See [MATERIAL_ASSIGNMENTS.md](docs/MATERIAL_ASSIGNMENTS.md)
+for ambient/air policy, resources, binding scope and physical limitations.
+
+### Shared and legacy routes
+
+- GET /api/health -> {status:'ok',version:'0.19.0'}
 - GET /api/examples -> [{id,name,description,twin}]
 - GET /api/materials -> list of material dicts with id,name,color,density_g_cm3,sound_speed_m_s,impedance_mrayl and provenance; extra properties permitted.
 - POST /api/validate -> twin body -> {valid:true,twin:normalized twin,warnings:[]}; errors HTTP 422.

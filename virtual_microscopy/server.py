@@ -182,6 +182,8 @@ from .sls_api import router as sls_router
 app.include_router(sls_router)
 from .sls_comparison_api import router as sls_comparison_router
 app.include_router(sls_comparison_router)
+from .material_assignment_api import router as material_assignment_router
+app.include_router(material_assignment_router)
 
 dist = ROOT / "web" / "dist"
 if dist.is_dir():

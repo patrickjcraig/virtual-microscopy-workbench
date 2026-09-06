@@ -2,6 +2,98 @@
 
 This record concerns the first local implementation in `E:\git\Dissertation`. It establishes software and analytical-model behavior, not experimental imaging accuracy.
 
+## Version 0.19 — explicit material assignments and column coverage
+
+The complete local Windows suite passed **1,929 tests in 474.52 seconds**, with
+the same two third-party warnings. The 181 new cases comprise 88 core/schema
+checks, 75 storage/API checks and 18 independent geometry-oracle checks. Evidence:
+`artifacts/v019-final-pytest.log`. Locked dependency setup passed; dependencies
+remain unchanged. Exact-commit Windows/Linux CI is recorded separately in
+`artifacts/v019-release-ci.json` and its GitHub Actions run.
+
+The core checks strict explicit manual/report-layer origins, units, passive
+modulus ordering, required notes, canonical source IDs, selected versus whole
+inventory, missing explicit air, occluded materials, full-depth paths and complete
+snapshot/resource closure. Only four parameters transfer from a selected source
+layer; its thickness, exteriors and numerical certificate remain source provenance.
+Eight independently tabulated box/cylinder/sphere cases cover center/chord/tangent,
+inclusive walls, overlap order and excluded defects. HBM checks retain all 26/28
+segments; assignment count does not bypass the existing eight-layer SLS ceiling.
+
+Storage/API tests remove original sources and parent files, trap current schema,
+geometry and acoustic imports, and reopen/export saved columns from their complete
+flattened closure. Rehashed incorrect bindings, coverage, labels, endpoints,
+diagnostic arithmetic, resource forecasts and identities reject. Predecode tests cover six
+retained sources and historical validation reserves. Catalog listing releases
+each full record after making its compact summary; final publication rechecks
+stream source/parent file hashes without decoding another retained copy. Collision,
+path/link, disk and incomplete-publication controls preserve existing files.
+
+All earlier backend files except application version and router registration
+remain byte-identical to v0.18. The new instance runs on **8771**, with its own
+`artifacts/volumes-v019` root and no auto-reload. **10,776 prior files totaling
+536,210,301 bytes** were copied and SHA-256 verified, together with an online
+backup of the idle catalog. Startup changed only 85 existing `updated_at` values
+(82 acquisition and three observation rows). Complete post-startup catalog values
+and earlier files remained unchanged during delivery. The private reference image
+retained its original SHA and provisional approximately 4.6 µm/pixel metadata.
+
+The real native workflow delivers exactly four assignment documents and five
+saved columns, with no propagation/acquisition jobs:
+
+| Assignment control | Document ID | Saved columns |
+| --- | --- | --- |
+| Unassigned six-site H100, 574 primitives | `275e347b-57c3-47e6-b0d7-1654ea567a78` | Two HBM6 points, 26 segments each over 2.65 mm |
+| Manufactured complete coupon | `c5f4e274-0fba-4f97-a042-04f58dc5bde2` | Five segments over 1 mm |
+| Same coupon with unassigned air enabled | `1c8e3fe8-045f-43b6-a273-71887143066a` | Seven segments over 1 mm; air explicitly missing |
+| Coupon with one exact saved SLS layer binding | `8c98705b-9e5f-4c83-8bee-15595d5ea3a3` | Five segments over 1 mm |
+
+The HBM points are `(49.42734375,39.876953125)` and
+`(49.47421875,39.947265625)` mm. Each coupon column is at `(1,1)` mm. Whole H100
+inventory includes six unassigned IDs; the two actual HBM6 columns encounter five
+nonambient IDs. The complete/missing-air coupons share identical twin and binding
+snapshots, with defect inclusion changed. The manufactured coefficients are
+deliberately arbitrary and do not supply HBM properties.
+
+An initial native attempt retained three documents/four columns before source
+selection exposed two UI races. The source catalog now survives specimen
+recapture, while per-material request identities prevent an older layer response
+from changing a newer draft. Deterministic browser-local delayed-response checks
+passed with zero POSTs after the initial preview. The completed **35.634-second**
+native run reused the retained records and created only the remaining document
+and column. It checks exact read-only source values, missing-air/subset coverage,
+bad moduli/duplicate/unknown rejection, immutable geometry, source-free history and
+JSON exports, keyboard segment selection and 390 px layout, with zero page errors.
+Blank coordinates are rejected before conversion rather than silently becoming
+zero. Original attempt IDs and failure evidence remain preserved.
+
+Independent read-only delivery passed in **5.124 seconds**, creating no documents,
+columns or jobs. It froze all nine native-created file hashes before the first HTTP
+read and verified canonical JSON exports/complete parent reconstruction, exact
+four-parameter bindings, scope sets and all five expected unique column locators.
+It compared **69 positive segments** against separate direct chord equations and
+midpoint material precedence, with **zero observed endpoint or thickness-sum
+discrepancy**. The endpoint acceptance threshold is 1e-12 mm, a numerical geometry
+check rather than experimental accuracy. Numeric material labels, missing
+assignment locators and ambient policy also agree. Evidence:
+`artifacts/v019-material-assignment-delivery.json`.
+
+The frontend build used for native verification passed in **1.01 seconds**.
+After removing duplicate carriage returns from the new JavaScript source, the
+final build passed in **1.08 seconds** and every generated asset remained
+byte-identical to the browser-verified build. The exact committed native
+verifier passed again in **35.664 seconds**, reusing all four documents/five columns
+with zero new publications or jobs after the final label and race-check updates.
+A final **8.835-second read-only check** verified the actual HBM image, exports,
+nine unchanged files and six unchanged catalog responses, with no POSTs after the
+initial preview and no page errors. Final paths are in
+`artifacts/v019-native-paths.json`; the [actual screenshot](images/material-assignment-workspace.png)
+shows the entire physical-depth strip and the saved bump/TSV-core column. No
+backend/source fingerprint changed after the server freeze. See
+[MATERIAL_ASSIGNMENTS.md](MATERIAL_ASSIGNMENTS.md) for the supported workflow.
+Typed finite real/SLS media, larger-stack numerical admission and HBM propagation
+remain separate later contracts; complete assignment coverage does not enable them.
+
 ## Version 0.18 — saved SLS material comparisons
 
 The complete local Windows suite passed **1,747 tests in 477.31 seconds**, with

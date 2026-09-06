@@ -117,12 +117,22 @@ remain unchanged. The existing constant-loss-plus-delay model is itself causal.
 Version 0.18 adds [compatible saved SLS comparisons](SLS_COMPARISONS.md), with
 explicit material differences, exact shared frequency/time axes, complete source
 snapshots and five full-record reflected residual bounds. Spectral and statistical
-products remain ordinary diagnostics. Next define explicit material assignments
-and their validation/resource contracts before extending saved HBM propagation.
-Any material-to-HBM mapping needs an explicit provenance-aware assignment and
-resource contract; do not infer a calibrated relaxation law from one attenuation
-value. Frequency-dependent X-ray spectra and calibrated source/detector effects
-remain separate physics work.
+products remain ordinary diagnostics.
+
+Version 0.19 adds [explicit material assignments and column coverage](MATERIAL_ASSIGNMENTS.md):
+complete frozen twins, authored material-ID bindings or exact saved report-layer
+parameters, separate whole-inventory/subset status, and one full-depth ordered
+column with missing-material locators. Assignments and saved column evidence are
+immutable and remain readable without their original sources. No propagation
+follows from a complete coverage status. The observed HBM6 columns have 26/28
+segments, exceeding the standalone SLS eight-layer limit; finite ambient water
+also needs an explicit supported medium resolver.
+
+Next establish mixed finite-medium and larger-stack numerical/resource contracts
+before creating saved SLS/HBM responses. Do not truncate or average geometry to
+fit the old cap, invent an ambient-water relaxation, or infer calibrated laws from
+one attenuation value. Frequency-dependent X-ray spectra and calibrated
+source/detector effects remain separate physics work.
 
 ## 1. Correct the specimen and preserve the image evidence
 
@@ -324,8 +334,9 @@ observation and its compatible saved comparisons. Their complete support,
 explicit weights/phase, complex mixing and distinct pressure/magnitude bounds
 are documented above. Version 0.17 adds a standalone SLS material law and its
 independent controls. Version 0.18 adds compatible saved SLS comparisons.
-Next define provenance-aware material assignments and bounded propagation
-contracts before expanding saved propagation. Preserve historical
+Version 0.19 adds immutable material assignments and full-depth column coverage.
+Next define mixed finite-medium and larger-stack propagation contracts, with
+independent numerical and resource evidence, before expanding saved propagation. Preserve historical
 data and numerical identities, distinguish excitation/observation changes, and
 keep ordinary unique-depth mapping unavailable for repeated returns.
 
