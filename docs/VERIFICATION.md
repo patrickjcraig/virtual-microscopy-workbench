@@ -2,6 +2,98 @@
 
 This record concerns the first local implementation in `E:\git\Dissertation`. It establishes software and analytical-model behavior, not experimental imaging accuracy.
 
+## Version 0.20 — explicit finite real/SLS media
+
+The complete local Windows suite passed **2,157 tests in 476.85 seconds**, with
+the same two third-party warnings. The 228 new cases comprise 88 numerical/schema
+checks, 122 storage/API checks and 18 independent transfer/inverse checks.
+Evidence: `artifacts/v020-final-pytest.log`. Locked Python setup and the final
+frontend production build passed; the latter took **1.12 seconds**. No dependency
+was added. Exact-commit Windows/Linux CI is retained separately in
+`artifacts/v020-release-ci.json` and its GitHub Actions run.
+
+The new typed layer contract rejects omitted or conflicting tags and fields,
+nonfinite/boolean values, invalid passive moduli, more than eight authored rows
+and exact represented thickness above 6 mm. Zero-thickness entries retain their
+type and diagnostics but do not introduce physical interfaces. Enclosed real
+impedance/speed propagation avoids a rounded SLS material conversion. The new
+[mixed proof](MIXED_MATERIAL_PROOF.md) derives flux cancellation, outgoing
+uniqueness, analytic reflected contractivity, gamma causality/periodization and
+the finite frequency-tail and returned-value error bounds.
+
+Numerical tests include independent pressure/velocity matrix exponentials,
+analytic real-slab coherent spectra and finite causal echo sums, exact
+representable real/elastic-SLS equivalence, matched front and terminal spacers,
+exterior standoff and an explicit double-counting negative control. They check
+actual coordinate retention, exact subdivision, zero thickness, difficult
+contrasts, precision/tolerance behavior and rejection before coefficient
+allocation. Root's separate p/v/deHoog implementation imports no production
+material, scattering, pulse or inverse helper; real and quadrature transforms
+are inverted separately.
+
+Historical storage checks cover explicit typed snapshots, every represented
+frequency/time coordinate, real-medium curves, ordinary scalar/material
+consistency, frozen plan/count relationships, complete hashes and exact outward
+component sums. Corruption controls reseal changed payloads to exercise the
+structural validators, including jointly modified plans and output diagnostics.
+Historical reads require no current schemas, kernels, proof-file lookup or FLINT.
+They do not recertify a response. Predecode/retained-page checks, numerical/result
+retention, CSV/HTTP accounting, exclusive atomic publication, path/link guards
+and kind isolation remain explicit.
+
+The isolated `volumes-v020` delivery root copied and SHA-verified **10,785 files
+totaling 536,799,494 bytes**, with an idle online SQLite backup. Startup changed
+only **85 existing updated_at values**; IDs, requests, state and every other
+catalog field were preserved. All previous files and the post-startup catalog
+remained unchanged through delivery. The old backend baseline contains 80 files:
+only server registration and package version changed; the other 78 were preserved.
+The eight numerical/storage/helper identities and new proof were frozen before
+the isolated service and native publication.
+
+Native browser creation passed in **24.682 seconds**, saving exactly three
+reports: a frequency-only real slab, an arbitrary relaxing SLS baseline and the
+same baseline with a positive matched nominal-water front spacer. Both RF
+controls use 10 MHz, bandwidth 0.8, gamma order 12, 200 MHz sampling, 0–0.4 µs,
+zero exterior standoff, 192-bit arithmetic and requested tolerance `1e-8`.
+They retain 81 actual times; all three spectra retain 257 frequencies over
+0–80 MHz. No acquisition or derived job was created.
+
+The exact native verifier reran with retained IDs in **24.825 seconds**, creating
+no new reports or jobs. The final strictly read-only browser pass took
+**19.843 seconds**, with no POSTs after the ordinary initial preview, no page
+errors, all three report files and eight catalogs unchanged, and exact JSON/CSV
+equality. Checks cover typed clearing, blanks, reorder/zero/count limits,
+rejected recording settings, stale preflight/history responses, cold reopening,
+old SLS selector isolation, exact cursors and a 390 px layout. The generated-only
+[workspace screenshot](images/mixed-acoustics-workspace.png) shows the actual
+water-spacer report and its full reflected-error table; it contains no private
+cross-section pixels. Receipts are indexed in `artifacts/v020-native-paths.json`.
+
+Independent read-only delivery passed in **18.270 seconds**, creating no reports
+or jobs. It prehashed all three new files before the first HTTP call, checked
+canonical JSON/CSV/local identity including signed zero, verified every source
+and proof hash, and retained all old files/catalog values. Across **771 saved
+frequencies**, independent p/v matrices differed from saved reflected pressure
+by at most `2.757e-17` and transmitted pressure by at most `7.528e-17`. The real
+slab's maximum rounded energy residual was below `4.650e-16`.
+
+Separate deHoog degrees 72 and 96 checked **six actual RF centers** at
+0.125/0.25/0.375 µs across the two RF reports. Maximum degree change was below
+`4.718e-24`; maximum selected complex difference was below `1.023e-11` and
+magnitude difference below `9.026e-12`. Both published full-record numerical
+totals were below `4.792e-9`, meeting the requested `1e-8`. Degree convergence
+is not an independently certified oracle remainder and does not tighten those
+published bounds.
+
+The controlled finite spacer changes complex reflection by up to **0.264362919**
+over the saved spectrum. Its independently checked two-way reflection and
+one-way transmission phase relations differ by less than `1.727e-17` and
+`9.704e-17`, respectively, with every other layer/exterior/pulse setting
+unchanged. These are ordinary diagnostic differences under the authored model,
+not detection accuracy or measured material validation. Eight-layer admission,
+standalone authorship and reflected-only certification remain the scope; no HBM
+assignment, raster or finite-beam propagation is implied.
+
 ## Version 0.19 — explicit material assignments and column coverage
 
 The complete local Windows suite passed **1,929 tests in 474.52 seconds**, with

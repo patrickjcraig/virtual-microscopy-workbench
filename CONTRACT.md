@@ -1,4 +1,4 @@
-# Virtual microscopy 0.19 integration contract (compatible twin schema 1)
+# Virtual microscopy 0.20 integration contract (compatible twin schema 1)
 
 Local application: Python FastAPI serves a Vite/vanilla JS + Three.js client. Source in `virtual_microscopy/` and `web/`. Physical dimensions use millimetres. Coordinates x right, y down in image, z depth from specimen top; surrounding material is water for SAM and air for X-ray. Later primitives replace earlier ones. This is a reduced-order synthetic forward simulator, not experimentally validated or coupled full-wave multiphysics.
 
@@ -36,6 +36,37 @@ defects follow their assembly; global defects preserve existing coordinates.
 
 ## API
 
+### Mixed finite-media instrument (0.20)
+
+`/api/v2/mixed-acoustics` owns standalone `mixed_layered_analysis` reports.
+POST `/estimate`, POST/GET `/reports`, GET `/reports/{id}` and GET
+`/reports/{id}/export?format=json|csv` supply preflight, atomic publication,
+bounded ID-desc history, full historical reads and lossless exports.
+
+The request is `{kind:"mixed_layered_analysis",name,stack,spectrum,causal_pulse}`.
+Kind is required. Spectrum may use its documented defaults and causal_pulse may
+be null. Stack has explicit real incident/terminal media and zero-to-eight authored
+finite layers. Every layer requires a discriminator: `lossless_real` has name,
+thickness_mm, impedance_mrayl and sound_speed_m_s; `sls` has name, thickness_mm,
+density_kg_m3, relaxed_modulus_gpa, unrelaxed_modulus_gpa and relaxation_time_us.
+Other fields reject. Zero-thickness entries remain authored evidence and count
+toward eight; exact represented total thickness is at most 6 mm.
+
+Spectrum stores actual frequencies, complex pressure R/T, energy diagnostics and
+one typed material record per authored layer. Optional causal_pulse stores actual
+times, signed real/quadrature pressure, magnitude and the new reflected-only
+`scalar-mixed-reflected-gamma-1` certificate. Its outward total encloses the exact
+sum of published alias, cutoff and both output-conversion components, within the
+requested tolerance. The five count fields are layer_count, authored_layer_count,
+active_layer_count, lossless_real_layer_count and sls_layer_count.
+
+Reports use the separate `mixed-reports` directory, with complete typed requests,
+arrays, runtime/proof/implementation provenance and request/stack/report hashes.
+Historical reads validate frozen contracts without current kernels or proof-file
+lookup. No Twin, assignment, HBM-column, acquisition or worker input is accepted.
+See [MIXED_ACOUSTICS.md](docs/MIXED_ACOUSTICS.md) and the
+[mixed proof](docs/MIXED_MATERIAL_PROOF.md) for units, bounds and scope.
+
 ### Material assignment instrument (0.19)
 
 `/api/v2/material-assignments` owns immutable `sls_material_assignment` documents.
@@ -62,7 +93,7 @@ for ambient/air policy, resources, binding scope and physical limitations.
 
 ### Shared and legacy routes
 
-- GET /api/health -> {status:'ok',version:'0.19.0'}
+- GET /api/health -> {status:'ok',version:'0.20.0'}
 - GET /api/examples -> [{id,name,description,twin}]
 - GET /api/materials -> list of material dicts with id,name,color,density_g_cm3,sound_speed_m_s,impedance_mrayl and provenance; extra properties permitted.
 - POST /api/validate -> twin body -> {valid:true,twin:normalized twin,warnings:[]}; errors HTTP 422.

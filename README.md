@@ -6,6 +6,8 @@ A local research prototype that loads a material-aware digital twin of a microel
 
 **Evidence status:** synthetic, reduced-order forward models. This version provides two imaging physics models sharing one specimen. It has no experimental calibration and does not claim a coupled elastic/electromagnetic solver or measured instrument accuracy.
 
+Version **0.20** adds [mixed finite-media acoustics](docs/MIXED_ACOUSTICS.md). Combine explicit lossless impedance/speed layers with dispersive SLS layers, distinguish finite water spacers from exterior standoff, and save coherent spectra plus optional reflected gamma RF with numerical error bounds. The standalone instrument retains eight authored layers and does not yet propagate frozen HBM assignments.
+
 Version **0.19** adds [material assignments and full-depth coverage](docs/MATERIAL_ASSIGNMENTS.md). Freeze a specimen, bind explicit manual or saved report-layer SLS assumptions, inspect the complete ordered column and retain missing-material evidence. Assignment coverage is separate from propagation admission; existing acoustic and X-ray results retain their original identities.
 
 Version **0.18** adds [saved SLS comparisons](docs/SLS_COMPARISONS.md): inspect explicit material changes on exact shared frequency/time axes, signed residuals and five full-record reflected-RF bounds. Complete source snapshots keep historical curves and exports available independently of original source files.
